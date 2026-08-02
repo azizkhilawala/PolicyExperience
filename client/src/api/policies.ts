@@ -58,3 +58,60 @@ export function fetchPolicy(id: string) {
 export function deletePolicy(id: string) {
   return apiFetch<void>(`/api/policies/${id}`, { method: 'DELETE' });
 }
+
+export function createPolicy(data: {
+  name: string;
+  description?: string;
+  scope: PolicyLabel[];
+  type: 'organizational' | 'application';
+}) {
+  return apiFetch<Policy>('/api/policies', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function fetchRules(policyId: string) {
+  return apiFetch<Rule[]>(`/api/policies/${policyId}/rules`);
+}
+
+export function createRule(
+  policyId: string,
+  data: {
+    source?: RuleEndpoint;
+    destination?: RuleEndpoint;
+    services?: RuleService[];
+    action?: 'allow' | 'deny';
+    scope_type?: 'intra' | 'extra';
+  }
+) {
+  return apiFetch<Rule>(`/api/policies/${policyId}/rules`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateRule(
+  ruleId: string,
+  data: Partial<{
+    source: RuleEndpoint;
+    destination: RuleEndpoint;
+    services: RuleService[];
+    action: 'allow' | 'deny';
+    scope_type: 'intra' | 'extra';
+    enabled: boolean;
+  }>
+) {
+  return apiFetch<Rule>(`/api/rules/${ruleId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteRule(ruleId: string) {
+  return apiFetch<void>(`/api/rules/${ruleId}`, { method: 'DELETE' });
+}
+
+export function duplicateRule(ruleId: string) {
+  return apiFetch<Rule>(`/api/rules/${ruleId}/duplicate`, { method: 'POST' });
+}
