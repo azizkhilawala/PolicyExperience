@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Button } from '@astryxdesign/core/Button';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -30,16 +30,22 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
     () => fetchRules(policyId),
     [policyId]
   );
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const handleAddRule = useCallback(async () => {
-    await createRule(policyId, {
-      source: { type: 'labels', labels: [] },
-      destination: { type: 'labels', labels: [] },
-      services: [{ protocol: 'TCP', port: '443' }],
-      action: 'allow',
-      scope_type: 'intra',
-    });
-    refetch();
+    try {
+      setMutationError(null);
+      await createRule(policyId, {
+        source: { type: 'labels', labels: [] },
+        destination: { type: 'labels', labels: [] },
+        services: [{ protocol: 'TCP', port: '443' }],
+        action: 'allow',
+        scope_type: 'intra',
+      });
+      refetch();
+    } catch (e) {
+      setMutationError(e instanceof Error ? e.message : 'Failed to add rule');
+    }
   }, [policyId, refetch]);
 
   const handleUpdate = useCallback(
@@ -47,31 +53,46 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
       // updateRule accepts enabled as boolean; Rule stores it as number (0/1).
       // Cast the subset of fields updateRule understands.
       const { source, destination, services, action, scope_type, enabled } = data;
-      await updateRule(ruleId, {
-        ...(source !== undefined && { source }),
-        ...(destination !== undefined && { destination }),
-        ...(services !== undefined && { services }),
-        ...(action !== undefined && { action }),
-        ...(scope_type !== undefined && { scope_type }),
-        ...(enabled !== undefined && { enabled: Boolean(enabled) }),
-      });
-      refetch();
+      try {
+        setMutationError(null);
+        await updateRule(ruleId, {
+          ...(source !== undefined && { source }),
+          ...(destination !== undefined && { destination }),
+          ...(services !== undefined && { services }),
+          ...(action !== undefined && { action }),
+          ...(scope_type !== undefined && { scope_type }),
+          ...(enabled !== undefined && { enabled: Boolean(enabled) }),
+        });
+        refetch();
+      } catch (e) {
+        setMutationError(e instanceof Error ? e.message : 'Failed to update rule');
+      }
     },
     [refetch]
   );
 
   const handleDelete = useCallback(
     async (ruleId: string) => {
-      await deleteRule(ruleId);
-      refetch();
+      try {
+        setMutationError(null);
+        await deleteRule(ruleId);
+        refetch();
+      } catch (e) {
+        setMutationError(e instanceof Error ? e.message : 'Failed to delete rule');
+      }
     },
     [refetch]
   );
 
   const handleDuplicate = useCallback(
     async (ruleId: string) => {
-      await duplicateRule(ruleId);
-      refetch();
+      try {
+        setMutationError(null);
+        await duplicateRule(ruleId);
+        refetch();
+      } catch (e) {
+        setMutationError(e instanceof Error ? e.message : 'Failed to duplicate rule');
+      }
     },
     [refetch]
   );
@@ -92,6 +113,14 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
 
   return (
     <VStack gap={3}>
+      {!!mutationError && (
+        <Banner
+          status="error"
+          title={mutationError}
+          isDismissable
+          onDismiss={() => setMutationError(null)}
+        />
+      )}
       <HStack hAlign="between" vAlign="center">
         <Heading level={2}>Rules</Heading>
         <Button

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
@@ -15,7 +16,7 @@ import { Spinner } from '@astryxdesign/core/Spinner';
 import { useApi } from '../hooks/useApi.js';
 import { apiFetch } from '../api/client.js';
 import { useAuth } from '../hooks/useAuth.js';
-import { fetchPolicy } from '../api/policies.js';
+import { fetchPolicy, deletePolicy } from '../api/policies.js';
 import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
@@ -35,6 +36,7 @@ export default function PolicyDetailPage() {
   const navigate = useNavigate();
   const { user, users } = useAuth();
   const { data: policy, loading, error, refetch } = useApi(() => fetchPolicy(id!), [id]);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -82,9 +84,26 @@ export default function PolicyDetailPage() {
               size="sm"
               isDisabled={!isAdmin}
               tooltip={!isAdmin ? 'Only global admins can unlock rulesets' : undefined}
-              onClick={() => apiFetch(`/api/policies/${id}/unlock`, { method: 'POST' }).then(refetch)}
+              onClick={async () => {
+                try {
+                  setActionError(null);
+                  await apiFetch(`/api/policies/${id}/unlock`, { method: 'POST' });
+                  refetch();
+                } catch (e) {
+                  setActionError(e instanceof Error ? e.message : 'Action failed');
+                }
+              }}
             />
           }
+        />
+      )}
+
+      {!!actionError && (
+        <Banner
+          status="error"
+          title={actionError}
+          isDismissable
+          onDismiss={() => setActionError(null)}
         />
       )}
 
@@ -108,26 +127,45 @@ export default function PolicyDetailPage() {
               { label: 'Edit', onClick: () => {} },
               {
                 label: policy.is_locked ? 'Unlock' : 'Lock',
-                onClick: () =>
-                  apiFetch(`/api/policies/${id}/${policy.is_locked ? 'unlock' : 'lock'}`, {
-                    method: 'POST',
-                  }).then(refetch),
+                onClick: async () => {
+                  try {
+                    setActionError(null);
+                    await apiFetch(`/api/policies/${id}/${policy.is_locked ? 'unlock' : 'lock'}`, {
+                      method: 'POST',
+                    });
+                    refetch();
+                  } catch (e) {
+                    setActionError(e instanceof Error ? e.message : 'Action failed');
+                  }
+                },
               },
               {
                 label: policy.enabled ? 'Disable' : 'Enable',
-                onClick: () =>
-                  apiFetch(`/api/policies/${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ enabled: !policy.enabled }),
-                  }).then(refetch),
+                onClick: async () => {
+                  try {
+                    setActionError(null);
+                    await apiFetch(`/api/policies/${id}`, {
+                      method: 'PATCH',
+                      body: JSON.stringify({ enabled: !policy.enabled }),
+                    });
+                    refetch();
+                  } catch (e) {
+                    setActionError(e instanceof Error ? e.message : 'Action failed');
+                  }
+                },
               },
               { type: 'divider' as const },
               {
                 label: 'Delete',
-                onClick: () =>
-                  apiFetch(`/api/policies/${id}`, { method: 'DELETE' }).then(() =>
-                    navigate('/policies')
-                  ),
+                onClick: async () => {
+                  try {
+                    setActionError(null);
+                    await deletePolicy(id!);
+                    navigate('/policies');
+                  } catch (e) {
+                    setActionError(e instanceof Error ? e.message : 'Action failed');
+                  }
+                },
               },
             ]}
           />

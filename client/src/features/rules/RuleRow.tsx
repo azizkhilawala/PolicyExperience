@@ -34,6 +34,16 @@ function getGhostLabels(
   return [];
 }
 
+const scopeTypeOptions = [
+  { value: 'intra', label: 'Intra scope' },
+  { value: 'extra', label: 'Extra scope' },
+];
+
+const actionOptions = [
+  { value: 'allow', label: 'Allow' },
+  { value: 'deny', label: 'Deny' },
+];
+
 export function RuleRow({
   rule,
   position,
@@ -84,16 +94,6 @@ export function RuleRow({
 
   const sourceGhosts = getGhostLabels(scopeLabels, rule.scope_type, 'source');
   const destGhosts = getGhostLabels(scopeLabels, rule.scope_type, 'destination');
-
-  const scopeTypeOptions = [
-    { value: 'intra', label: 'Intra scope' },
-    { value: 'extra', label: 'Extra scope' },
-  ];
-
-  const actionOptions = [
-    { value: 'allow', label: 'Allow' },
-    { value: 'deny', label: 'Deny' },
-  ];
 
   return (
     <VStack gap={1}>
