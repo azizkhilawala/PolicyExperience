@@ -9,4 +9,5 @@ export const routes = [
   { path: '/policies', element: <PolicyListPage /> },
   { path: '/policies/:id', element: <PolicyDetailPage /> },
   { path: '/settings', element: <SettingsPage /> },
+  { path: '*', element: <Navigate to="/policies" replace /> },
 ];

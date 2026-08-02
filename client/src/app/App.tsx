@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '../hooks/useAuth.js';
 import { SettingsProvider } from '../hooks/useSettings.js';
 import { useColorMode } from '../hooks/useColorMode.js';
 import { routes } from './routes.js';
+import { ErrorBoundary } from '../components/ErrorBoundary.js';
 
 function AppLayout() {
   const location = useLocation();
@@ -87,7 +88,9 @@ function ThemedApp() {
       <BrowserRouter>
         <AuthProvider>
           <SettingsProvider>
-            <AppLayout />
+            <ErrorBoundary>
+              <AppLayout />
+            </ErrorBoundary>
           </SettingsProvider>
         </AuthProvider>
       </BrowserRouter>
