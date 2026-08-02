@@ -1,9 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import App from './app/App.js';
 import './globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <div>PolicyExperience loading...</div>
+    <App />
   </React.StrictMode>,
 );
