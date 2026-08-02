@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Banner } from '@astryxdesign/core/Banner';
@@ -11,14 +11,15 @@ import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList';
 import { Divider } from '@astryxdesign/core/Divider';
 import { Spinner } from '@astryxdesign/core/Spinner';
-import { EmptyState } from '@astryxdesign/core/EmptyState';
 
 import { useApi } from '../hooks/useApi.js';
+import { apiFetch } from '../api/client.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { fetchPolicy } from '../api/policies.js';
 import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
+import { RuleEditor } from '../features/rules/RuleEditor.js';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
@@ -31,8 +32,9 @@ function formatDate(iso: string | null): string {
 
 export default function PolicyDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user, users } = useAuth();
-  const { data: policy, loading, error } = useApi(() => fetchPolicy(id!), [id]);
+  const { data: policy, loading, error, refetch } = useApi(() => fetchPolicy(id!), [id]);
 
   if (loading) {
     return (
@@ -80,6 +82,7 @@ export default function PolicyDetailPage() {
               size="sm"
               isDisabled={!isAdmin}
               tooltip={!isAdmin ? 'Only global admins can unlock rulesets' : undefined}
+              onClick={() => apiFetch(`/api/policies/${id}/unlock`, { method: 'POST' }).then(refetch)}
             />
           }
         />
@@ -105,14 +108,27 @@ export default function PolicyDetailPage() {
               { label: 'Edit', onClick: () => {} },
               {
                 label: policy.is_locked ? 'Unlock' : 'Lock',
-                onClick: () => {},
+                onClick: () =>
+                  apiFetch(`/api/policies/${id}/${policy.is_locked ? 'unlock' : 'lock'}`, {
+                    method: 'POST',
+                  }).then(refetch),
               },
               {
                 label: policy.enabled ? 'Disable' : 'Enable',
-                onClick: () => {},
+                onClick: () =>
+                  apiFetch(`/api/policies/${id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ enabled: !policy.enabled }),
+                  }).then(refetch),
               },
               { type: 'divider' as const },
-              { label: 'Delete', onClick: () => {} },
+              {
+                label: 'Delete',
+                onClick: () =>
+                  apiFetch(`/api/policies/${id}`, { method: 'DELETE' }).then(() =>
+                    navigate('/policies')
+                  ),
+              },
             ]}
           />
         </HStack>
@@ -135,20 +151,10 @@ export default function PolicyDetailPage() {
 
       <Divider />
 
-      <HStack hAlign="between" vAlign="center">
-        <Heading level={2}>Rules</Heading>
-        <Button
-          label="+ Add Rule"
-          variant="secondary"
-          isDisabled
-          tooltip="Rule editing available in Phase 2"
-        />
-      </HStack>
-
-      <EmptyState
-        title="No rules yet"
-        description="Add rules in Phase 2."
-        headingLevel={3}
+      <RuleEditor
+        policyId={policy.id}
+        scopeLabels={policy.scope}
+        isLocked={!!policy.is_locked}
       />
     </VStack>
   );
