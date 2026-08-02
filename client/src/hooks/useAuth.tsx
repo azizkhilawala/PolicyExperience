@@ -7,6 +7,7 @@ interface AuthContextValue {
   users: User[];
   switchUser: (userId: string) => Promise<void>;
   loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -15,6 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([fetchCurrentUser(), fetchUsers()])
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUsers(allUsers);
         setCurrentUserId(me.id);
       })
+      .catch((e) => setError(e instanceof Error ? e.message : 'Auth failed'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -33,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, users, switchUser, loading }}>
+    <AuthContext.Provider value={{ user, users, switchUser, loading, error }}>
       {children}
     </AuthContext.Provider>
   );

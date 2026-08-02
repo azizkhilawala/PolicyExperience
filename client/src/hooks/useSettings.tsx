@@ -5,6 +5,7 @@ interface SettingsContextValue {
   settings: TenantSettings;
   updateSetting: (key: string, value: string) => Promise<void>;
   loading: boolean;
+  error: string | null;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -12,10 +13,12 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<TenantSettings>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings()
       .then(setSettings)
+      .catch((e) => setError(e instanceof Error ? e.message : 'Settings failed'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -25,7 +28,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, loading }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, loading, error }}>
       {children}
     </SettingsContext.Provider>
   );
