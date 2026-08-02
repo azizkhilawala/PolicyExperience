@@ -20,6 +20,7 @@ import { fetchPolicies, type Policy } from '../api/policies.js';
 import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
+import { CreatePolicyDialog } from '../features/policies/CreatePolicyDialog.js';
 
 // SVG lock icon — "lock" is not in Astryx's semantic icon list
 function LockIcon() {
@@ -49,6 +50,7 @@ export default function PolicyListPage() {
   const navigate = useNavigate();
   const { data, loading, error } = useApi(() => fetchPolicies());
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const allPolicies = data ?? [];
 
@@ -140,7 +142,7 @@ export default function PolicyListPage() {
 
       <HStack hAlign="between" vAlign="center">
         <Heading level={1}>Policies</Heading>
-        <Button label="Create Policy" variant="primary" isDisabled />
+        <Button label="Create Policy" variant="primary" onClick={() => setDialogOpen(true)} />
       </HStack>
 
       <TabList value={activeTab} onChange={setActiveTab} hasDivider>
@@ -174,6 +176,14 @@ export default function PolicyListPage() {
           hasHover
         />
       )}
+      <CreatePolicyDialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onCreated={(policy) => {
+          setDialogOpen(false);
+          navigate(`/policies/${policy.id}`);
+        }}
+      />
     </VStack>
   );
 }
