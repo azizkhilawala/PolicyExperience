@@ -108,7 +108,7 @@ router.delete('/:id', (req, res) => {
 // POST /:id/lock
 router.post('/:id/lock', (req, res) => {
   const db = getDb();
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   const existing = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
   const now = new Date().toISOString();
@@ -120,7 +120,7 @@ router.post('/:id/lock', (req, res) => {
 // POST /:id/unlock
 router.post('/:id/unlock', (req, res) => {
   const db = getDb();
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   if (user.role !== 'global_admin') {
     return res.status(403).json({ error: 'Only global_admin can unlock policies' });
   }
@@ -142,7 +142,7 @@ router.post('/:id/provision/preview', (req, res) => {
 // POST /:id/provision/commit
 router.post('/:id/provision/commit', (req, res) => {
   const db = getDb();
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   const existing = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
   if (existing.is_locked) return res.status(409).json({ error: 'Policy is locked' });
