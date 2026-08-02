@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Table, proportional, pixel } from '@astryxdesign/core/Table';
-import { TabList } from '@astryxdesign/core/TabList';
-import { Tab } from '@astryxdesign/core/TabList';
+import { TabList, Tab } from '@astryxdesign/core/TabList';
 import { Button } from '@astryxdesign/core/Button';
 import { Heading } from '@astryxdesign/core/Heading';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -14,6 +13,7 @@ import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
+import { Banner } from '@astryxdesign/core/Banner';
 
 import { useApi } from '../hooks/useApi.js';
 import { fetchPolicies, type Policy } from '../api/policies.js';
@@ -21,49 +21,55 @@ import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 
-interface PolicyRow extends Record<string, unknown> {
-  id: string;
-  name: string;
-  description: string;
-  type: 'organizational' | 'application';
-  scope: Policy['scope'];
-  enabled: number;
-  provision_status: 'draft' | 'provisioned' | 'pending';
-  is_locked: number;
-  locked_by: string | null;
-  locked_at: string | null;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
+// SVG lock icon — "lock" is not in Astryx's semantic icon list
+function LockIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
 }
 
-function toPolicyRow(p: Policy): PolicyRow {
-  return p as unknown as PolicyRow;
-}
+// Policy already extends Record via intersection for Table's generic constraint
+type PolicyTableRow = Policy & Record<string, unknown>;
 
 export default function PolicyListPage() {
   const navigate = useNavigate();
-  const { data, loading } = useApi(() => fetchPolicies());
+  const { data, loading, error } = useApi(() => fetchPolicies());
   const [activeTab, setActiveTab] = useState<string>('all');
 
   const allPolicies = data ?? [];
 
-  const filteredPolicies: PolicyRow[] = allPolicies
+  const filteredPolicies: PolicyTableRow[] = allPolicies
     .filter((p) => {
       if (activeTab === 'all') return true;
       return p.type === activeTab;
     })
-    .map(toPolicyRow);
+    .map((p) => p as PolicyTableRow);
 
   const columns = [
     {
       key: 'name',
       header: 'Name',
       width: proportional(2),
-      renderCell: (row: PolicyRow) => (
-        <VStack gap={0} onClick={() => navigate(`/policies/${row.id}`)} style={{ cursor: 'pointer' }}>
+      renderCell: (row: PolicyTableRow) => (
+        <VStack gap={0} onClick={() => navigate(`/policies/${row.id}`)}>
           <HStack gap={0.5} vAlign="center">
-            {row.is_locked ? <Icon icon="stop" size="sm" color="warning" /> : null}
+            {row.is_locked ? (
+              <Icon icon={LockIcon} size="sm" color="warning" label="Locked" />
+            ) : null}
             <Text weight="medium">{row.name}</Text>
           </HStack>
           <Text type="supporting" color="secondary">
@@ -76,15 +82,15 @@ export default function PolicyListPage() {
       key: 'scope',
       header: 'Scope',
       width: proportional(2),
-      renderCell: (row: PolicyRow) => (
-        <LabelTokens labels={row.scope as Policy['scope']} />
+      renderCell: (row: PolicyTableRow) => (
+        <LabelTokens labels={row.scope} />
       ),
     },
     {
       key: 'enabled',
       header: 'Status',
       width: pixel(140),
-      renderCell: (row: PolicyRow) => (
+      renderCell: (row: PolicyTableRow) => (
         <HStack style={!row.enabled ? { opacity: 0.5 } : undefined}>
           <StatusIndicator enabled={!!row.enabled} />
         </HStack>
@@ -94,15 +100,15 @@ export default function PolicyListPage() {
       key: 'provision_status',
       header: 'Provision Status',
       width: pixel(130),
-      renderCell: (row: PolicyRow) => (
-        <ProvisionBadge status={row.provision_status as 'draft' | 'provisioned' | 'pending'} />
+      renderCell: (row: PolicyTableRow) => (
+        <ProvisionBadge status={row.provision_status} />
       ),
     },
     {
       key: 'actions',
       header: '',
       width: pixel(60),
-      renderCell: (row: PolicyRow) => (
+      renderCell: (row: PolicyTableRow) => (
         <MoreMenu
           size="sm"
           items={[
@@ -147,6 +153,8 @@ export default function PolicyListPage() {
         <HStack hAlign="center" padding={8}>
           <Spinner label="Loading policies…" size="lg" />
         </HStack>
+      ) : error ? (
+        <Banner status="error" title={error} />
       ) : filteredPolicies.length === 0 ? (
         <EmptyState
           title="No policies found"
