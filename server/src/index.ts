@@ -1,0 +1,29 @@
+import express from 'express';
+import cors from 'cors';
+import { authMiddleware } from './middleware/auth.js';
+import authRoutes from './routes/auth.js';
+import labelsRoutes from './routes/labels.js';
+import workloadsRoutes from './routes/workloads.js';
+import k8sRoutes from './routes/k8s.js';
+import policiesRoutes from './routes/policies.js';
+import rulesRoutes from './routes/rules.js';
+import settingsRoutes from './routes/settings.js';
+
+const app = express();
+const PORT = 3001;
+
+app.use(cors());
+app.use(express.json());
+app.use(authMiddleware);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/labels', labelsRoutes);
+app.use('/api/workloads', workloadsRoutes);
+app.use('/api/k8s', k8sRoutes);
+app.use('/api/policies', policiesRoutes);
+app.use('/api/rules', rulesRoutes);
+app.use('/api/tenant-settings', settingsRoutes);
+
+app.listen(PORT, () => {
+  console.log(`PolicyExperience API running on http://localhost:${PORT}`);
+});
