@@ -21,7 +21,8 @@ app.use('/api/labels', labelsRoutes);
 app.use('/api/workloads', workloadsRoutes);
 app.use('/api/k8s', k8sRoutes);
 app.use('/api/policies', policiesRoutes);
-app.use('/api/rules', rulesRoutes);
+app.use('/api/policies', rulesRoutes);   // handles /:policyId/rules
+app.use('/api/rules', rulesRoutes);      // handles /:id, /:id/duplicate
 app.use('/api/tenant-settings', settingsRoutes);
 
 app.listen(PORT, () => {

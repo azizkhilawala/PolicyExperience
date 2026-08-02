@@ -148,12 +148,13 @@ router.post('/:id/provision/commit', (req, res) => {
   if (existing.is_locked) return res.status(409).json({ error: 'Policy is locked' });
 
   const now = new Date().toISOString();
-  db.prepare("UPDATE policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?").run(now, req.params.id);
-
   const historyId = uuidv4();
-  db.prepare(
-    'INSERT INTO provision_history (id, policy_id, provisioned_by, provisioned_at, diff) VALUES (?, ?, ?, ?, ?)'
-  ).run(historyId, req.params.id, user.id, now, JSON.stringify([]));
+  db.transaction(() => {
+    db.prepare("UPDATE policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?").run(now, req.params.id);
+    db.prepare(
+      'INSERT INTO provision_history (id, policy_id, provisioned_by, provisioned_at, diff) VALUES (?, ?, ?, ?, ?)'
+    ).run(historyId, req.params.id, user.id, now, JSON.stringify([]));
+  })();
 
   const updated = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   res.json(parsePolicy(updated));

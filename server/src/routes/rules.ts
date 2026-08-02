@@ -23,15 +23,15 @@ function markPolicyPendingIfProvisioned(db: any, policyId: string) {
   }
 }
 
-// GET /policies/:policyId/rules
-router.get('/policies/:policyId/rules', (req, res) => {
+// GET /:policyId/rules
+router.get('/:policyId/rules', (req, res) => {
   const db = getDb();
   const rows = db.prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position').all(req.params.policyId);
   res.json(rows.map(parseRule));
 });
 
-// POST /policies/:policyId/rules
-router.post('/policies/:policyId/rules', (req, res) => {
+// POST /:policyId/rules
+router.post('/:policyId/rules', (req, res) => {
   const db = getDb();
   const { source, destination, services, action, scope_type } = req.body;
   const { policyId } = req.params;
