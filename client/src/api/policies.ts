@@ -49,6 +49,28 @@ export interface Rule {
   stateless: number;
 }
 
+export interface K8sCluster {
+  id: string;
+  name: string;
+  region: string;
+}
+
+export interface K8sNamespace {
+  id: string;
+  name: string;
+  cluster_id: string;
+  labels: { key: string; value: string }[];
+}
+
+export function fetchClusters() {
+  return apiFetch<K8sCluster[]>('/api/k8s/clusters');
+}
+
+export function fetchNamespaces(clusterId?: string) {
+  const query = clusterId ? `?cluster_id=${clusterId}` : '';
+  return apiFetch<K8sNamespace[]>(`/api/k8s/namespaces${query}`);
+}
+
 export function fetchPolicies(params?: { type?: string; status?: string; enabled?: string }) {
   const query = new URLSearchParams(params as Record<string, string>).toString();
   return apiFetch<Policy[]>(`/api/policies${query ? `?${query}` : ''}`);
