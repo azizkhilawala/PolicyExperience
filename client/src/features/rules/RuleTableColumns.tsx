@@ -104,7 +104,9 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
     provisionStatus,
   } = opts;
 
-  return [
+  const hasScope = scopeLabels.length > 0;
+
+  const columns: TableColumn<RuleTableRow>[] = [
     {
       key: 'position',
       header: '#',
@@ -126,7 +128,10 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
         />
       ),
     },
-    {
+  ];
+
+  if (hasScope) {
+    columns.push({
       key: 'scope_type',
       header: 'Scope',
       width: pixel(130),
@@ -154,7 +159,10 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           />
         );
       },
-    },
+    });
+  }
+
+  columns.push(
     {
       key: 'source',
       header: 'Source',
@@ -352,5 +360,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
         );
       },
     },
-  ];
+  );
+
+  return columns;
 }
