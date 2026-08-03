@@ -63,6 +63,7 @@ const seed = db.transaction(() => {
   // Clear all tables in reverse FK order
   db.exec(`
     DELETE FROM provision_history;
+    DELETE FROM provisioned_rules;
     DELETE FROM rules;
     DELETE FROM policies;
     DELETE FROM workloads;
@@ -461,6 +462,16 @@ const seed = db.transaction(() => {
     '', 0, 0
   );
 
+  // ── Provisioned Rules snapshot for HRM (provisioned policy) ───────────────
+  const hrmRules = db.prepare('SELECT * FROM rules WHERE policy_id = ?').all(POLICY_HRM);
+  const insertProvisionedRule = db.prepare(`
+    INSERT INTO provisioned_rules (id, policy_id, rule_id, source, destination, services, action, scope_type, enabled, position, notes, logging, stateless)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (const r of hrmRules as any[]) {
+    insertProvisionedRule.run(uuid(), r.policy_id, r.id, r.source, r.destination, r.services, r.action, r.scope_type, r.enabled, r.position, r.notes, r.logging, r.stateless);
+  }
+
   // ── Tenant Settings ────────────────────────────────────────────────────────
   db.prepare('INSERT INTO tenant_settings (key, value) VALUES (?, ?)').run(
     'display_scopes_in_policies', 'true'
@@ -480,4 +491,5 @@ console.log('  k8s_namespaces:', (db2.prepare('SELECT count(*) as c FROM k8s_nam
 console.log('  workloads:', (db2.prepare('SELECT count(*) as c FROM workloads').get() as { c: number }).c);
 console.log('  policies:', (db2.prepare('SELECT count(*) as c FROM policies').get() as { c: number }).c);
 console.log('  rules:', (db2.prepare('SELECT count(*) as c FROM rules').get() as { c: number }).c);
+console.log('  provisioned_rules:', (db2.prepare('SELECT count(*) as c FROM provisioned_rules').get() as { c: number }).c);
 console.log('  tenant_settings:', (db2.prepare('SELECT count(*) as c FROM tenant_settings').get() as { c: number }).c);

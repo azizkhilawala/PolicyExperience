@@ -74,6 +74,22 @@ CREATE TABLE IF NOT EXISTS rules (
   stateless INTEGER DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS provisioned_rules (
+  id TEXT PRIMARY KEY,
+  policy_id TEXT NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+  rule_id TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT '{}',
+  destination TEXT NOT NULL DEFAULT '{}',
+  services TEXT NOT NULL DEFAULT '[]',
+  action TEXT NOT NULL DEFAULT 'allow',
+  scope_type TEXT NOT NULL DEFAULT 'intra',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  position INTEGER NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  logging INTEGER DEFAULT 0,
+  stateless INTEGER DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS tenant_settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
