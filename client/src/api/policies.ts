@@ -44,6 +44,9 @@ export interface Rule {
   scope_type: 'intra' | 'extra';
   enabled: number;
   position: number;
+  notes: string;
+  logging: number;
+  stateless: number;
 }
 
 export function fetchPolicies(params?: { type?: string; status?: string; enabled?: string }) {
@@ -100,6 +103,9 @@ export function updateRule(
     action: 'allow' | 'deny';
     scope_type: 'intra' | 'extra';
     enabled: boolean;
+    notes: string;
+    logging: boolean;
+    stateless: boolean;
   }>
 ) {
   return apiFetch<Rule>(`/api/rules/${ruleId}`, {
