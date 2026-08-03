@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { PowerSearch } from '@astryxdesign/core/PowerSearch';
 import type {
   PowerSearchConfig,
@@ -8,8 +8,9 @@ import type {
 } from '@astryxdesign/core/PowerSearch';
 import { VStack } from '@astryxdesign/core/VStack';
 
-import { fetchLabels, type Label } from '../../api/labels.js';
+import type { Label } from '../../api/labels.js';
 import type { RuleEndpoint, PolicyLabel } from '../../api/policies.js';
+import { useLabels } from '../../hooks/useLabels.js';
 import { GhostTokens } from './GhostTokens.js';
 
 interface EndpointEditorProps {
@@ -20,11 +21,7 @@ interface EndpointEditorProps {
 }
 
 export function EndpointEditor({ value, onChange, ghostLabels, isDisabled }: EndpointEditorProps) {
-  const [allLabels, setAllLabels] = useState<Label[]>([]);
-
-  useEffect(() => {
-    fetchLabels().then(setAllLabels).catch(() => {});
-  }, []);
+  const allLabels: Label[] = useLabels();
 
   const config: PowerSearchConfig = useMemo(() => {
     const labelsByKey: Record<string, { value: string; label: string }[]> = {};

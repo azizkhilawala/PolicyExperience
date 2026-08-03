@@ -10,6 +10,7 @@ import { Icon } from '@astryxdesign/core/Icon';
 
 import { AuthProvider, useAuth } from '../hooks/useAuth.js';
 import { SettingsProvider } from '../hooks/useSettings.js';
+import { LabelsProvider } from '../hooks/useLabels.js';
 import { useColorMode } from '../hooks/useColorMode.js';
 import { routes } from './routes.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
@@ -88,9 +89,11 @@ function ThemedApp() {
       <BrowserRouter>
         <AuthProvider>
           <SettingsProvider>
-            <ErrorBoundary>
-              <AppLayout />
-            </ErrorBoundary>
+            <LabelsProvider>
+              <ErrorBoundary>
+                <AppLayout />
+              </ErrorBoundary>
+            </LabelsProvider>
           </SettingsProvider>
         </AuthProvider>
       </BrowserRouter>

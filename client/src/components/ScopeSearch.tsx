@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { PowerSearch } from '@astryxdesign/core/PowerSearch';
 import type {
   PowerSearchConfig,
@@ -7,8 +7,9 @@ import type {
   FilterValueEnum,
 } from '@astryxdesign/core/PowerSearch';
 
-import { fetchLabels, type Label } from '../api/labels.js';
+import type { Label } from '../api/labels.js';
 import type { PolicyLabel } from '../api/policies.js';
+import { useLabels } from '../hooks/useLabels.js';
 
 interface ScopeSearchProps {
   labels: PolicyLabel[];
@@ -17,11 +18,7 @@ interface ScopeSearchProps {
 }
 
 export function ScopeSearch({ labels, onChange, isDisabled }: ScopeSearchProps) {
-  const [allLabels, setAllLabels] = useState<Label[]>([]);
-
-  useEffect(() => {
-    fetchLabels().then(setAllLabels).catch(() => {});
-  }, []);
+  const allLabels: Label[] = useLabels();
 
   const config: PowerSearchConfig = useMemo(() => {
     const labelsByKey: Record<string, { value: string; label: string }[]> = {};
