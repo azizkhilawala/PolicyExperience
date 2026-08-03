@@ -334,8 +334,8 @@ const seed = db.transaction(() => {
   // ── Rules ──────────────────────────────────────────────────────────────────
   const insertRule = db.prepare(`
     INSERT INTO rules
-      (id, policy_id, source, destination, services, action, scope_type, enabled, position)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, policy_id, source, destination, services, action, scope_type, enabled, position, notes, logging, stateless)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Policy 1 rules (HRM Production Access) — 4 intra allow
@@ -344,28 +344,32 @@ const seed = db.transaction(() => {
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'intra', 1, 0
+    'allow', 'intra', 1, 0,
+    '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_HRM,
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'db' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '5432' }]),
-    'allow', 'intra', 1, 1
+    'allow', 'intra', 1, 1,
+    'Database access for API tier', 1, 0
   );
   insertRule.run(
     uuid(), POLICY_HRM,
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'cache' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '6379' }]),
-    'allow', 'intra', 1, 2
+    'allow', 'intra', 1, 2,
+    '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_HRM,
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'load-balancer' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }, { protocol: 'TCP', port: '80' }]),
-    'allow', 'intra', 1, 3
+    'allow', 'intra', 1, 3,
+    '', 0, 0
   );
 
   // Policy 2 rules (ERP Database Access) — 3 rules (mix intra/extra)
@@ -374,21 +378,24 @@ const seed = db.transaction(() => {
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'db' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '3306' }]),
-    'allow', 'intra', 1, 0
+    'allow', 'intra', 1, 0,
+    '', 0, 1
   );
   insertRule.run(
     uuid(), POLICY_ERP,
     JSON.stringify({ type: 'ip_list', ipList: { cidr: '10.0.0.0/8', name: 'Corporate Network' } }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'extra', 1, 1
+    'allow', 'extra', 1, 1,
+    '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_ERP,
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '8080' }]),
-    'allow', 'intra', 1, 2
+    'allow', 'intra', 1, 2,
+    '', 0, 0
   );
 
   // Policy 3 rules (K8s Frontend Services) — 2 rules
@@ -400,7 +407,8 @@ const seed = db.transaction(() => {
     }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'intra', 1, 0
+    'allow', 'intra', 1, 0,
+    '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_K8S,
@@ -410,7 +418,8 @@ const seed = db.transaction(() => {
     }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'db' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '5432' }]),
-    'allow', 'intra', 1, 1
+    'allow', 'intra', 1, 1,
+    '', 0, 0
   );
 
   // Policy 4 rules (Global Deny Logging) — 1 rule
@@ -419,7 +428,8 @@ const seed = db.transaction(() => {
     JSON.stringify({ type: 'labels', labels: [] }),
     JSON.stringify({ type: 'labels', labels: [] }),
     JSON.stringify([{ protocol: 'TCP', port: '514' }]),
-    'deny', 'intra', 1, 0
+    'deny', 'intra', 1, 0,
+    '', 0, 0
   );
 
   // Policy 5 rules (Payment Gateway) — 3 rules
@@ -428,7 +438,8 @@ const seed = db.transaction(() => {
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'intra', 1, 0
+    'allow', 'intra', 1, 0,
+    '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_PAYMENT,
@@ -438,14 +449,16 @@ const seed = db.transaction(() => {
     }),
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'extra', 1, 1
+    'allow', 'extra', 1, 1,
+    '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_PAYMENT,
     JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
     JSON.stringify({ type: 'ip_list', ipList: { cidr: '192.168.1.0/24', name: 'Payment Processor Network' } }),
     JSON.stringify([{ protocol: 'TCP', port: '8443' }]),
-    'allow', 'intra', 1, 2
+    'allow', 'intra', 1, 2,
+    '', 0, 0
   );
 
   // ── Tenant Settings ────────────────────────────────────────────────────────

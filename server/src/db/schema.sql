@@ -68,7 +68,10 @@ CREATE TABLE IF NOT EXISTS rules (
   action TEXT NOT NULL DEFAULT 'allow' CHECK (action IN ('allow', 'deny')),
   scope_type TEXT NOT NULL DEFAULT 'intra' CHECK (scope_type IN ('intra', 'extra')),
   enabled INTEGER NOT NULL DEFAULT 1,
-  position INTEGER NOT NULL DEFAULT 0
+  position INTEGER NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  logging INTEGER DEFAULT 0,
+  stateless INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS tenant_settings (

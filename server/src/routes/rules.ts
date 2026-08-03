@@ -41,8 +41,8 @@ router.post('/:policyId/rules', (req, res) => {
 
   const id = uuidv4();
   db.prepare(
-    `INSERT INTO rules (id, policy_id, source, destination, services, action, scope_type, enabled, position)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`
+    `INSERT INTO rules (id, policy_id, source, destination, services, action, scope_type, enabled, position, notes, logging, stateless)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, '', 0, 0)`
   ).run(
     id,
     policyId,
@@ -66,7 +66,7 @@ router.patch('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM rules WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Rule not found' });
 
-  const { source, destination, services, action, scope_type, enabled, position } = req.body;
+  const { source, destination, services, action, scope_type, enabled, position, notes, logging, stateless } = req.body;
 
   db.prepare(
     `UPDATE rules SET
@@ -76,7 +76,10 @@ router.patch('/:id', (req, res) => {
       action = COALESCE(?, action),
       scope_type = COALESCE(?, scope_type),
       enabled = COALESCE(?, enabled),
-      position = COALESCE(?, position)
+      position = COALESCE(?, position),
+      notes = COALESCE(?, notes),
+      logging = COALESCE(?, logging),
+      stateless = COALESCE(?, stateless)
      WHERE id = ?`
   ).run(
     source !== undefined ? JSON.stringify(source) : null,
@@ -86,6 +89,9 @@ router.patch('/:id', (req, res) => {
     scope_type ?? null,
     enabled !== undefined ? (enabled ? 1 : 0) : null,
     position ?? null,
+    notes ?? null,
+    logging !== undefined ? (logging ? 1 : 0) : null,
+    stateless !== undefined ? (stateless ? 1 : 0) : null,
     req.params.id
   );
 
@@ -117,8 +123,8 @@ router.post('/:id/duplicate', (req, res) => {
   const newId = uuidv4();
 
   db.prepare(
-    `INSERT INTO rules (id, policy_id, source, destination, services, action, scope_type, enabled, position)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO rules (id, policy_id, source, destination, services, action, scope_type, enabled, position, notes, logging, stateless)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     newId,
     existing.policy_id,
@@ -128,7 +134,10 @@ router.post('/:id/duplicate', (req, res) => {
     existing.action,
     existing.scope_type,
     existing.enabled,
-    position
+    position,
+    existing.notes,
+    existing.logging,
+    existing.stateless
   );
 
   const created = db.prepare('SELECT * FROM rules WHERE id = ?').get(newId);
