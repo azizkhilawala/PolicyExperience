@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { ReactNode } from 'react';
 import type { TableColumn } from '@astryxdesign/core/Table';
 import { proportional, pixel } from '@astryxdesign/core/Table';
@@ -19,6 +20,13 @@ import { EndpointEditor } from './EndpointEditor.js';
 import { ServiceEditor } from './ServiceEditor.js';
 
 export type RuleTableRow = Rule & Record<string, unknown>;
+
+function dimIfDisabled(row: RuleTableRow, content: React.ReactNode): React.ReactNode {
+  if (!row.enabled) {
+    return <span style={{ opacity: 0.5 }}>{content}</span>;
+  }
+  return content;
+}
 
 export interface EditDraft {
   source: RuleEndpoint;
@@ -101,7 +109,8 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
       key: 'position',
       header: '#',
       width: pixel(48),
-      renderCell: (row: RuleTableRow) => (
+      renderCell: (row: RuleTableRow) => dimIfDisabled(
+        row,
         <Text type="supporting" weight="medium">{row.position}</Text>
       ),
     },
@@ -136,7 +145,8 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             />
           );
         }
-        return (
+        return dimIfDisabled(
+          row,
           <Token
             label={row.scope_type === 'intra' ? 'Intra' : 'Extra'}
             color={row.scope_type === 'intra' ? 'blue' : 'purple'}
@@ -163,7 +173,8 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             />
           );
         }
-        return (
+        return dimIfDisabled(
+          row,
           <VStack gap={0.5}>
             {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
             <HStack gap={0.5} wrap="wrap">
@@ -182,7 +193,8 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
       key: 'arrow',
       header: '',
       width: pixel(32),
-      renderCell: () => (
+      renderCell: (row: RuleTableRow) => dimIfDisabled(
+        row,
         <Icon icon="chevronRight" size="sm" color="secondary" label="to" />
       ),
     },
@@ -204,7 +216,8 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             />
           );
         }
-        return (
+        return dimIfDisabled(
+          row,
           <VStack gap={0.5}>
             {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
             <HStack gap={0.5} wrap="wrap">
@@ -233,7 +246,8 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             />
           );
         }
-        return (
+        return dimIfDisabled(
+          row,
           <HStack gap={0.5} wrap="wrap">
             {row.services.map((s, i) => (
               <Token key={i} label={`${s.protocol} ${s.port}`} color="default" size="sm" />
@@ -260,21 +274,23 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             />
           );
         }
-        return <ActionToken action={row.action} />;
+        return dimIfDisabled(row, <ActionToken action={row.action} />);
       },
     },
     {
       key: 'provision',
       header: 'Provision',
       width: pixel(100),
-      renderCell: (_row: RuleTableRow) => {
+      renderCell: (row: RuleTableRow) => {
+        let token: React.ReactNode;
         if (provisionStatus === 'provisioned') {
-          return <Token label="Active" color="green" size="sm" />;
+          token = <Token label="Active" color="green" size="sm" />;
+        } else if (provisionStatus === 'pending') {
+          token = <Token label="Modified" color="orange" size="sm" />;
+        } else {
+          token = <Token label="Draft" color="gray" size="sm" />;
         }
-        if (provisionStatus === 'pending') {
-          return <Token label="Modified" color="orange" size="sm" />;
-        }
-        return <Token label="Draft" color="gray" size="sm" />;
+        return dimIfDisabled(row, token);
       },
     },
     {
