@@ -47,6 +47,42 @@ export function getGhostLabels(
   return [];
 }
 
+function renderEndpointTokens(endpoint: RuleEndpoint): React.ReactNode {
+  if (endpoint.type === 'k8s' && endpoint.k8s) {
+    return (
+      <VStack gap={0.5}>
+        <HStack gap={0.5} wrap="wrap">
+          <Token label={endpoint.k8s.cluster} color="gray" size="sm" />
+          <Token label={endpoint.k8s.namespace.value} color="teal" size="sm" />
+        </HStack>
+        <HStack gap={0.5} wrap="wrap">
+          {endpoint.k8s.selector.split(',').map((s, i) => (
+            <Token key={i} label={s.trim()} color="blue" size="sm" />
+          ))}
+        </HStack>
+      </VStack>
+    );
+  }
+
+  if (endpoint.type === 'ip_list' && endpoint.ipList) {
+    return (
+      <Token label={`${endpoint.ipList.name} (${endpoint.ipList.cidr})`} color="orange" size="sm" />
+    );
+  }
+
+  // Default: labels
+  return (
+    <HStack gap={0.5} wrap="wrap">
+      {endpoint.labels?.map((l, i) => (
+        <Token key={i} label={`${l.key}=${l.value}`} color="default" size="sm" />
+      ))}
+      {(!endpoint.labels || endpoint.labels.length === 0) && (
+        <Text type="supporting" color="secondary">All workloads</Text>
+      )}
+    </HStack>
+  );
+}
+
 const SCOPE_TYPE_DESCRIPTIONS: Record<string, string> = {
   intra: 'Within scope',
   extra: 'From outside the scope (inbound)',
@@ -185,14 +221,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           row,
           <VStack gap={0.5}>
             {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
-            <HStack gap={0.5} wrap="wrap">
-              {row.source.labels?.map((l, i) => (
-                <Token key={i} label={`${l.key}=${l.value}`} color="default" size="sm" />
-              ))}
-              {(!row.source.labels || row.source.labels.length === 0) && (
-                <Text type="supporting" color="secondary">All workloads</Text>
-              )}
-            </HStack>
+            {renderEndpointTokens(row.source)}
           </VStack>
         );
       },
@@ -228,14 +257,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           row,
           <VStack gap={0.5}>
             {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
-            <HStack gap={0.5} wrap="wrap">
-              {row.destination.labels?.map((l, i) => (
-                <Token key={i} label={`${l.key}=${l.value}`} color="default" size="sm" />
-              ))}
-              {(!row.destination.labels || row.destination.labels.length === 0) && (
-                <Text type="supporting" color="secondary">All workloads</Text>
-              )}
-            </HStack>
+            {renderEndpointTokens(row.destination)}
           </VStack>
         );
       },
