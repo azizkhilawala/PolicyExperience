@@ -68,21 +68,19 @@ export function ServiceEditor({ value, onChange, isDisabled }: ServiceEditorProp
       _changeType: PowerSearchChangeType,
       _index: number
     ) => {
-      const protocols = newFilters.filter((f) => f.field === 'protocol');
-      const ports = newFilters.filter((f) => f.field === 'port');
       const services: RuleService[] = [];
-      const len = Math.max(protocols.length, ports.length);
-      for (let i = 0; i < len; i++) {
-        services.push({
-          protocol:
-            protocols[i]?.value.type === 'enum'
-              ? (protocols[i].value as FilterValueEnum).value
-              : 'TCP',
-          port:
-            ports[i]?.value.type === 'string'
-              ? (ports[i].value as FilterValueString).value
-              : '',
-        });
+      let currentProtocol = 'TCP';
+
+      for (const f of newFilters) {
+        if (f.field === 'protocol' && f.value.type === 'enum') {
+          currentProtocol = (f.value as FilterValueEnum).value;
+        } else if (f.field === 'port' && f.value.type === 'string') {
+          services.push({
+            protocol: currentProtocol,
+            port: (f.value as FilterValueString).value,
+          });
+          currentProtocol = 'TCP';
+        }
       }
       onChange(services);
     },
