@@ -193,6 +193,7 @@ export default function PolicyDetailPage() {
         policyId={policy.id}
         scopeLabels={policy.scope}
         isLocked={!!policy.is_locked}
+        provisionStatus={policy.provision_status}
       />
     </VStack>
   );

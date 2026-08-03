@@ -17,15 +17,16 @@ import {
   type Rule,
 } from '../../api/policies.js';
 import { useApi } from '../../hooks/useApi.js';
-import { RuleRow } from './RuleRow.js';
+import { RuleTable } from './RuleTable.js';
 
 interface RuleEditorProps {
   policyId: string;
   scopeLabels: PolicyLabel[];
   isLocked: boolean;
+  provisionStatus: 'draft' | 'provisioned' | 'pending';
 }
 
-export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps) {
+export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }: RuleEditorProps) {
   const { data: rules, loading, error, refetch } = useApi(
     () => fetchRules(policyId),
     [policyId]
@@ -50,8 +51,6 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
 
   const handleUpdate = useCallback(
     async (ruleId: string, data: Partial<Rule>) => {
-      // updateRule accepts enabled as boolean; Rule stores it as number (0/1).
-      // Cast the subset of fields updateRule understands.
       const { source, destination, services, action, scope_type, enabled } = data;
       try {
         setMutationError(null);
@@ -113,6 +112,14 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
 
   return (
     <VStack gap={3}>
+      {provisionStatus === 'pending' && (
+        <Banner
+          status="warning"
+          title="This policy has un-provisioned changes."
+          container="section"
+        />
+      )}
+
       {!!mutationError && (
         <Banner
           status="error"
@@ -121,6 +128,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
           onDismiss={() => setMutationError(null)}
         />
       )}
+
       <HStack hAlign="between" vAlign="center">
         <Heading level={2}>Rules</Heading>
         <Button
@@ -139,20 +147,15 @@ export function RuleEditor({ policyId, scopeLabels, isLocked }: RuleEditorProps)
           headingLevel={3}
         />
       ) : (
-        <VStack gap={0}>
-          {ruleList.map((rule, index) => (
-            <RuleRow
-              key={rule.id}
-              rule={rule}
-              position={index + 1}
-              scopeLabels={scopeLabels}
-              onUpdate={handleUpdate}
-              onDelete={handleDelete}
-              onDuplicate={handleDuplicate}
-              isLocked={isLocked}
-            />
-          ))}
-        </VStack>
+        <RuleTable
+          rules={ruleList}
+          scopeLabels={scopeLabels}
+          isLocked={isLocked}
+          provisionStatus={provisionStatus}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
+        />
       )}
     </VStack>
   );
