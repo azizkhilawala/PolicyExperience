@@ -82,7 +82,7 @@ export interface ColumnOptions {
   onDelete: (ruleId: string) => void;
   onDuplicate: (ruleId: string) => void;
   onToggleEnabled: (ruleId: string, currentEnabled: number) => void;
-  onToggleAdvanced: (ruleId: string) => void;
+  onOpenAdvanced: (ruleId: string) => void;
   isLocked: boolean;
   provisionStatus: 'draft' | 'provisioned' | 'pending';
 }
@@ -99,7 +99,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
     onDelete,
     onDuplicate,
     onToggleEnabled,
-    onToggleAdvanced,
+    onOpenAdvanced,
     isLocked,
     provisionStatus,
   } = opts;
@@ -307,38 +307,48 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             </HStack>
           );
         }
+        const hasAdvanced = Boolean(row.notes) || Boolean(row.logging) || Boolean(row.stateless);
         return (
-          <MoreMenu
-            size="sm"
-            items={[
-              {
-                label: 'Edit',
-                onClick: () => onStartEdit(row),
-                isDisabled: isLocked,
-              },
-              {
-                label: row.enabled ? 'Disable' : 'Enable',
-                onClick: () => onToggleEnabled(row.id, row.enabled),
-                isDisabled: isLocked,
-              },
-              {
-                label: 'Advanced',
-                onClick: () => onToggleAdvanced(row.id),
-                isDisabled: isLocked,
-              },
-              {
-                label: 'Duplicate',
-                onClick: () => onDuplicate(row.id),
-                isDisabled: isLocked,
-              },
-              { type: 'divider' as const },
-              {
-                label: 'Delete',
-                onClick: () => onDelete(row.id),
-                isDisabled: isLocked,
-              },
-            ]}
-          />
+          <HStack gap={0.5} vAlign="center">
+            {hasAdvanced && (
+              <StatusDot
+                variant="accent"
+                label="Advanced options configured"
+                tooltip="This rule has advanced options"
+              />
+            )}
+            <MoreMenu
+              size="sm"
+              items={[
+                {
+                  label: 'Edit',
+                  onClick: () => onStartEdit(row),
+                  isDisabled: isLocked,
+                },
+                {
+                  label: row.enabled ? 'Disable' : 'Enable',
+                  onClick: () => onToggleEnabled(row.id, row.enabled),
+                  isDisabled: isLocked,
+                },
+                {
+                  label: 'Advanced',
+                  onClick: () => onOpenAdvanced(row.id),
+                  isDisabled: isLocked,
+                },
+                {
+                  label: 'Duplicate',
+                  onClick: () => onDuplicate(row.id),
+                  isDisabled: isLocked,
+                },
+                { type: 'divider' as const },
+                {
+                  label: 'Delete',
+                  onClick: () => onDelete(row.id),
+                  isDisabled: isLocked,
+                },
+              ]}
+            />
+          </HStack>
         );
       },
     },
