@@ -62,6 +62,14 @@ export function deletePolicy(id: string) {
   return apiFetch<void>(`/api/policies/${id}`, { method: 'DELETE' });
 }
 
+export function lockPolicy(id: string) {
+  return apiFetch<Policy>(`/api/policies/${id}/lock`, { method: 'POST' });
+}
+
+export function unlockPolicy(id: string) {
+  return apiFetch<Policy>(`/api/policies/${id}/unlock`, { method: 'POST' });
+}
+
 export function createPolicy(data: {
   name: string;
   description?: string;

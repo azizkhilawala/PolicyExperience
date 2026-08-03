@@ -16,7 +16,8 @@ import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Banner } from '@astryxdesign/core/Banner';
 
 import { useApi } from '../hooks/useApi.js';
-import { fetchPolicies, type Policy } from '../api/policies.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { fetchPolicies, deletePolicy, lockPolicy, unlockPolicy, type Policy } from '../api/policies.js';
 import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
@@ -48,9 +49,11 @@ type PolicyTableRow = Policy & Record<string, unknown>;
 
 export default function PolicyListPage() {
   const navigate = useNavigate();
-  const { data, loading, error } = useApi(() => fetchPolicies());
+  const { data, loading, error, refetch } = useApi(() => fetchPolicies());
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const allPolicies = data ?? [];
 
@@ -117,15 +120,32 @@ export default function PolicyListPage() {
             { label: 'Edit', onClick: () => navigate(`/policies/${row.id}`) },
             {
               label: row.is_locked ? 'Unlock' : 'Lock',
-              onClick: () => {
-                // stub for Phase 2
+              onClick: async () => {
+                try {
+                  setActionError(null);
+                  if (row.is_locked) {
+                    await unlockPolicy(row.id);
+                  } else {
+                    await lockPolicy(row.id);
+                  }
+                  refetch();
+                } catch (e) {
+                  setActionError(e instanceof Error ? e.message : 'Action failed');
+                }
               },
+              isDisabled: !!row.is_locked && user?.role !== 'global_admin',
             },
             { type: 'divider' as const },
             {
               label: 'Delete',
-              onClick: () => {
-                // stub for Phase 2
+              onClick: async () => {
+                try {
+                  setActionError(null);
+                  await deletePolicy(row.id);
+                  refetch();
+                } catch (e) {
+                  setActionError(e instanceof Error ? e.message : 'Action failed');
+                }
               },
             },
           ]}
@@ -150,6 +170,14 @@ export default function PolicyListPage() {
         <Tab value="organizational" label="Organizational" />
         <Tab value="application" label="Application" />
       </TabList>
+
+      {actionError ? (
+        <Banner
+          status="error"
+          title={actionError}
+          onDismiss={() => setActionError(null)}
+        />
+      ) : null}
 
       {loading ? (
         <HStack hAlign="center" padding={8}>
