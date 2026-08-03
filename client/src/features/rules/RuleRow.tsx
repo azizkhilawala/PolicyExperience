@@ -3,7 +3,8 @@ import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { StackItem } from '@astryxdesign/core/Stack';
 import { Text } from '@astryxdesign/core/Text';
-import { Selector } from '@astryxdesign/core/Selector';
+import { Selector, SelectorOption } from '@astryxdesign/core/Selector';
+import type { SelectorOptionData } from '@astryxdesign/core/Selector';
 import { Icon } from '@astryxdesign/core/Icon';
 import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { Divider } from '@astryxdesign/core/Divider';
@@ -34,10 +35,24 @@ function getGhostLabels(
   return [];
 }
 
+const SCOPE_TYPE_DESCRIPTIONS: Record<string, string> = {
+  intra: 'Within scope',
+  extra: 'From outside the scope (inbound)',
+};
+
 const scopeTypeOptions = [
   { value: 'intra', label: 'Intra scope' },
   { value: 'extra', label: 'Extra scope' },
 ];
+
+function renderScopeTypeOption(option: SelectorOptionData) {
+  return (
+    <SelectorOption
+      label={option.label}
+      description={SCOPE_TYPE_DESCRIPTIONS[option.value] ?? ''}
+    />
+  );
+}
 
 const actionOptions = [
   { value: 'allow', label: 'Allow' },
@@ -108,6 +123,7 @@ export function RuleRow({
           onChange={handleScopeTypeChange}
           size="sm"
           isDisabled={isLocked}
+          renderOption={renderScopeTypeOption}
         />
 
         <StackItem size="fill">
