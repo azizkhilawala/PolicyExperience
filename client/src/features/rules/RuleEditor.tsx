@@ -68,6 +68,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
         refetch();
       } catch (e) {
         setMutationError(e instanceof Error ? e.message : 'Failed to update rule');
+        throw e;
       }
     },
     [refetch]
