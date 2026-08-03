@@ -51,7 +51,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
 
   const handleUpdate = useCallback(
     async (ruleId: string, data: Partial<Rule>) => {
-      const { source, destination, services, action, scope_type, enabled } = data;
+      const { source, destination, services, action, scope_type, enabled, notes, logging, stateless } = data;
       try {
         setMutationError(null);
         await updateRule(ruleId, {
@@ -61,6 +61,9 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
           ...(action !== undefined && { action }),
           ...(scope_type !== undefined && { scope_type }),
           ...(enabled !== undefined && { enabled: Boolean(enabled) }),
+          ...(notes !== undefined && { notes }),
+          ...(logging !== undefined && { logging: Boolean(logging) }),
+          ...(stateless !== undefined && { stateless: Boolean(stateless) }),
         });
         refetch();
       } catch (e) {

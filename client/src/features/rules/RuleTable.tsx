@@ -3,11 +3,11 @@ import { Table } from '@astryxdesign/core/Table';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
-import { Text } from '@astryxdesign/core/Text';
+import { useToast } from '@astryxdesign/core/Toast';
 
 import type { Rule, PolicyLabel, RuleEndpoint, RuleService } from '../../api/policies.js';
 import { getColumns, type RuleTableRow, type EditDraft } from './RuleTableColumns.js';
-import { AdvancedOptions } from './AdvancedOptions.js';
+import { AdvancedOptionsDialog } from './AdvancedOptionsDialog.js';
 
 interface RuleTableProps {
   rules: Rule[];
@@ -31,10 +31,9 @@ export function RuleTable({
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [advancedState, setAdvancedState] = useState<
-    Record<string, { notes: string; logging: boolean; stateless: boolean }>
-  >({});
+  const [advancedRule, setAdvancedRule] = useState<Rule | null>(null);
+
+  const toast = useToast();
 
   const filteredRules: RuleTableRow[] = useMemo(() => {
     let result = rules;
@@ -81,32 +80,21 @@ export function RuleTable({
     [onUpdate]
   );
 
-  const handleToggleAdvanced = useCallback((ruleId: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(ruleId)) {
-        next.delete(ruleId);
-      } else {
-        next.add(ruleId);
-      }
-      return next;
-    });
-  }, []);
+  const handleOpenAdvanced = useCallback((ruleId: string) => {
+    const rule = rules.find((r) => r.id === ruleId);
+    if (rule) setAdvancedRule(rule);
+  }, [rules]);
 
-  const getAdvancedState = useCallback(
-    (ruleId: string) =>
-      advancedState[ruleId] ?? { notes: '', logging: false, stateless: false },
-    [advancedState]
-  );
-
-  const updateAdvancedState = useCallback(
-    (ruleId: string, field: string, value: string | boolean) => {
-      setAdvancedState((prev) => ({
-        ...prev,
-        [ruleId]: { ...getAdvancedState(ruleId), [field]: value },
-      }));
+  const handleSaveAdvanced = useCallback(
+    async (ruleId: string, data: { notes: string; logging: boolean; stateless: boolean }) => {
+      await onUpdate(ruleId, {
+        notes: data.notes,
+        logging: data.logging ? 1 : 0,
+        stateless: data.stateless ? 1 : 0,
+      });
+      toast({ body: 'Advanced options saved', type: 'info', isAutoHide: true, uniqueID: 'adv-save' });
     },
-    [getAdvancedState]
+    [onUpdate, toast]
   );
 
   const columns = useMemo(
@@ -122,7 +110,7 @@ export function RuleTable({
         onDelete: (id) => onDelete(id),
         onDuplicate: (id) => onDuplicate(id),
         onToggleEnabled: handleToggleEnabled,
-        onToggleAdvanced: handleToggleAdvanced,
+        onOpenAdvanced: handleOpenAdvanced,
         isLocked,
         provisionStatus,
       }),
@@ -137,7 +125,7 @@ export function RuleTable({
       onDelete,
       onDuplicate,
       handleToggleEnabled,
-      handleToggleAdvanced,
+      handleOpenAdvanced,
       isLocked,
       provisionStatus,
     ]
@@ -167,26 +155,14 @@ export function RuleTable({
         verticalAlign="top"
       />
 
-      {Array.from(expandedIds).map((ruleId) => {
-        const rule = rules.find((r) => r.id === ruleId);
-        if (!rule) return null;
-        const state = getAdvancedState(ruleId);
-        return (
-          <VStack key={`adv-${ruleId}`} padding={2} gap={1}>
-            <Text type="supporting" weight="medium">
-              Advanced Options — Rule #{rule.position}
-            </Text>
-            <AdvancedOptions
-              notes={state.notes}
-              onNotesChange={(v) => updateAdvancedState(ruleId, 'notes', v)}
-              logging={state.logging}
-              onLoggingChange={(v) => updateAdvancedState(ruleId, 'logging', v)}
-              stateless={state.stateless}
-              onStatelessChange={(v) => updateAdvancedState(ruleId, 'stateless', v)}
-            />
-          </VStack>
-        );
-      })}
+      {advancedRule && (
+        <AdvancedOptionsDialog
+          isOpen={advancedRule !== null}
+          onOpenChange={(open) => { if (!open) setAdvancedRule(null); }}
+          rule={advancedRule}
+          onSave={handleSaveAdvanced}
+        />
+      )}
     </VStack>
   );
 }
