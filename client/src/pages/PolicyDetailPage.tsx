@@ -21,6 +21,7 @@ import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { RuleEditor } from '../features/rules/RuleEditor.js';
+import { ProvisionDialog } from '../features/policies/ProvisionDialog.js';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
@@ -37,6 +38,7 @@ export default function PolicyDetailPage() {
   const { user, users } = useAuth();
   const { data: policy, loading, error, refetch } = useApi(() => fetchPolicy(id!), [id]);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [provisionOpen, setProvisionOpen] = useState(false);
 
   if (loading) {
     return (
@@ -119,8 +121,12 @@ export default function PolicyDetailPage() {
           <Button
             label="Provision"
             variant="primary"
-            isDisabled
-            tooltip="Provisioning available in Phase 3"
+            isDisabled={!!policy.is_locked || policy.provision_status === 'provisioned'}
+            tooltip={
+              policy.is_locked ? 'Unlock policy before provisioning' :
+              policy.provision_status === 'provisioned' ? 'Already provisioned' : undefined
+            }
+            onClick={() => setProvisionOpen(true)}
           />
           <MoreMenu
             items={[
@@ -194,6 +200,16 @@ export default function PolicyDetailPage() {
         scopeLabels={policy.scope}
         isLocked={!!policy.is_locked}
         provisionStatus={policy.provision_status}
+      />
+
+      <ProvisionDialog
+        isOpen={provisionOpen}
+        onOpenChange={setProvisionOpen}
+        policyId={policy.id}
+        onProvisioned={() => {
+          setProvisionOpen(false);
+          refetch();
+        }}
       />
     </VStack>
   );

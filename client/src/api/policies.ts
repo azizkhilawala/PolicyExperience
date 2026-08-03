@@ -129,3 +129,28 @@ export function deleteRule(ruleId: string) {
 export function duplicateRule(ruleId: string) {
   return apiFetch<Rule>(`/api/rules/${ruleId}/duplicate`, { method: 'POST' });
 }
+
+export interface ProvisionDiffRule {
+  id: string;
+  source: RuleEndpoint;
+  destination: RuleEndpoint;
+  services: RuleService[];
+  action: 'allow' | 'deny';
+  scope_type: 'intra' | 'extra';
+  enabled: number;
+  position: number;
+}
+
+export interface ProvisionDiff {
+  added: ProvisionDiffRule[];
+  modified: { before: ProvisionDiffRule; after: ProvisionDiffRule }[];
+  removed: ProvisionDiffRule[];
+}
+
+export function provisionPreview(id: string) {
+  return apiFetch<ProvisionDiff>(`/api/policies/${id}/provision/preview`, { method: 'POST' });
+}
+
+export function provisionCommit(id: string) {
+  return apiFetch<Policy>(`/api/policies/${id}/provision/commit`, { method: 'POST' });
+}
