@@ -1,0 +1,330 @@
+import type { ReactNode } from 'react';
+import type { TableColumn } from '@astryxdesign/core/Table';
+import { proportional, pixel } from '@astryxdesign/core/Table';
+import { StatusDot } from '@astryxdesign/core/StatusDot';
+import { Token } from '@astryxdesign/core/Token';
+import { Text } from '@astryxdesign/core/Text';
+import { Icon } from '@astryxdesign/core/Icon';
+import { HStack } from '@astryxdesign/core/HStack';
+import { VStack } from '@astryxdesign/core/VStack';
+import { Button } from '@astryxdesign/core/Button';
+import { MoreMenu } from '@astryxdesign/core/MoreMenu';
+import { Selector, SelectorOption } from '@astryxdesign/core/Selector';
+import type { SelectorOptionData } from '@astryxdesign/core/Selector';
+
+import type { Rule, PolicyLabel, RuleEndpoint, RuleService } from '../../api/policies.js';
+import { ActionToken } from './ActionToken.js';
+import { GhostTokens } from './GhostTokens.js';
+import { EndpointEditor } from './EndpointEditor.js';
+import { ServiceEditor } from './ServiceEditor.js';
+
+export type RuleTableRow = Rule & Record<string, unknown>;
+
+export interface EditDraft {
+  source: RuleEndpoint;
+  destination: RuleEndpoint;
+  services: RuleService[];
+  action: 'allow' | 'deny';
+  scope_type: 'intra' | 'extra';
+}
+
+export function getGhostLabels(
+  scopeLabels: PolicyLabel[],
+  scopeType: 'intra' | 'extra',
+  field: 'source' | 'destination'
+): PolicyLabel[] {
+  if (scopeLabels.length === 0) return [];
+  if (scopeType === 'intra') return scopeLabels;
+  if (scopeType === 'extra' && field === 'destination') return scopeLabels;
+  return [];
+}
+
+const SCOPE_TYPE_DESCRIPTIONS: Record<string, string> = {
+  intra: 'Within scope',
+  extra: 'From outside the scope (inbound)',
+};
+
+const scopeTypeOptions = [
+  { value: 'intra', label: 'Intra scope' },
+  { value: 'extra', label: 'Extra scope' },
+];
+
+function renderScopeTypeOption(option: SelectorOptionData): ReactNode {
+  return (
+    <SelectorOption
+      label={option.label ?? option.value}
+      description={SCOPE_TYPE_DESCRIPTIONS[option.value] ?? ''}
+    />
+  );
+}
+
+const actionOptions = [
+  { value: 'allow', label: 'Allow' },
+  { value: 'deny', label: 'Deny' },
+];
+
+export interface ColumnOptions {
+  scopeLabels: PolicyLabel[];
+  editingId: string | null;
+  editDraft: EditDraft | null;
+  onEditDraftChange: (field: keyof EditDraft, value: EditDraft[keyof EditDraft]) => void;
+  onStartEdit: (rule: Rule) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onDelete: (ruleId: string) => void;
+  onDuplicate: (ruleId: string) => void;
+  onToggleEnabled: (ruleId: string, currentEnabled: number) => void;
+  onToggleAdvanced: (ruleId: string) => void;
+  isLocked: boolean;
+  provisionStatus: 'draft' | 'provisioned' | 'pending';
+}
+
+export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
+  const {
+    scopeLabels,
+    editingId,
+    editDraft,
+    onEditDraftChange,
+    onStartEdit,
+    onSaveEdit,
+    onCancelEdit,
+    onDelete,
+    onDuplicate,
+    onToggleEnabled,
+    onToggleAdvanced,
+    isLocked,
+    provisionStatus,
+  } = opts;
+
+  return [
+    {
+      key: 'position',
+      header: '#',
+      width: pixel(48),
+      renderCell: (row: RuleTableRow) => (
+        <Text type="supporting" weight="medium">{row.position}</Text>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: pixel(80),
+      renderCell: (row: RuleTableRow) => (
+        <StatusDot
+          variant={row.enabled ? 'success' : 'neutral'}
+          label={row.enabled ? 'Enabled' : 'Disabled'}
+          tooltip={row.enabled ? 'Enabled' : 'Disabled'}
+        />
+      ),
+    },
+    {
+      key: 'scope_type',
+      header: 'Scope',
+      width: pixel(130),
+      renderCell: (row: RuleTableRow) => {
+        const isEditing = editingId === row.id;
+        if (isEditing && editDraft) {
+          return (
+            <Selector
+              label="Scope type"
+              isLabelHidden
+              options={scopeTypeOptions}
+              value={editDraft.scope_type}
+              onChange={(v: string) => onEditDraftChange('scope_type', v as 'intra' | 'extra')}
+              size="sm"
+              renderOption={renderScopeTypeOption}
+            />
+          );
+        }
+        return (
+          <Token
+            label={row.scope_type === 'intra' ? 'Intra' : 'Extra'}
+            color={row.scope_type === 'intra' ? 'blue' : 'purple'}
+            size="sm"
+          />
+        );
+      },
+    },
+    {
+      key: 'source',
+      header: 'Source',
+      width: proportional(2),
+      renderCell: (row: RuleTableRow) => {
+        const isEditing = editingId === row.id;
+        const scopeType = isEditing && editDraft ? editDraft.scope_type : row.scope_type;
+        const ghosts = getGhostLabels(scopeLabels, scopeType, 'source');
+
+        if (isEditing && editDraft) {
+          return (
+            <EndpointEditor
+              value={editDraft.source}
+              onChange={(v) => onEditDraftChange('source', v)}
+              ghostLabels={ghosts}
+            />
+          );
+        }
+        return (
+          <VStack gap={0.5}>
+            {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
+            <HStack gap={0.5} wrap="wrap">
+              {row.source.labels?.map((l, i) => (
+                <Token key={i} label={`${l.key}=${l.value}`} color="default" size="sm" />
+              ))}
+              {(!row.source.labels || row.source.labels.length === 0) && (
+                <Text type="supporting" color="secondary">All workloads</Text>
+              )}
+            </HStack>
+          </VStack>
+        );
+      },
+    },
+    {
+      key: 'arrow',
+      header: '',
+      width: pixel(32),
+      renderCell: () => (
+        <Icon icon="chevronRight" size="sm" color="secondary" label="to" />
+      ),
+    },
+    {
+      key: 'destination',
+      header: 'Destination',
+      width: proportional(2),
+      renderCell: (row: RuleTableRow) => {
+        const isEditing = editingId === row.id;
+        const scopeType = isEditing && editDraft ? editDraft.scope_type : row.scope_type;
+        const ghosts = getGhostLabels(scopeLabels, scopeType, 'destination');
+
+        if (isEditing && editDraft) {
+          return (
+            <EndpointEditor
+              value={editDraft.destination}
+              onChange={(v) => onEditDraftChange('destination', v)}
+              ghostLabels={ghosts}
+            />
+          );
+        }
+        return (
+          <VStack gap={0.5}>
+            {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
+            <HStack gap={0.5} wrap="wrap">
+              {row.destination.labels?.map((l, i) => (
+                <Token key={i} label={`${l.key}=${l.value}`} color="default" size="sm" />
+              ))}
+              {(!row.destination.labels || row.destination.labels.length === 0) && (
+                <Text type="supporting" color="secondary">All workloads</Text>
+              )}
+            </HStack>
+          </VStack>
+        );
+      },
+    },
+    {
+      key: 'services',
+      header: 'Service',
+      width: proportional(1),
+      renderCell: (row: RuleTableRow) => {
+        const isEditing = editingId === row.id;
+        if (isEditing && editDraft) {
+          return (
+            <ServiceEditor
+              value={editDraft.services}
+              onChange={(v) => onEditDraftChange('services', v)}
+            />
+          );
+        }
+        return (
+          <HStack gap={0.5} wrap="wrap">
+            {row.services.map((s, i) => (
+              <Token key={i} label={`${s.protocol} ${s.port}`} color="default" size="sm" />
+            ))}
+          </HStack>
+        );
+      },
+    },
+    {
+      key: 'action',
+      header: 'Action',
+      width: pixel(100),
+      renderCell: (row: RuleTableRow) => {
+        const isEditing = editingId === row.id;
+        if (isEditing && editDraft) {
+          return (
+            <Selector
+              label="Action"
+              isLabelHidden
+              options={actionOptions}
+              value={editDraft.action}
+              onChange={(v: string) => onEditDraftChange('action', v as 'allow' | 'deny')}
+              size="sm"
+            />
+          );
+        }
+        return <ActionToken action={row.action} />;
+      },
+    },
+    {
+      key: 'provision',
+      header: 'Provision',
+      width: pixel(100),
+      renderCell: (_row: RuleTableRow) => {
+        if (provisionStatus === 'provisioned') {
+          return <Token label="Active" color="green" size="sm" />;
+        }
+        if (provisionStatus === 'pending') {
+          return <Token label="Modified" color="orange" size="sm" />;
+        }
+        return <Token label="Draft" color="gray" size="sm" />;
+      },
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: pixel(80),
+      renderCell: (row: RuleTableRow) => {
+        const isEditing = editingId === row.id;
+        if (isEditing) {
+          return (
+            <HStack gap={1}>
+              <Button label="Save" variant="primary" size="sm" onClick={onSaveEdit} />
+              <Button label="Cancel" variant="ghost" size="sm" onClick={onCancelEdit} />
+            </HStack>
+          );
+        }
+        return (
+          <MoreMenu
+            size="sm"
+            items={[
+              {
+                label: 'Edit',
+                onClick: () => onStartEdit(row),
+                isDisabled: isLocked,
+              },
+              {
+                label: row.enabled ? 'Disable' : 'Enable',
+                onClick: () => onToggleEnabled(row.id, row.enabled),
+                isDisabled: isLocked,
+              },
+              {
+                label: 'Advanced',
+                onClick: () => onToggleAdvanced(row.id),
+                isDisabled: isLocked,
+              },
+              {
+                label: 'Duplicate',
+                onClick: () => onDuplicate(row.id),
+                isDisabled: isLocked,
+              },
+              { type: 'divider' as const },
+              {
+                label: 'Delete',
+                onClick: () => onDelete(row.id),
+                isDisabled: isLocked,
+              },
+            ]}
+          />
+        );
+      },
+    },
+  ];
+}
