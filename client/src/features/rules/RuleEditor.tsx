@@ -24,9 +24,10 @@ interface RuleEditorProps {
   scopeLabels: PolicyLabel[];
   isLocked: boolean;
   provisionStatus: 'draft' | 'provisioned' | 'pending';
+  onRulesChanged?: () => void;
 }
 
-export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }: RuleEditorProps) {
+export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, onRulesChanged }: RuleEditorProps) {
   const { data: rules, loading, error, refetch } = useApi(
     () => fetchRules(policyId),
     [policyId]
@@ -44,10 +45,11 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
         scope_type: 'intra',
       });
       refetch();
+      onRulesChanged?.();
     } catch (e) {
       setMutationError(e instanceof Error ? e.message : 'Failed to add rule');
     }
-  }, [policyId, refetch]);
+  }, [policyId, refetch, onRulesChanged]);
 
   const handleUpdate = useCallback(
     async (ruleId: string, data: Partial<Rule>) => {
@@ -66,12 +68,13 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
           ...(stateless !== undefined && { stateless: Boolean(stateless) }),
         });
         refetch();
+        onRulesChanged?.();
       } catch (e) {
         setMutationError(e instanceof Error ? e.message : 'Failed to update rule');
         throw e;
       }
     },
-    [refetch]
+    [refetch, onRulesChanged]
   );
 
   const handleDelete = useCallback(
@@ -80,11 +83,12 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
         setMutationError(null);
         await deleteRule(ruleId);
         refetch();
+        onRulesChanged?.();
       } catch (e) {
         setMutationError(e instanceof Error ? e.message : 'Failed to delete rule');
       }
     },
-    [refetch]
+    [refetch, onRulesChanged]
   );
 
   const handleDuplicate = useCallback(
@@ -93,11 +97,12 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus }:
         setMutationError(null);
         await duplicateRule(ruleId);
         refetch();
+        onRulesChanged?.();
       } catch (e) {
         setMutationError(e instanceof Error ? e.message : 'Failed to duplicate rule');
       }
     },
-    [refetch]
+    [refetch, onRulesChanged]
   );
 
   if (loading) {

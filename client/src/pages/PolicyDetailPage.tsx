@@ -200,6 +200,7 @@ export default function PolicyDetailPage() {
         scopeLabels={policy.scope}
         isLocked={!!policy.is_locked}
         provisionStatus={policy.provision_status}
+        onRulesChanged={refetch}
       />
 
       <ProvisionDialog
