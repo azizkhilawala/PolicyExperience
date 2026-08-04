@@ -35,6 +35,7 @@ router.get('/policies/:id', (req, res) => {
 router.post('/policies', (req, res) => {
   const db = getDb();
   const { name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels } = req.body;
+  if (!name || !scope_type) return res.status(400).json({ error: 'name and scope_type are required' });
   const user = (req as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
@@ -107,6 +108,9 @@ router.post('/policies/:id/rules', (req, res) => {
   const db = getDb();
   const { direction, entity, services, action } = req.body;
   const policyId = req.params.id;
+  const policy = db.prepare('SELECT id FROM v2_policies WHERE id = ?').get(policyId);
+  if (!policy) return res.status(404).json({ error: 'Policy not found' });
+  if (!direction || !['ingress', 'egress'].includes(direction)) return res.status(400).json({ error: 'direction must be ingress or egress' });
   const maxRow = db.prepare('SELECT MAX(position) as maxPos FROM v2_rules WHERE policy_id = ? AND direction = ?').get(policyId, direction) as any;
   const position = (maxRow?.maxPos ?? -1) + 1;
   const id = uuidv4();
