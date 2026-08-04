@@ -214,6 +214,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
               value={editDraft.source}
               onChange={(v) => onEditDraftChange('source', v)}
               ghostLabels={ghosts}
+              side="source"
             />
           );
         }
@@ -250,6 +251,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
               value={editDraft.destination}
               onChange={(v) => onEditDraftChange('destination', v)}
               ghostLabels={ghosts}
+              side="destination"
             />
           );
         }
