@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { SearchSource } from '@astryxdesign/core/Typeahead';
 import type {
   PowerSearchConfig,
@@ -77,19 +77,22 @@ export function useEndpointResources(): EndpointResources {
     fetchCloudSubnets().then(setCloudSubnets).catch(() => {});
   }, []);
 
-  return {
-    labels,
-    labelGroups,
-    ipLists,
-    workloads: [], // no workloads API in this demo
-    userGroups,
-    virtualServices,
-    clusters,
-    namespaces,
-    cloudAccounts,
-    cloudVpcs,
-    cloudSubnets,
-  };
+  return useMemo(
+    () => ({
+      labels,
+      labelGroups,
+      ipLists,
+      workloads: [] as Workload[], // no workloads API in this demo
+      userGroups,
+      virtualServices,
+      clusters,
+      namespaces,
+      cloudAccounts,
+      cloudVpcs,
+      cloudSubnets,
+    }),
+    [labels, labelGroups, ipLists, userGroups, virtualServices, clusters, namespaces, cloudAccounts, cloudVpcs, cloudSubnets]
+  );
 }
 
 function makeEntitySource<T extends { id: string; name: string }>(
@@ -235,6 +238,22 @@ export function buildEndpointConfig(
       ],
     });
   }
+
+  // ─── Workloads group ──────────────────────────────────────────────────────
+  const workloadSource: SearchSource = makeEntitySource(resources.workloads, (w) => w.name);
+  fields.push({
+    key: 'workload',
+    label: 'Workload',
+    group: 'Workloads',
+    defaultOperator: 'is',
+    operators: [
+      {
+        key: 'is',
+        label: 'is',
+        value: { type: 'entity_list', searchSource: workloadSource },
+      } satisfies PowerSearchOperator,
+    ],
+  });
 
   // ─── Identity group ───────────────────────────────────────────────────────
   const userGroupSource: SearchSource = makeEntitySource(userGroups, (ug) => ug.name);
