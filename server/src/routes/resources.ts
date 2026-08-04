@@ -76,4 +76,10 @@ router.get('/cloud/subnets', (req, res) => {
   res.json(db.prepare(sql).all(...params));
 });
 
+// GET /api/workloads
+router.get('/workloads', (_req, res) => {
+  const db = getDb();
+  res.json(db.prepare('SELECT id, name, hostname FROM workloads ORDER BY name').all());
+});
+
 export default router;

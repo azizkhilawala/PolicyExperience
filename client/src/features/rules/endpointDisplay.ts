@@ -68,6 +68,7 @@ const OPERATOR_LABELS: Record<string, string> = {
   exists: 'exists',
   does_not_exist: 'does not exist',
   matches: 'matches',
+  does_not_match: 'not matches',
 };
 
 export function getDisplayValue(filter: EndpointFilter): string {

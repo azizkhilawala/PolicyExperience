@@ -17,6 +17,7 @@ import type {
   CloudSubnet,
   K8sCluster,
   K8sNamespace,
+  Workload,
 } from '../../api/policies.js';
 import {
   fetchIpLists,
@@ -28,15 +29,11 @@ import {
   fetchCloudSubnets,
   fetchClusters,
   fetchNamespaces,
+  fetchWorkloads,
 } from '../../api/policies.js';
 import { useLabels } from '../../hooks/useLabels.js';
 
-// Workload is not a real API type in this demo; we use a minimal placeholder
-export interface Workload {
-  id: string;
-  name: string;
-  hostname: string;
-}
+export type { Workload } from '../../api/policies.js';
 
 export interface EndpointResources {
   labels: Label[];
@@ -62,12 +59,14 @@ export function useEndpointResources(): EndpointResources {
   const [clusters, setClusters] = useState<K8sCluster[]>([]);
   const [namespaces, setNamespaces] = useState<K8sNamespace[]>([]);
   const [cloudAccounts, setCloudAccounts] = useState<CloudAccount[]>([]);
+  const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [cloudVpcs, setCloudVpcs] = useState<CloudVpc[]>([]);
   const [cloudSubnets, setCloudSubnets] = useState<CloudSubnet[]>([]);
 
   useEffect(() => {
     fetchLabelGroups().then(setLabelGroups).catch(() => {});
     fetchIpLists().then(setIpLists).catch(() => {});
+    fetchWorkloads().then(setWorkloads).catch(() => {});
     fetchUserGroups().then(setUserGroups).catch(() => {});
     fetchVirtualServices().then(setVirtualServices).catch(() => {});
     fetchClusters().then(setClusters).catch(() => {});
@@ -82,7 +81,7 @@ export function useEndpointResources(): EndpointResources {
       labels,
       labelGroups,
       ipLists,
-      workloads: [] as Workload[], // no workloads API in this demo
+      workloads,
       userGroups,
       virtualServices,
       clusters,
@@ -91,7 +90,7 @@ export function useEndpointResources(): EndpointResources {
       cloudVpcs,
       cloudSubnets,
     }),
-    [labels, labelGroups, ipLists, userGroups, virtualServices, clusters, namespaces, cloudAccounts, cloudVpcs, cloudSubnets]
+    [labels, labelGroups, ipLists, workloads, userGroups, virtualServices, clusters, namespaces, cloudAccounts, cloudVpcs, cloudSubnets]
   );
 }
 
@@ -221,14 +220,31 @@ export function buildEndpointConfig(
         value: { type: 'entity_list', searchSource: ipListSource },
       } satisfies PowerSearchOperator,
       {
+        key: 'is_not',
+        label: 'is not',
+        value: { type: 'entity_list', searchSource: ipListSource },
+      } satisfies PowerSearchOperator,
+      {
         key: 'is_any_of',
         label: 'is any of',
+        value: { type: 'entity_list', searchSource: ipListSource },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
         value: { type: 'entity_list', searchSource: ipListSource },
       } satisfies PowerSearchOperator,
     ],
   });
 
   if (side === 'destination') {
+    const fqdnValues = [
+      { value: 'api.stripe.com', label: 'api.stripe.com' },
+      { value: '*.amazonaws.com', label: '*.amazonaws.com' },
+      { value: '*.googleapis.com', label: '*.googleapis.com' },
+      { value: 'login.microsoftonline.com', label: 'login.microsoftonline.com' },
+      { value: 'api.github.com', label: 'api.github.com' },
+    ];
     fields.push({
       key: 'fqdn',
       label: 'FQDN',
@@ -238,7 +254,12 @@ export function buildEndpointConfig(
         {
           key: 'matches',
           label: 'matches',
-          value: { type: 'string' },
+          value: { type: 'enum', values: fqdnValues },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'does_not_match',
+          label: 'does not match',
+          value: { type: 'enum', values: fqdnValues },
         } satisfies PowerSearchOperator,
       ],
     });
@@ -258,8 +279,18 @@ export function buildEndpointConfig(
         value: { type: 'entity_list', searchSource: workloadSource },
       } satisfies PowerSearchOperator,
       {
+        key: 'is_not',
+        label: 'is not',
+        value: { type: 'entity_list', searchSource: workloadSource },
+      } satisfies PowerSearchOperator,
+      {
         key: 'is_any_of',
         label: 'is any of',
+        value: { type: 'entity_list', searchSource: workloadSource },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
         value: { type: 'entity_list', searchSource: workloadSource },
       } satisfies PowerSearchOperator,
     ],
@@ -279,8 +310,18 @@ export function buildEndpointConfig(
         value: { type: 'entity_list', searchSource: userGroupSource },
       } satisfies PowerSearchOperator,
       {
+        key: 'is_not',
+        label: 'is not',
+        value: { type: 'entity_list', searchSource: userGroupSource },
+      } satisfies PowerSearchOperator,
+      {
         key: 'is_any_of',
         label: 'is any of',
+        value: { type: 'entity_list', searchSource: userGroupSource },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
         value: { type: 'entity_list', searchSource: userGroupSource },
       } satisfies PowerSearchOperator,
     ],
@@ -300,8 +341,18 @@ export function buildEndpointConfig(
         value: { type: 'entity_list', searchSource: virtualServiceSource },
       } satisfies PowerSearchOperator,
       {
+        key: 'is_not',
+        label: 'is not',
+        value: { type: 'entity_list', searchSource: virtualServiceSource },
+      } satisfies PowerSearchOperator,
+      {
         key: 'is_any_of',
         label: 'is any of',
+        value: { type: 'entity_list', searchSource: virtualServiceSource },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
         value: { type: 'entity_list', searchSource: virtualServiceSource },
       } satisfies PowerSearchOperator,
     ],
@@ -324,6 +375,16 @@ export function buildEndpointConfig(
         key: 'is_not',
         label: 'is not',
         value: { type: 'enum', values: clusterEnumValues },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
+        value: { type: 'enum_list', values: clusterEnumValues },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
+        value: { type: 'enum_list', values: clusterEnumValues },
       } satisfies PowerSearchOperator,
     ],
   });
@@ -453,8 +514,18 @@ export function buildEndpointConfig(
         value: { type: 'string_list' },
       } satisfies PowerSearchOperator,
       {
+        key: 'is_not',
+        label: 'is not',
+        value: { type: 'string_list' },
+      } satisfies PowerSearchOperator,
+      {
         key: 'is_any_of',
         label: 'is any of',
+        value: { type: 'string_list' },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
         value: { type: 'string_list' },
       } satisfies PowerSearchOperator,
     ],
@@ -473,6 +544,11 @@ export function buildEndpointConfig(
             label: 'is',
             value: { type: 'string' },
           } satisfies PowerSearchOperator,
+          {
+            key: 'is_not',
+            label: 'is not',
+            value: { type: 'string' },
+          } satisfies PowerSearchOperator,
         ],
       },
       {
@@ -486,6 +562,11 @@ export function buildEndpointConfig(
             label: 'is',
             value: { type: 'string' },
           } satisfies PowerSearchOperator,
+          {
+            key: 'is_not',
+            label: 'is not',
+            value: { type: 'string' },
+          } satisfies PowerSearchOperator,
         ],
       },
       {
@@ -497,6 +578,11 @@ export function buildEndpointConfig(
           {
             key: 'is',
             label: 'is',
+            value: { type: 'string' },
+          } satisfies PowerSearchOperator,
+          {
+            key: 'is_not',
+            label: 'is not',
             value: { type: 'string' },
           } satisfies PowerSearchOperator,
         ],
@@ -525,6 +611,11 @@ export function buildEndpointConfig(
           label: 'is',
           value: { type: 'entity_list', searchSource: awsAccountSource },
         } satisfies PowerSearchOperator,
+        {
+          key: 'is_not',
+          label: 'is not',
+          value: { type: 'entity_list', searchSource: awsAccountSource },
+        } satisfies PowerSearchOperator,
       ],
     },
     {
@@ -538,6 +629,11 @@ export function buildEndpointConfig(
           label: 'is',
           value: { type: 'entity_list', searchSource: awsVpcSource },
         } satisfies PowerSearchOperator,
+        {
+          key: 'is_not',
+          label: 'is not',
+          value: { type: 'entity_list', searchSource: awsVpcSource },
+        } satisfies PowerSearchOperator,
       ],
     },
     {
@@ -549,6 +645,11 @@ export function buildEndpointConfig(
         {
           key: 'is',
           label: 'is',
+          value: { type: 'entity_list', searchSource: awsSubnetSource },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'is_not',
+          label: 'is not',
           value: { type: 'entity_list', searchSource: awsSubnetSource },
         } satisfies PowerSearchOperator,
       ],
@@ -576,6 +677,11 @@ export function buildEndpointConfig(
           label: 'is',
           value: { type: 'entity_list', searchSource: azureAccountSource },
         } satisfies PowerSearchOperator,
+        {
+          key: 'is_not',
+          label: 'is not',
+          value: { type: 'entity_list', searchSource: azureAccountSource },
+        } satisfies PowerSearchOperator,
       ],
     },
     {
@@ -589,6 +695,11 @@ export function buildEndpointConfig(
           label: 'is',
           value: { type: 'entity_list', searchSource: azureVpcSource },
         } satisfies PowerSearchOperator,
+        {
+          key: 'is_not',
+          label: 'is not',
+          value: { type: 'entity_list', searchSource: azureVpcSource },
+        } satisfies PowerSearchOperator,
       ],
     },
     {
@@ -600,6 +711,11 @@ export function buildEndpointConfig(
         {
           key: 'is',
           label: 'is',
+          value: { type: 'entity_list', searchSource: azureSubnetSource },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'is_not',
+          label: 'is not',
           value: { type: 'entity_list', searchSource: azureSubnetSource },
         } satisfies PowerSearchOperator,
       ],

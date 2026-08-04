@@ -82,6 +82,9 @@ export interface CloudAccount { id: string; provider: string; name: string; acco
 export interface CloudVpc { id: string; provider: string; name: string; vpc_id: string; cloud_account_id: string; region?: string; resource_group?: string; }
 export interface CloudSubnet { id: string; provider: string; name: string; subnet_id: string; cloud_vpc_id: string; region?: string; }
 
+export interface Workload { id: string; name: string; hostname: string; }
+
+export function fetchWorkloads() { return apiFetch<Workload[]>('/api/workloads'); }
 export function fetchIpLists() { return apiFetch<IpList[]>('/api/ip-lists'); }
 export function fetchUserGroups() { return apiFetch<UserGroup[]>('/api/user-groups'); }
 export function fetchVirtualServices() { return apiFetch<VirtualService[]>('/api/virtual-services'); }
