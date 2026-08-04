@@ -48,6 +48,49 @@ const NS_WEB_STG = 'ns-web-stg-0006';
 const NS_MONITORING_STG = 'ns-monitoring-stg-0007';
 const NS_BACKEND_STG = 'ns-backend-stg-0008';
 
+// Label groups
+const LG_WEB_TIER = 'lg-web-tier-0001';
+const LG_DB_TIER = 'lg-db-tier-0002';
+const LG_PROD_APPS = 'lg-prod-apps-0003';
+
+// IP lists
+const IPL_CORPORATE = 'ipl-corporate-network-0001';
+const IPL_VPN = 'ipl-vpn-gateway-0002';
+const IPL_CDN = 'ipl-public-cdn-0003';
+const IPL_PAYMENT = 'ipl-payment-processor-0004';
+const IPL_MONITORING = 'ipl-monitoring-subnet-0005';
+
+// User groups
+const UG_ENGINEERING = 'ug-engineering-0001';
+const UG_OPERATIONS = 'ug-operations-0002';
+const UG_SECURITY = 'ug-security-team-0003';
+const UG_DEVOPS = 'ug-devops-0004';
+
+// Virtual services
+const VS_PAYMENT_API = 'vs-payment-api-0001';
+const VS_INTERNAL_DNS = 'vs-internal-dns-0002';
+const VS_METRICS = 'vs-metrics-endpoint-0003';
+
+// Cloud accounts
+const CA_AWS_PROD = 'ca-aws-prod-0001';
+const CA_AWS_STAGING = 'ca-aws-staging-0002';
+const CA_AZURE_PROD = 'ca-azure-prod-0003';
+const CA_AZURE_DEV = 'ca-azure-dev-0004';
+
+// Cloud VPCs
+const CV_AWS_PROD = 'cv-aws-prod-vpc-0001';
+const CV_AWS_STAGING = 'cv-aws-staging-vpc-0002';
+const CV_AZURE_PROD = 'cv-azure-prod-vnet-0003';
+const CV_AZURE_DEV = 'cv-azure-dev-vnet-0004';
+
+// Cloud subnets
+const CS_AWS_PROD_1A = 'cs-aws-prod-private-1a-0001';
+const CS_AWS_PROD_1B = 'cs-aws-prod-private-1b-0002';
+const CS_AWS_STAGING = 'cs-aws-staging-public-0003';
+const CS_AZURE_PROD_APP = 'cs-azure-prod-app-subnet-0004';
+const CS_AZURE_PROD_DB = 'cs-azure-prod-db-subnet-0005';
+const CS_AZURE_DEV = 'cs-azure-dev-default-0006';
+
 // Policies
 const POLICY_HRM = 'policy-hrm-prod-access-0001';
 const POLICY_ERP = 'policy-erp-db-access-0002';
@@ -69,6 +112,12 @@ const seed = db.transaction(() => {
     DELETE FROM workloads;
     DELETE FROM k8s_namespaces;
     DELETE FROM k8s_clusters;
+    DELETE FROM cloud_subnets;
+    DELETE FROM cloud_vpcs;
+    DELETE FROM cloud_accounts;
+    DELETE FROM virtual_services;
+    DELETE FROM user_groups;
+    DELETE FROM ip_lists;
     DELETE FROM label_groups;
     DELETE FROM labels;
     DELETE FROM tenant_settings;
@@ -107,6 +156,70 @@ const seed = db.transaction(() => {
   insertLabel.run(LBL_ROLE_CACHE, 'role', 'cache', 'illumio');
   insertLabel.run(LBL_ROLE_WORKER, 'role', 'worker', 'illumio');
   insertLabel.run(LBL_ROLE_LB, 'role', 'load-balancer', 'illumio');
+
+  // ── Label Groups ───────────────────────────────────────────────────────────
+  const insertLabelGroup = db.prepare(
+    'INSERT INTO label_groups (id, name, label_ids) VALUES (?, ?, ?)'
+  );
+  insertLabelGroup.run(LG_WEB_TIER, 'Web Tier', JSON.stringify([LBL_ROLE_WEB, LBL_ROLE_LB]));
+  insertLabelGroup.run(LG_DB_TIER, 'Database Tier', JSON.stringify([LBL_ROLE_DB, LBL_ROLE_CACHE]));
+  insertLabelGroup.run(LG_PROD_APPS, 'Production Apps', JSON.stringify([LBL_APP_HRM, LBL_APP_ERP, LBL_APP_PAYMENT]));
+
+  // ── IP Lists ───────────────────────────────────────────────────────────────
+  const insertIpList = db.prepare(
+    'INSERT INTO ip_lists (id, name, cidr, description) VALUES (?, ?, ?, ?)'
+  );
+  insertIpList.run(IPL_CORPORATE, 'Corporate Network', '10.0.0.0/8', '');
+  insertIpList.run(IPL_VPN, 'VPN Gateway', '172.16.0.0/12', '');
+  insertIpList.run(IPL_CDN, 'Public CDN', '203.0.113.0/24', '');
+  insertIpList.run(IPL_PAYMENT, 'Payment Processor Network', '192.168.1.0/24', '');
+  insertIpList.run(IPL_MONITORING, 'Monitoring Subnet', '10.100.0.0/16', '');
+
+  // ── User Groups ────────────────────────────────────────────────────────────
+  const insertUserGroup = db.prepare(
+    'INSERT INTO user_groups (id, name, member_ids) VALUES (?, ?, ?)'
+  );
+  insertUserGroup.run(UG_ENGINEERING, 'Engineering', JSON.stringify([USER_ALEX]));
+  insertUserGroup.run(UG_OPERATIONS, 'Operations', JSON.stringify([USER_MORGAN]));
+  insertUserGroup.run(UG_SECURITY, 'Security Team', JSON.stringify([]));
+  insertUserGroup.run(UG_DEVOPS, 'DevOps', JSON.stringify([]));
+
+  // ── Virtual Services ───────────────────────────────────────────────────────
+  const insertVirtualService = db.prepare(
+    'INSERT INTO virtual_services (id, name, port, protocol) VALUES (?, ?, ?, ?)'
+  );
+  insertVirtualService.run(VS_PAYMENT_API, 'Payment API', 443, 'TCP');
+  insertVirtualService.run(VS_INTERNAL_DNS, 'Internal DNS', 53, 'UDP');
+  insertVirtualService.run(VS_METRICS, 'Metrics Endpoint', 9090, 'TCP');
+
+  // ── Cloud Accounts ─────────────────────────────────────────────────────────
+  const insertCloudAccount = db.prepare(
+    'INSERT INTO cloud_accounts (id, provider, name, account_id, region) VALUES (?, ?, ?, ?, ?)'
+  );
+  insertCloudAccount.run(CA_AWS_PROD, 'aws', 'Production', '123456789012', 'us-east-1');
+  insertCloudAccount.run(CA_AWS_STAGING, 'aws', 'Staging', '987654321098', 'us-west-2');
+  insertCloudAccount.run(CA_AZURE_PROD, 'azure', 'Enterprise Prod', 'aaaa-bbbb-cccc-dddd', null);
+  insertCloudAccount.run(CA_AZURE_DEV, 'azure', 'Enterprise Dev', 'eeee-ffff-1111-2222', null);
+
+  // ── Cloud VPCs ─────────────────────────────────────────────────────────────
+  const insertCloudVpc = db.prepare(
+    'INSERT INTO cloud_vpcs (id, provider, name, vpc_id, cloud_account_id, region, resource_group) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  );
+  insertCloudVpc.run(CV_AWS_PROD, 'aws', 'prod-vpc', 'vpc-0a1b2c3d', CA_AWS_PROD, 'us-east-1', null);
+  insertCloudVpc.run(CV_AWS_STAGING, 'aws', 'staging-vpc', 'vpc-9z8y7x6w', CA_AWS_STAGING, 'us-west-2', null);
+  insertCloudVpc.run(CV_AZURE_PROD, 'azure', 'prod-vnet', 'prod-vnet', CA_AZURE_PROD, null, 'prod-rg');
+  insertCloudVpc.run(CV_AZURE_DEV, 'azure', 'dev-vnet', 'dev-vnet', CA_AZURE_DEV, null, 'dev-rg');
+
+  // ── Cloud Subnets ──────────────────────────────────────────────────────────
+  const insertCloudSubnet = db.prepare(
+    'INSERT INTO cloud_subnets (id, provider, name, subnet_id, cloud_vpc_id, region) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  insertCloudSubnet.run(CS_AWS_PROD_1A, 'aws', 'prod-private-1a', 'subnet-aaa', CV_AWS_PROD, 'us-east-1');
+  insertCloudSubnet.run(CS_AWS_PROD_1B, 'aws', 'prod-private-1b', 'subnet-bbb', CV_AWS_PROD, 'us-east-1');
+  insertCloudSubnet.run(CS_AWS_STAGING, 'aws', 'staging-public', 'subnet-ccc', CV_AWS_STAGING, 'us-west-2');
+  insertCloudSubnet.run(CS_AZURE_PROD_APP, 'azure', 'prod-app-subnet', 'prod-app-subnet', CV_AZURE_PROD, null);
+  insertCloudSubnet.run(CS_AZURE_PROD_DB, 'azure', 'prod-db-subnet', 'prod-db-subnet', CV_AZURE_PROD, null);
+  insertCloudSubnet.run(CS_AZURE_DEV, 'azure', 'dev-default', 'dev-default', CV_AZURE_DEV, null);
 
   // ── K8s Clusters ───────────────────────────────────────────────────────────
   const insertCluster = db.prepare(
@@ -493,3 +606,10 @@ console.log('  policies:', (db2.prepare('SELECT count(*) as c FROM policies').ge
 console.log('  rules:', (db2.prepare('SELECT count(*) as c FROM rules').get() as { c: number }).c);
 console.log('  provisioned_rules:', (db2.prepare('SELECT count(*) as c FROM provisioned_rules').get() as { c: number }).c);
 console.log('  tenant_settings:', (db2.prepare('SELECT count(*) as c FROM tenant_settings').get() as { c: number }).c);
+console.log('  label_groups:', (db2.prepare('SELECT count(*) as c FROM label_groups').get() as { c: number }).c);
+console.log('  ip_lists:', (db2.prepare('SELECT count(*) as c FROM ip_lists').get() as { c: number }).c);
+console.log('  user_groups:', (db2.prepare('SELECT count(*) as c FROM user_groups').get() as { c: number }).c);
+console.log('  virtual_services:', (db2.prepare('SELECT count(*) as c FROM virtual_services').get() as { c: number }).c);
+console.log('  cloud_accounts:', (db2.prepare('SELECT count(*) as c FROM cloud_accounts').get() as { c: number }).c);
+console.log('  cloud_vpcs:', (db2.prepare('SELECT count(*) as c FROM cloud_vpcs').get() as { c: number }).c);
+console.log('  cloud_subnets:', (db2.prepare('SELECT count(*) as c FROM cloud_subnets').get() as { c: number }).c);

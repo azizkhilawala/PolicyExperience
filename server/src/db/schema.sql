@@ -32,6 +32,53 @@ CREATE TABLE IF NOT EXISTS k8s_namespaces (
   labels TEXT NOT NULL DEFAULT '[]'
 );
 
+CREATE TABLE IF NOT EXISTS ip_lists (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  cidr TEXT NOT NULL,
+  description TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS user_groups (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  member_ids TEXT NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS virtual_services (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  port INTEGER NOT NULL,
+  protocol TEXT NOT NULL DEFAULT 'TCP'
+);
+
+CREATE TABLE IF NOT EXISTS cloud_accounts (
+  id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL CHECK (provider IN ('aws', 'azure')),
+  name TEXT NOT NULL,
+  account_id TEXT NOT NULL,
+  region TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cloud_vpcs (
+  id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL CHECK (provider IN ('aws', 'azure')),
+  name TEXT NOT NULL,
+  vpc_id TEXT NOT NULL,
+  cloud_account_id TEXT NOT NULL REFERENCES cloud_accounts(id),
+  region TEXT,
+  resource_group TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cloud_subnets (
+  id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL CHECK (provider IN ('aws', 'azure')),
+  name TEXT NOT NULL,
+  subnet_id TEXT NOT NULL,
+  cloud_vpc_id TEXT NOT NULL REFERENCES cloud_vpcs(id),
+  region TEXT
+);
+
 CREATE TABLE IF NOT EXISTS workloads (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

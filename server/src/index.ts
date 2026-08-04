@@ -8,6 +8,7 @@ import k8sRoutes from './routes/k8s.js';
 import policiesRoutes from './routes/policies.js';
 import rulesRoutes from './routes/rules.js';
 import settingsRoutes from './routes/settings.js';
+import resourcesRoutes from './routes/resources.js';
 
 const app = express();
 const PORT = 3001;
@@ -24,6 +25,7 @@ app.use('/api/policies', policiesRoutes);
 app.use('/api/policies', rulesRoutes);   // handles /:policyId/rules
 app.use('/api/rules', rulesRoutes);      // handles /:id, /:id/duplicate
 app.use('/api/tenant-settings', settingsRoutes);
+app.use('/api', resourcesRoutes);
 
 app.listen(PORT, () => {
   console.log(`PolicyExperience API running on http://localhost:${PORT}`);
