@@ -22,7 +22,7 @@ const PROTOCOL_OPTIONS = [
 ];
 
 function serviceLabel(s: V2RuleService): string {
-  if (s.type === 'named') return s.name === 'all' ? 'All Services' : s.name;
+  if (s.type === 'named') return s.name;
   return `${s.protocol}/${s.port}`;
 }
 
@@ -53,7 +53,7 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
         return;
       }
       if (selectedValue === 'all') {
-        onChange([...value, { type: 'named', name: 'all' }]);
+        onChange([...value, { type: 'named', name: 'All Services' }]);
         return;
       }
       const vs = virtualServices.find((v) => v.id === selectedValue);

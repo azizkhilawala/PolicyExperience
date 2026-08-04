@@ -11,6 +11,7 @@ import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Banner } from '@astryxdesign/core/Banner';
 
 import type { V2Rule, V2RuleService } from '../../api/v2-policies.js';
 import { createV2Rule, updateV2Rule, deleteV2Rule } from '../../api/v2-policies.js';
@@ -55,9 +56,7 @@ function renderServiceTokens(services: V2RuleService[]) {
   return (
     <HStack gap={0.5} wrap="wrap">
       {services.map((s, i) => {
-        const label = s.type === 'named'
-          ? (s.name === 'all' ? 'All Services' : s.name)
-          : `${s.protocol}/${s.port}`;
+        const label = s.type === 'named' ? s.name : `${s.protocol}/${s.port}`;
         return <Token key={i} label={label} color="default" size="sm" />;
       })}
     </HStack>
@@ -69,6 +68,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
   const [newRuleMode, setNewRuleMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const handleAddRule = useCallback(async () => {
     try {
@@ -82,8 +82,8 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
       setEditingId(newRule.id);
       setEditDraft({ entity: [], services: [], action: 'allow' });
       setNewRuleMode(true);
-    } catch {
-      // silently fail — caller can surface errors if needed
+    } catch (e) {
+      setMutationError(e instanceof Error ? e.message : 'Failed to add rule');
     }
   }, [policyId, direction, onRulesChanged]);
 
@@ -110,6 +110,8 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
       setEditingId(null);
       setEditDraft(null);
       setNewRuleMode(false);
+    } catch (e) {
+      setMutationError(e instanceof Error ? e.message : 'Failed to save rule');
     } finally {
       setIsSaving(false);
     }
@@ -134,16 +136,24 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
 
   const handleDelete = useCallback(
     async (ruleId: string) => {
-      await deleteV2Rule(ruleId);
-      onRulesChanged();
+      try {
+        await deleteV2Rule(ruleId);
+        onRulesChanged();
+      } catch (e) {
+        setMutationError(e instanceof Error ? e.message : 'Failed to delete rule');
+      }
     },
     [onRulesChanged]
   );
 
   const handleToggleEnabled = useCallback(
     async (ruleId: string, currentEnabled: number) => {
-      await updateV2Rule(ruleId, { enabled: !currentEnabled });
-      onRulesChanged();
+      try {
+        await updateV2Rule(ruleId, { enabled: !currentEnabled });
+        onRulesChanged();
+      } catch (e) {
+        setMutationError(e instanceof Error ? e.message : 'Failed to update rule');
+      }
     },
     [onRulesChanged]
   );
@@ -315,6 +325,15 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
 
   return (
     <VStack gap={2}>
+      {mutationError ? (
+        <Banner
+          status="error"
+          title={mutationError}
+          isDismissable
+          onDismiss={() => setMutationError(null)}
+        />
+      ) : null}
+
       <HStack hAlign="end">
         <Button label="Add Rule" variant="primary" size="sm" onClick={handleAddRule} />
       </HStack>

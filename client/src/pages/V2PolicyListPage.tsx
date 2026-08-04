@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Table, proportional, pixel } from '@astryxdesign/core/Table';
@@ -41,7 +42,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   }
 
   // k8s scope
-  const tokens: React.ReactNode[] = [];
+  const tokens: ReactNode[] = [];
   if (policy.scope_cluster_id) {
     tokens.push(
       <Token key="cluster" label={`Cluster: ${policy.scope_cluster_id}`} color="teal" size="sm" />
