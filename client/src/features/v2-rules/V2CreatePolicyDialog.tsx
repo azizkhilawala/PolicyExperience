@@ -87,6 +87,7 @@ export function V2CreatePolicyDialog({ isOpen, onClose, onCreated }: V2CreatePol
     setSelectedCluster('');
     setSelectedNamespace('');
     setSelectedLabels([]);
+    setNamespaces([]);
     setAvailableLabels([]);
     setName('');
     setDescription('');
@@ -100,7 +101,6 @@ export function V2CreatePolicyDialog({ isOpen, onClose, onCreated }: V2CreatePol
 
   const canProceedStep1 =
     scopeType === 'all_workloads' ||
-    scopeType === 'labels' ||
     (scopeType === 'k8s' && !!selectedCluster && !!selectedNamespace);
 
   const handleSubmit = useCallback(async () => {
@@ -165,7 +165,8 @@ export function V2CreatePolicyDialog({ isOpen, onClose, onCreated }: V2CreatePol
               <RadioListItem
                 label="Specific Labels / Groups"
                 value="labels"
-                description="Scope by App + Env labels, label groups"
+                description="Coming soon — scope by App + Env labels, label groups"
+                isDisabled
               />
               <RadioListItem
                 label="Kubernetes Cluster / Namespace"

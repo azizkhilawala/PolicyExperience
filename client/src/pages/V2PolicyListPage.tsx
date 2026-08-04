@@ -81,7 +81,7 @@ export default function V2PolicyListPage() {
       header: 'Name',
       width: proportional(2),
       renderCell: (row: V2PolicyRow) => (
-        <VStack gap={0} onClick={() => navigate(`/policy-v2/${row.id}`)}>
+        <VStack gap={0} onClick={() => navigate(`/policy-v2/${row.id}`)} style={{ cursor: 'pointer' }}>
           <Text weight="medium">{row.name as string}</Text>
           {row.description ? (
             <Text type="supporting" color="secondary">{row.description as string}</Text>
@@ -93,14 +93,20 @@ export default function V2PolicyListPage() {
       key: 'scope',
       header: 'Scope',
       width: proportional(2),
-      renderCell: (row: V2PolicyRow) => <ScopeTokens policy={row as V2Policy} />,
+      renderCell: (row: V2PolicyRow) => (
+        <HStack onClick={() => navigate(`/policy-v2/${row.id}`)} style={{ cursor: 'pointer' }}>
+          <ScopeTokens policy={row as V2Policy} />
+        </HStack>
+      ),
     },
     {
       key: 'enabled',
       header: 'Status',
       width: pixel(140),
       renderCell: (row: V2PolicyRow) => (
-        <StatusIndicator enabled={!!row.enabled} />
+        <HStack onClick={() => navigate(`/policy-v2/${row.id}`)} style={{ cursor: 'pointer' }}>
+          <StatusIndicator enabled={!!row.enabled} />
+        </HStack>
       ),
     },
     {
@@ -108,7 +114,9 @@ export default function V2PolicyListPage() {
       header: 'Provision Status',
       width: pixel(130),
       renderCell: (row: V2PolicyRow) => (
-        <ProvisionBadge status={row.provision_status as 'draft' | 'provisioned'} />
+        <HStack onClick={() => navigate(`/policy-v2/${row.id}`)} style={{ cursor: 'pointer' }}>
+          <ProvisionBadge status={row.provision_status as 'draft' | 'provisioned'} />
+        </HStack>
       ),
     },
     {
@@ -154,6 +162,7 @@ export default function V2PolicyListPage() {
         <Banner
           status="error"
           title={actionError}
+          isDismissable
           onDismiss={() => setActionError(null)}
         />
       ) : null}
