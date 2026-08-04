@@ -22,11 +22,14 @@ export interface Policy {
   rules?: Rule[];
 }
 
+export interface EndpointFilter {
+  field: string;
+  operator: string;
+  value: any;
+}
+
 export interface RuleEndpoint {
-  type: 'labels' | 'ip_list' | 'k8s';
-  labels?: PolicyLabel[];
-  ipList?: { cidr: string; name: string };
-  k8s?: { cluster: string; namespace: { type: string; value: string }; selector: string };
+  filters: EndpointFilter[];
 }
 
 export interface RuleService {
@@ -69,6 +72,37 @@ export function fetchClusters() {
 export function fetchNamespaces(clusterId?: string) {
   const query = clusterId ? `?cluster_id=${clusterId}` : '';
   return apiFetch<K8sNamespace[]>(`/api/k8s/namespaces${query}`);
+}
+
+export interface IpList { id: string; name: string; cidr: string; description: string; }
+export interface UserGroup { id: string; name: string; member_ids: string[]; }
+export interface VirtualService { id: string; name: string; port: number; protocol: string; }
+export interface LabelGroup { id: string; name: string; label_ids: string[]; }
+export interface CloudAccount { id: string; provider: string; name: string; account_id: string; region?: string; }
+export interface CloudVpc { id: string; provider: string; name: string; vpc_id: string; cloud_account_id: string; region?: string; resource_group?: string; }
+export interface CloudSubnet { id: string; provider: string; name: string; subnet_id: string; cloud_vpc_id: string; region?: string; }
+
+export function fetchIpLists() { return apiFetch<IpList[]>('/api/ip-lists'); }
+export function fetchUserGroups() { return apiFetch<UserGroup[]>('/api/user-groups'); }
+export function fetchVirtualServices() { return apiFetch<VirtualService[]>('/api/virtual-services'); }
+export function fetchLabelGroups() { return apiFetch<LabelGroup[]>('/api/label-groups'); }
+export function fetchCloudAccounts(provider?: string) {
+  const q = provider ? `?provider=${provider}` : '';
+  return apiFetch<CloudAccount[]>(`/api/cloud/accounts${q}`);
+}
+export function fetchCloudVpcs(provider?: string, accountId?: string) {
+  const params = new URLSearchParams();
+  if (provider) params.set('provider', provider);
+  if (accountId) params.set('account_id', accountId);
+  const q = params.toString();
+  return apiFetch<CloudVpc[]>(`/api/cloud/vpcs${q ? `?${q}` : ''}`);
+}
+export function fetchCloudSubnets(provider?: string, vpcId?: string) {
+  const params = new URLSearchParams();
+  if (provider) params.set('provider', provider);
+  if (vpcId) params.set('vpc_id', vpcId);
+  const q = params.toString();
+  return apiFetch<CloudSubnet[]>(`/api/cloud/subnets${q ? `?${q}` : ''}`);
 }
 
 export function fetchPolicies(params?: { type?: string; status?: string; enabled?: string }) {

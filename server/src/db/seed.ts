@@ -455,32 +455,32 @@ const seed = db.transaction(() => {
   // Policy 1 rules (HRM Production Access) — 4 intra allow
   insertRule.run(
     uuid(), POLICY_HRM,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
     'allow', 'intra', 1, 0,
     '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_HRM,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'db' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '5432' }]),
     'allow', 'intra', 1, 1,
     'Database access for API tier', 1, 0
   );
   insertRule.run(
     uuid(), POLICY_HRM,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'cache' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'cache' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '6379' }]),
     'allow', 'intra', 1, 2,
     '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_HRM,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'load-balancer' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'load-balancer' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }, { protocol: 'TCP', port: '80' }]),
     'allow', 'intra', 1, 3,
     '', 0, 0
@@ -489,24 +489,24 @@ const seed = db.transaction(() => {
   // Policy 2 rules (ERP Database Access) — 3 rules (mix intra/extra)
   insertRule.run(
     uuid(), POLICY_ERP,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'db' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '3306' }]),
     'allow', 'intra', 1, 0,
     '', 0, 1
   );
   insertRule.run(
     uuid(), POLICY_ERP,
-    JSON.stringify({ type: 'ip_list', ipList: { cidr: '10.0.0.0/8', name: 'Corporate Network' } }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
+    JSON.stringify({ filters: [{ field: 'ip_list', operator: 'is', value: { type: 'entity_list', value: [{ id: IPL_CORPORATE, label: 'Corporate Network (10.0.0.0/8)' }] } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
     'allow', 'extra', 1, 1,
     '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_ERP,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '8080' }]),
     'allow', 'intra', 1, 2,
     '', 0, 0
@@ -515,22 +515,25 @@ const seed = db.transaction(() => {
   // Policy 3 rules (K8s Frontend Services) — 2 rules
   insertRule.run(
     uuid(), POLICY_K8S,
-    JSON.stringify({
-      type: 'k8s',
-      k8s: { cluster: 'us-east-prod', namespace: { type: 'name', value: 'web-frontend' }, selector: 'app=web,tier=frontend' }
-    }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
+    JSON.stringify({ filters: [
+      { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+      { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'web-frontend' } },
+      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'web' } },
+      { field: 'k8s_pod_tier', operator: 'is', value: { type: 'enum', value: 'frontend' } }
+    ] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
     'allow', 'intra', 1, 0,
     '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_K8S,
-    JSON.stringify({
-      type: 'k8s',
-      k8s: { cluster: 'us-east-prod', namespace: { type: 'name', value: 'payments' }, selector: 'app=payment-processor' }
-    }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'db' }] }),
+    JSON.stringify({ filters: [
+      { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+      { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
+      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'payment-processor' } }
+    ] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '5432' }]),
     'allow', 'intra', 1, 1,
     '', 0, 0
@@ -539,8 +542,8 @@ const seed = db.transaction(() => {
   // Policy 4 rules (Global Deny Logging) — 1 rule
   insertRule.run(
     uuid(), POLICY_DENY,
-    JSON.stringify({ type: 'labels', labels: [] }),
-    JSON.stringify({ type: 'labels', labels: [] }),
+    JSON.stringify({ filters: [] }),
+    JSON.stringify({ filters: [] }),
     JSON.stringify([{ protocol: 'TCP', port: '514' }]),
     'deny', 'intra', 1, 0,
     '', 0, 0
@@ -549,27 +552,28 @@ const seed = db.transaction(() => {
   // Policy 5 rules (Payment Gateway) — 3 rules
   insertRule.run(
     uuid(), POLICY_PAYMENT,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'web' }] }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
     'allow', 'intra', 1, 0,
     '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_PAYMENT,
-    JSON.stringify({
-      type: 'k8s',
-      k8s: { cluster: 'us-east-prod', namespace: { type: 'name', value: 'payments' }, selector: 'app=checkout' }
-    }),
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
+    JSON.stringify({ filters: [
+      { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+      { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
+      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'checkout' } }
+    ] }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
     'allow', 'extra', 1, 1,
     '', 0, 0
   );
   insertRule.run(
     uuid(), POLICY_PAYMENT,
-    JSON.stringify({ type: 'labels', labels: [{ key: 'role', value: 'api' }] }),
-    JSON.stringify({ type: 'ip_list', ipList: { cidr: '192.168.1.0/24', name: 'Payment Processor Network' } }),
+    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    JSON.stringify({ filters: [{ field: 'ip_list', operator: 'is', value: { type: 'entity_list', value: [{ id: IPL_PAYMENT, label: 'Payment Processor Network (192.168.1.0/24)' }] } }] }),
     JSON.stringify([{ protocol: 'TCP', port: '8443' }]),
     'allow', 'intra', 1, 2,
     '', 0, 0
