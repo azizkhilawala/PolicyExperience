@@ -220,6 +220,11 @@ export function buildEndpointConfig(
         label: 'is',
         value: { type: 'entity_list', searchSource: ipListSource },
       } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
+        value: { type: 'entity_list', searchSource: ipListSource },
+      } satisfies PowerSearchOperator,
     ],
   });
 
@@ -252,6 +257,11 @@ export function buildEndpointConfig(
         label: 'is',
         value: { type: 'entity_list', searchSource: workloadSource },
       } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
+        value: { type: 'entity_list', searchSource: workloadSource },
+      } satisfies PowerSearchOperator,
     ],
   });
 
@@ -268,6 +278,11 @@ export function buildEndpointConfig(
         label: 'is',
         value: { type: 'entity_list', searchSource: userGroupSource },
       } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
+        value: { type: 'entity_list', searchSource: userGroupSource },
+      } satisfies PowerSearchOperator,
     ],
   });
 
@@ -282,6 +297,11 @@ export function buildEndpointConfig(
       {
         key: 'is',
         label: 'is',
+        value: { type: 'entity_list', searchSource: virtualServiceSource },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
         value: { type: 'entity_list', searchSource: virtualServiceSource },
       } satisfies PowerSearchOperator,
     ],
@@ -325,6 +345,26 @@ export function buildEndpointConfig(
         label: 'is not',
         value: { type: 'enum', values: namespaceEnumValues },
       } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
+        value: { type: 'enum_list', values: namespaceEnumValues },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_none_of',
+        label: 'is none of',
+        value: { type: 'enum_list', values: namespaceEnumValues },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'exists',
+        label: 'exists',
+        value: { type: 'empty' },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'does_not_exist',
+        label: 'does not exist',
+        value: { type: 'empty' },
+      } satisfies PowerSearchOperator,
     ],
   });
 
@@ -341,7 +381,18 @@ export function buildEndpointConfig(
     }
   }
 
+  const k8sPodLabelValues: Record<string, { value: string; label: string }[]> = {};
+  for (const l of labels) {
+    if (l.type === 'k8s' && k8sPodLabelKeys.has(l.key)) {
+      if (!k8sPodLabelValues[l.key]) k8sPodLabelValues[l.key] = [];
+      if (!k8sPodLabelValues[l.key].some((v) => v.value === l.value)) {
+        k8sPodLabelValues[l.key].push({ value: l.value, label: l.value });
+      }
+    }
+  }
+
   for (const podKey of k8sPodLabelKeys) {
+    const podEnumValues = k8sPodLabelValues[podKey] ?? [];
     fields.push({
       key: `k8s_pod_${podKey}`,
       label: `K8s Pod: ${podKey}`,
@@ -351,12 +402,40 @@ export function buildEndpointConfig(
         {
           key: 'is',
           label: 'is',
-          value: { type: 'string' },
+          value: podEnumValues.length > 0
+            ? { type: 'enum' as const, values: podEnumValues }
+            : { type: 'string' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_not',
           label: 'is not',
-          value: { type: 'string' },
+          value: podEnumValues.length > 0
+            ? { type: 'enum' as const, values: podEnumValues }
+            : { type: 'string' as const },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'is_any_of',
+          label: 'is any of',
+          value: podEnumValues.length > 0
+            ? { type: 'enum_list' as const, values: podEnumValues }
+            : { type: 'string_list' as const },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'is_none_of',
+          label: 'is none of',
+          value: podEnumValues.length > 0
+            ? { type: 'enum_list' as const, values: podEnumValues }
+            : { type: 'string_list' as const },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'exists',
+          label: 'exists',
+          value: { type: 'empty' },
+        } satisfies PowerSearchOperator,
+        {
+          key: 'does_not_exist',
+          label: 'does not exist',
+          value: { type: 'empty' },
         } satisfies PowerSearchOperator,
       ],
     });
@@ -371,6 +450,11 @@ export function buildEndpointConfig(
       {
         key: 'is',
         label: 'is',
+        value: { type: 'string_list' },
+      } satisfies PowerSearchOperator,
+      {
+        key: 'is_any_of',
+        label: 'is any of',
         value: { type: 'string_list' },
       } satisfies PowerSearchOperator,
     ],

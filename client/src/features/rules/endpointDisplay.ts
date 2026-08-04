@@ -60,13 +60,25 @@ export function fieldLabel(field: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+const OPERATOR_LABELS: Record<string, string> = {
+  is: '=',
+  is_not: '!=',
+  is_any_of: 'in',
+  is_none_of: 'not in',
+  exists: 'exists',
+  does_not_exist: 'does not exist',
+  matches: 'matches',
+};
+
 export function getDisplayValue(filter: EndpointFilter): string {
   const val = filter.value as { type: string; value?: unknown } | null | undefined;
-  if (!val || val.type === 'empty') return `${fieldLabel(filter.field)} exists`;
-  if (val.type === 'enum') return `${fieldLabel(filter.field)}=${val.value as string}`;
-  if (val.type === 'enum_list') return `${fieldLabel(filter.field)} [${(val.value as string[]).join(',')}]`;
+  const label = fieldLabel(filter.field);
+  const op = OPERATOR_LABELS[filter.operator] ?? filter.operator;
+  if (!val || val.type === 'empty') return `${label} ${op}`;
+  if (val.type === 'enum') return `${label}${op === '=' ? '=' : ` ${op} `}${val.value as string}`;
+  if (val.type === 'enum_list') return `${label} ${op} [${(val.value as string[]).join(', ')}]`;
   if (val.type === 'entity_list') return (val.value as Array<{ id: string; label: string }>).map((e) => e.label).join(', ');
-  if (val.type === 'string') return val.value as string;
+  if (val.type === 'string') return `${label} ${op} ${val.value as string}`;
   if (val.type === 'string_list') return (val.value as string[]).join(', ');
   return String(val.value ?? '');
 }
