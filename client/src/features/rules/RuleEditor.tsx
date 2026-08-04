@@ -38,8 +38,8 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
     try {
       setMutationError(null);
       await createRule(policyId, {
-        source: { type: 'labels', labels: [] },
-        destination: { type: 'labels', labels: [] },
+        source: { filters: [] },
+        destination: { filters: [] },
         services: [{ protocol: 'TCP', port: '443' }],
         action: 'allow',
         scope_type: 'intra',

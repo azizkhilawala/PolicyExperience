@@ -15,7 +15,8 @@ import {
   provisionCommit,
   type ProvisionDiff,
   type ProvisionDiffRule,
-  type PolicyLabel,
+  type RuleEndpoint,
+  type EndpointFilter,
 } from '../../api/policies.js';
 
 interface ProvisionDialogProps {
@@ -25,40 +26,94 @@ interface ProvisionDialogProps {
   onProvisioned: () => void;
 }
 
-function labelColor(key: string): 'blue' | 'green' | 'purple' | 'orange' | 'teal' | 'default' {
-  const map: Record<string, 'blue' | 'green' | 'purple' | 'orange' | 'teal'> = {
-    env: 'blue',
-    app: 'green',
-    role: 'purple',
-    loc: 'orange',
-    type: 'teal',
-  };
-  return map[key] ?? 'default';
+type TokenColor = 'default' | 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'cyan' | 'blue' | 'purple' | 'pink' | 'gray';
+
+const FILTER_COLOR_MAP: Array<[string, TokenColor]> = [
+  ['label_group', 'purple'],
+  ['label_', 'default'],
+  ['ip_list', 'orange'],
+  ['workload', 'teal'],
+  ['user_group', 'blue'],
+  ['virtual_service', 'green'],
+  ['k8s_cluster', 'gray'],
+  ['k8s_namespace', 'teal'],
+  ['k8s_pod_', 'blue'],
+  ['k8s_service_account', 'blue'],
+  ['k8s_service', 'green'],
+  ['k8s_ingress', 'green'],
+  ['k8s_gateway', 'green'],
+  ['cloud_aws', 'orange'],
+  ['cloud_azure', 'blue'],
+  ['fqdn', 'gray'],
+];
+
+function getFilterColor(field: string): TokenColor {
+  for (const [prefix, color] of FILTER_COLOR_MAP) {
+    if (field.startsWith(prefix)) return color;
+  }
+  return 'default';
 }
 
-function LabelTokenRow({ labels }: { labels?: PolicyLabel[] }) {
-  if (!labels || labels.length === 0) {
+function getFilterLabel(filter: EndpointFilter): string {
+  const labelMap: Record<string, string> = {
+    label_role: 'Role',
+    label_app: 'App',
+    label_env: 'Env',
+    label_loc: 'Loc',
+    label_type: 'Type',
+    ip_list: 'IP List',
+    workload: 'Workload',
+    user_group: 'User Group',
+    virtual_service: 'Virtual Service',
+    label_group: 'Label Group',
+    k8s_cluster: 'Cluster',
+    k8s_namespace: 'Namespace',
+    k8s_pod_app: 'Pod App',
+    k8s_pod_tier: 'Pod Tier',
+    k8s_service: 'K8s Service',
+    k8s_ingress: 'Ingress',
+    k8s_gateway: 'Gateway',
+    k8s_service_account: 'Service Account',
+    cloud_aws_account: 'AWS Account',
+    cloud_azure_subscription: 'Azure Subscription',
+    fqdn: 'FQDN',
+  };
+  const humanField = labelMap[filter.field] ?? filter.field
+    .replace(/^(label_|k8s_|cloud_)/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const val = filter.value;
+  if (!val || val.type === 'empty') return `${humanField} exists`;
+  if (val.type === 'enum') return `${humanField}=${val.value as string}`;
+  if (val.type === 'enum_list') return `${humanField} [${(val.value as string[]).join(',')}]`;
+  if (val.type === 'entity_list') return (val.value as Array<{ id: string; label: string }>).map((e) => e.label).join(', ');
+  if (val.type === 'string') return val.value as string;
+  if (val.type === 'string_list') return (val.value as string[]).join(', ');
+  return String(val.value ?? '');
+}
+
+function EndpointTokens({ endpoint }: { endpoint?: RuleEndpoint }) {
+  if (!endpoint?.filters || endpoint.filters.length === 0) {
     return <Text type="supporting">Any</Text>;
   }
   return (
     <HStack gap={1} wrap="wrap">
-      {labels.map((l) => (
-        <Token key={`${l.key}=${l.value}`} label={`${l.key}=${l.value}`} color={labelColor(l.key)} size="sm" />
+      {endpoint.filters.map((f, i) => (
+        <Token key={i} label={getFilterLabel(f)} color={getFilterColor(f.field)} size="sm" />
       ))}
     </HStack>
   );
 }
 
 function RuleSummary({ rule }: { rule: ProvisionDiffRule }) {
-  const srcLabels = rule.source?.type === 'labels' ? rule.source.labels : undefined;
-  const dstLabels = rule.destination?.type === 'labels' ? rule.destination.labels : undefined;
   const services = rule.services ?? [];
 
   return (
     <HStack gap={2} vAlign="center" wrap="wrap">
-      <LabelTokenRow labels={srcLabels} />
+      <EndpointTokens endpoint={rule.source} />
       <Text type="supporting">→</Text>
-      <LabelTokenRow labels={dstLabels} />
+      <EndpointTokens endpoint={rule.destination} />
       {services.length > 0 && (
         <>
           <Text type="supporting">on</Text>
