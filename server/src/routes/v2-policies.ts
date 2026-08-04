@@ -1,0 +1,156 @@
+import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { getDb } from '../db/connection.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
+
+const router = Router();
+
+function parseV2Policy(row: any) {
+  if (!row) return null;
+  return { ...row, scope_labels: JSON.parse(row.scope_labels) };
+}
+
+function parseV2Rule(row: any) {
+  if (!row) return null;
+  return { ...row, entity: JSON.parse(row.entity), services: JSON.parse(row.services) };
+}
+
+// GET /policies — list all v2 policies
+router.get('/policies', (_req, res) => {
+  const db = getDb();
+  const rows = db.prepare('SELECT * FROM v2_policies ORDER BY name').all();
+  res.json(rows.map(parseV2Policy));
+});
+
+// GET /policies/:id — get single v2 policy with rules
+router.get('/policies/:id', (req, res) => {
+  const db = getDb();
+  const policy = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
+  if (!policy) return res.status(404).json({ error: 'Policy not found' });
+  const rules = db.prepare('SELECT * FROM v2_rules WHERE policy_id = ? ORDER BY direction, position').all(req.params.id);
+  res.json({ ...parseV2Policy(policy), rules: rules.map(parseV2Rule) });
+});
+
+// POST /policies — create v2 policy
+router.post('/policies', (req, res) => {
+  const db = getDb();
+  const { name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels } = req.body;
+  const user = (req as AuthenticatedRequest).user;
+  const now = new Date().toISOString();
+  const id = uuidv4();
+  db.prepare(
+    `INSERT INTO v2_policies (id, name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels, enabled, provision_status, created_by, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'draft', ?, ?, ?)`
+  ).run(id, name, description ?? '', scope_type, scope_cluster_id ?? null, scope_namespace_id ?? null, JSON.stringify(scope_labels ?? []), user.id, now, now);
+  const created = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(id);
+  res.status(201).json(parseV2Policy(created));
+});
+
+// PATCH /policies/:id — update v2 policy
+router.patch('/policies/:id', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Policy not found' });
+  const { name, description, enabled } = req.body;
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE v2_policies SET
+      name = COALESCE(?, name),
+      description = COALESCE(?, description),
+      enabled = COALESCE(?, enabled),
+      updated_at = ?
+     WHERE id = ?`
+  ).run(name ?? null, description ?? null, enabled !== undefined ? (enabled ? 1 : 0) : null, now, req.params.id);
+  const updated = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
+  res.json(parseV2Policy(updated));
+});
+
+// DELETE /policies/:id
+router.delete('/policies/:id', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Policy not found' });
+  db.prepare('DELETE FROM v2_policies WHERE id = ?').run(req.params.id);
+  res.status(204).send();
+});
+
+// POST /policies/:id/provision — set policy + all draft rules to provisioned
+router.post('/policies/:id/provision', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Policy not found' });
+  const now = new Date().toISOString();
+  db.transaction(() => {
+    db.prepare("UPDATE v2_policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?").run(now, req.params.id);
+    db.prepare("UPDATE v2_rules SET provision_status = 'provisioned' WHERE policy_id = ? AND provision_status = 'draft'").run(req.params.id);
+  })();
+  const updated = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
+  res.json(parseV2Policy(updated));
+});
+
+// GET /policies/:id/rules — list rules for a v2 policy
+router.get('/policies/:id/rules', (req, res) => {
+  const db = getDb();
+  let sql = 'SELECT * FROM v2_rules WHERE policy_id = ?';
+  const params: string[] = [req.params.id];
+  if (req.query.direction) {
+    sql += ' AND direction = ?';
+    params.push(req.query.direction as string);
+  }
+  sql += ' ORDER BY direction, position';
+  const rows = db.prepare(sql).all(...params);
+  res.json(rows.map(parseV2Rule));
+});
+
+// POST /policies/:id/rules — create rule
+router.post('/policies/:id/rules', (req, res) => {
+  const db = getDb();
+  const { direction, entity, services, action } = req.body;
+  const policyId = req.params.id;
+  const maxRow = db.prepare('SELECT MAX(position) as maxPos FROM v2_rules WHERE policy_id = ? AND direction = ?').get(policyId, direction) as any;
+  const position = (maxRow?.maxPos ?? -1) + 1;
+  const id = uuidv4();
+  db.prepare(
+    `INSERT INTO v2_rules (id, policy_id, direction, entity, services, action, enabled, provision_status, position, notes)
+     VALUES (?, ?, ?, ?, ?, ?, 1, 'draft', ?, '')`
+  ).run(id, policyId, direction, JSON.stringify(entity ?? []), JSON.stringify(services ?? []), action ?? 'allow', position);
+  const created = db.prepare('SELECT * FROM v2_rules WHERE id = ?').get(id);
+  res.status(201).json(parseV2Rule(created));
+});
+
+// PATCH /rules/:id — update v2 rule
+router.patch('/rules/:id', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM v2_rules WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Rule not found' });
+  const { entity, services, action, enabled, notes } = req.body;
+  db.prepare(
+    `UPDATE v2_rules SET
+      entity = COALESCE(?, entity),
+      services = COALESCE(?, services),
+      action = COALESCE(?, action),
+      enabled = COALESCE(?, enabled),
+      notes = COALESCE(?, notes)
+     WHERE id = ?`
+  ).run(
+    entity !== undefined ? JSON.stringify(entity) : null,
+    services !== undefined ? JSON.stringify(services) : null,
+    action ?? null,
+    enabled !== undefined ? (enabled ? 1 : 0) : null,
+    notes ?? null,
+    req.params.id
+  );
+  const updated = db.prepare('SELECT * FROM v2_rules WHERE id = ?').get(req.params.id);
+  res.json(parseV2Rule(updated));
+});
+
+// DELETE /rules/:id
+router.delete('/rules/:id', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM v2_rules WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Rule not found' });
+  db.prepare('DELETE FROM v2_rules WHERE id = ?').run(req.params.id);
+  res.status(204).send();
+});
+
+export default router;

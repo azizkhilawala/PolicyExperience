@@ -9,6 +9,7 @@ import policiesRoutes from './routes/policies.js';
 import rulesRoutes from './routes/rules.js';
 import settingsRoutes from './routes/settings.js';
 import resourcesRoutes from './routes/resources.js';
+import v2PoliciesRoutes from './routes/v2-policies.js';
 
 const app = express();
 const PORT = 3001;
@@ -26,6 +27,7 @@ app.use('/api/policies', rulesRoutes);   // handles /:policyId/rules
 app.use('/api/rules', rulesRoutes);      // handles /:id, /:id/duplicate
 app.use('/api/tenant-settings', settingsRoutes);
 app.use('/api', resourcesRoutes);
+app.use('/api/v2', v2PoliciesRoutes);
 
 app.listen(PORT, () => {
   console.log(`PolicyExperience API running on http://localhost:${PORT}`);

@@ -91,6 +91,11 @@ const CS_AZURE_PROD_APP = 'cs-azure-prod-app-subnet-0004';
 const CS_AZURE_PROD_DB = 'cs-azure-prod-db-subnet-0005';
 const CS_AZURE_DEV = 'cs-azure-dev-default-0006';
 
+// V2 Policies
+const V2_POLICY_PAYMENTS = 'v2-policy-payments-frontend-0001';
+const V2_POLICY_MONITORING = 'v2-policy-monitoring-stack-0002';
+const V2_POLICY_BACKEND = 'v2-policy-backend-deny-0003';
+
 // Policies
 const POLICY_HRM = 'policy-hrm-prod-access-0001';
 const POLICY_ERP = 'policy-erp-db-access-0002';
@@ -109,6 +114,8 @@ const seed = db.transaction(() => {
     DELETE FROM provisioned_rules;
     DELETE FROM rules;
     DELETE FROM policies;
+    DELETE FROM v2_rules;
+    DELETE FROM v2_policies;
     DELETE FROM workloads;
     DELETE FROM k8s_namespaces;
     DELETE FROM k8s_clusters;
@@ -593,6 +600,127 @@ const seed = db.transaction(() => {
   db.prepare('INSERT INTO tenant_settings (key, value) VALUES (?, ?)').run(
     'display_scopes_in_policies', 'true'
   );
+
+  // ── V2 Policies (scope-centric) ──────────────────────────────────────────
+  const insertV2Policy = db.prepare(`
+    INSERT INTO v2_policies
+      (id, name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels, enabled, provision_status, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  insertV2Policy.run(
+    V2_POLICY_PAYMENTS,
+    'Payments Frontend Access',
+    'Controls ingress/egress for the payments frontend scope',
+    'k8s', CLUSTER_USEAST, NS_PAYMENTS,
+    JSON.stringify([{ key: 'app', value: 'frontend' }]),
+    1, 'draft', USER_ALEX, now, now
+  );
+
+  insertV2Policy.run(
+    V2_POLICY_MONITORING,
+    'Monitoring Stack',
+    'Monitoring scope for API role workloads',
+    'k8s', CLUSTER_USEAST, NS_MONITORING,
+    JSON.stringify([{ key: 'role', value: 'api' }]),
+    1, 'draft', USER_ALEX, now, now
+  );
+
+  insertV2Policy.run(
+    V2_POLICY_BACKEND,
+    'Backend Services Deny',
+    'Deny non-production access to backend services',
+    'k8s', CLUSTER_USEAST, NS_BACKEND,
+    JSON.stringify([{ key: 'tier', value: 'web' }, { key: 'env', value: 'production' }]),
+    1, 'provisioned', USER_MORGAN, now, now
+  );
+
+  // ── V2 Rules ─────────────────────────────────────────────────────────────
+  const insertV2Rule = db.prepare(`
+    INSERT INTO v2_rules
+      (id, policy_id, direction, entity, services, action, enabled, provision_status, position, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Policy 1: Payments Frontend Access — 2 ingress, 2 egress
+  insertV2Rule.run(
+    uuid(), V2_POLICY_PAYMENTS, 'ingress',
+    JSON.stringify([
+      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'api' } },
+      { field: 'k8s_pod_tier', operator: 'is', value: { type: 'enum', value: 'web' } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
+    'allow', 1, 'provisioned', 0, ''
+  );
+  insertV2Rule.run(
+    uuid(), V2_POLICY_PAYMENTS, 'ingress',
+    JSON.stringify([
+      { field: 'ip_list', operator: 'is', value: { type: 'entity_list', value: [{ id: IPL_VPN, label: 'VPN Gateway (172.16.0.0/12)' }] } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '8080' }]),
+    'allow', 1, 'draft', 1, ''
+  );
+  insertV2Rule.run(
+    uuid(), V2_POLICY_PAYMENTS, 'egress',
+    JSON.stringify([
+      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'backend' } },
+      { field: 'k8s_pod_role', operator: 'is', value: { type: 'enum', value: 'api' } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '3000' }]),
+    'allow', 1, 'provisioned', 0, ''
+  );
+  insertV2Rule.run(
+    uuid(), V2_POLICY_PAYMENTS, 'egress',
+    JSON.stringify([
+      { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: '*.amazonaws.com' } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
+    'allow', 1, 'draft', 1, ''
+  );
+
+  // Policy 2: Monitoring Stack — 1 ingress, 2 egress
+  insertV2Rule.run(
+    uuid(), V2_POLICY_MONITORING, 'ingress',
+    JSON.stringify([
+      { field: 'label_role', operator: 'is_any_of', value: { type: 'enum_list', value: ['web', 'api', 'worker'] } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '9090' }]),
+    'allow', 1, 'provisioned', 0, ''
+  );
+  insertV2Rule.run(
+    uuid(), V2_POLICY_MONITORING, 'egress',
+    JSON.stringify([
+      { field: 'k8s_pod_app', operator: 'is_any_of', value: { type: 'enum_list', value: ['frontend', 'backend'] } },
+    ]),
+    JSON.stringify([{ type: 'named', name: 'All Services' }]),
+    'allow', 1, 'draft', 0, ''
+  );
+  insertV2Rule.run(
+    uuid(), V2_POLICY_MONITORING, 'egress',
+    JSON.stringify([
+      { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: 'api.github.com' } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
+    'allow', 1, 'draft', 1, ''
+  );
+
+  // Policy 3: Backend Services Deny — 1 ingress, 1 egress
+  insertV2Rule.run(
+    uuid(), V2_POLICY_BACKEND, 'ingress',
+    JSON.stringify([
+      { field: 'k8s_pod_env', operator: 'is_none_of', value: { type: 'enum_list', value: ['production'] } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '5432' }]),
+    'deny', 1, 'provisioned', 0, ''
+  );
+  insertV2Rule.run(
+    uuid(), V2_POLICY_BACKEND, 'egress',
+    JSON.stringify([
+      { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: 'api.stripe.com' } },
+    ]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
+    'allow', 1, 'provisioned', 0, ''
+  );
 });
 
 // Run the transaction
@@ -617,3 +745,5 @@ console.log('  virtual_services:', (db2.prepare('SELECT count(*) as c FROM virtu
 console.log('  cloud_accounts:', (db2.prepare('SELECT count(*) as c FROM cloud_accounts').get() as { c: number }).c);
 console.log('  cloud_vpcs:', (db2.prepare('SELECT count(*) as c FROM cloud_vpcs').get() as { c: number }).c);
 console.log('  cloud_subnets:', (db2.prepare('SELECT count(*) as c FROM cloud_subnets').get() as { c: number }).c);
+console.log('  v2_policies:', (db2.prepare('SELECT count(*) as c FROM v2_policies').get() as { c: number }).c);
+console.log('  v2_rules:', (db2.prepare('SELECT count(*) as c FROM v2_rules').get() as { c: number }).c);
