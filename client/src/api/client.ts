@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
+
 let currentUserId: string | null = null;
 
 export function setCurrentUserId(id: string) {
@@ -12,7 +14,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   if (currentUserId) {
     headers['x-user-id'] = currentUserId;
   }
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `API error: ${res.status}`);

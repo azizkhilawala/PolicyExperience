@@ -12,7 +12,7 @@ import resourcesRoutes from './routes/resources.js';
 import v2PoliciesRoutes from './routes/v2-policies.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 app.use(cors());
 app.use(express.json());

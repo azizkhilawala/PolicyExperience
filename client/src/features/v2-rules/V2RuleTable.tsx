@@ -8,7 +8,8 @@ import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Button } from '@astryxdesign/core/Button';
 import { MoreMenu } from '@astryxdesign/core/MoreMenu';
-import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
+import { Selector } from '@astryxdesign/core/Selector';
+import type { SelectorOptionData } from '@astryxdesign/core/Selector';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Banner } from '@astryxdesign/core/Banner';
@@ -35,6 +36,11 @@ interface EditDraft {
 }
 
 type V2RuleRow = V2Rule & Record<string, unknown>;
+
+const actionOptions: SelectorOptionData[] = [
+  { value: 'allow', label: 'Allow' },
+  { value: 'deny', label: 'Deny' },
+];
 
 function renderEntityTokens(filters: EndpointFilter[]) {
   if (!filters || filters.length === 0) {
@@ -211,19 +217,15 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
           const isEditing = editingId === row.id;
           if (isEditing && editDraft) {
             return (
-              <SegmentedControl
-                label="Rule type"
+              <Selector
+                label="Action"
+                isLabelHidden
+                options={actionOptions}
                 value={editDraft.action}
-                onChange={(v) =>
-                  setEditDraft((prev) =>
-                    prev ? { ...prev, action: v as 'allow' | 'deny' } : prev
-                  )
-                }
-                size="sm"
-              >
-                <SegmentedControlItem value="allow" label="Allow" />
-                <SegmentedControlItem value="deny" label="Deny" />
-              </SegmentedControl>
+                onChange={(v: string) => setEditDraft((prev) =>
+                  prev ? { ...prev, action: v as 'allow' | 'deny' } : prev
+                )}
+              />
             );
           }
           return <ActionToken action={row.action as 'allow' | 'deny'} />;
