@@ -136,7 +136,7 @@ export function buildEndpointConfig(
   for (const key of labelFieldKeys) {
     const enumValues = labelsByKey[key] ?? [];
     fields.push({
-      key,
+      key: `label_${key}`,
       label: key.charAt(0).toUpperCase() + key.slice(1),
       group: 'Labels',
       defaultOperator: 'is',
