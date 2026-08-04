@@ -68,6 +68,12 @@ function AppLayout() {
             icon={<Icon icon="funnel" />}
           />
           <SideNavItem
+            label="Policy-v2"
+            href="/policy-v2"
+            isSelected={location.pathname.startsWith('/policy-v2')}
+            icon={<Icon icon="funnel" />}
+          />
+          <SideNavItem
             label="Settings"
             href="/settings"
             isSelected={location.pathname === '/settings'}
