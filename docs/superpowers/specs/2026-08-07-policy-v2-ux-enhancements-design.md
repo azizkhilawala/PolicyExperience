@@ -18,6 +18,7 @@
 4. Add Rule button repositioned and restyled
 5. Rule type precedence filtering (SegmentedControl)
 6. Ingress/egress direction visuals
+7. Guardrail policies & template model (live-linked templates, template CRUD, convert-to-template)
 
 ---
 
@@ -283,6 +284,204 @@ The icons should be simple, monochrome, approximately 20-24px, using Astryx colo
 
 ---
 
+## 7. Guardrail Policies & Template Model
+
+### Concept
+
+The current V2 model ties scope and rules together in one policy. Guardrail policies decouple these:
+
+- **Template** = rules only (no scope). A reusable, editable rule set.
+- **Guardrail Policy** = template reference + enforcement points. Many guardrail policies can share one template. Rules are live-linked — editing a template's rules propagates to all policies referencing it.
+- **Standard Policy** = the existing scope-centric model (scope + rules together).
+
+This decoupling allows a single set of rules to be enforced across many clusters without creating one rule per cluster.
+
+**Use cases (from Nick Sappa, Anand, Romain, Kunal):**
+
+1. A K8s admin defines a policy allowing ingress from namespace `illumio-cloud` to namespace `gke-dataplane-v2` across 100 GKE clusters — as a single Illumio policy.
+2. A K8s admin defines a policy allowing egress from any workload in any namespace to `kube-dns` in `kube-system` across 300 clusters — as a single policy.
+
+### Policy-v2 List Page — Tabbed View
+
+The list page gets two tabs:
+
+- **Policies** (default) — shows all policies (standard + guardrail). Guardrail policies display a "Guardrail" badge and their linked template name.
+- **Templates** — shows the template library. Each row displays template name, source (Illumio Suggested / User Created), rule count, linked policy count, and actions.
+
+Both tabs have their own Create button: "Create Policy" on the Policies tab, "Create Template" on the Templates tab.
+
+### Data Model
+
+**`v2_templates` table:**
+
+```sql
+CREATE TABLE v2_templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'user_created' CHECK (source IN ('illumio_suggested', 'user_created')),
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+**`v2_template_rules` table:**
+
+```sql
+CREATE TABLE v2_template_rules (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES v2_templates(id) ON DELETE CASCADE,
+  direction TEXT NOT NULL CHECK (direction IN ('ingress', 'egress')),
+  entity TEXT NOT NULL DEFAULT '[]',
+  services TEXT NOT NULL DEFAULT '[]',
+  action TEXT NOT NULL DEFAULT 'allow' CHECK (action IN ('allow', 'deny', 'override_deny')),
+  enabled INTEGER NOT NULL DEFAULT 1,
+  position INTEGER NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT ''
+);
+```
+
+**`v2_policies` table additions:**
+
+```sql
+policy_type TEXT NOT NULL DEFAULT 'standard' CHECK (policy_type IN ('standard', 'guardrail')),
+template_id TEXT REFERENCES v2_templates(id)
+```
+
+- Standard policies: `policy_type = 'standard'`, `template_id = NULL`. Rules stored in `v2_rules` as today.
+- Guardrail policies: `policy_type = 'guardrail'`, `template_id` references a template. Rules come from `v2_template_rules` via the template. `v2_rules` is not used for guardrail policies.
+
+### API Changes
+
+**Template endpoints** — mounted at `/api/v2/templates`:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v2/templates` | List all templates (with rule counts and linked policy counts) |
+| `GET` | `/api/v2/templates/:id` | Get template with its rules |
+| `POST` | `/api/v2/templates` | Create template |
+| `PATCH` | `/api/v2/templates/:id` | Update template name/description |
+| `DELETE` | `/api/v2/templates/:id` | Delete template (blocked if linked policies exist) |
+| `GET` | `/api/v2/templates/:id/rules` | List template rules |
+| `POST` | `/api/v2/templates/:id/rules` | Create template rule |
+| `PATCH` | `/api/v2/template-rules/:id` | Update template rule |
+| `DELETE` | `/api/v2/template-rules/:id` | Delete template rule |
+
+**Policy endpoint changes:**
+- `POST /api/v2/policies` accepts `policy_type` and `template_id` fields
+- `GET /api/v2/policies/:id` — for guardrail policies, includes rules from the linked template (fetched via `template_id` join to `v2_template_rules`)
+
+### Create Policy Page — Policy Type Selector
+
+A `SegmentedControl` at the top of the create page: **Standard Policy** | **Guardrail Policy**.
+
+**Standard Policy** (default):
+- Current flow: scope selection + inline rule authoring
+
+**Guardrail Policy:**
+- **Zone 1: Policy Info** — Name, description (same as standard)
+- **Zone 2: Template Selection** — `Selector` dropdown populated from `GET /api/v2/templates`. Selecting a template displays its rules in a read-only preview below.
+- **Zone 3: Enforcement Points** — Multi-select scope using the same cascade selectors: clusters (required, multi), namespaces (optional, multi), K8s labels (optional, multi). Same selectors as standard policy scope, but labeled "Enforcement Points" instead of "Scope."
+- No inline rule editing — rules come from the template.
+
+**Footer:** Cancel + Create Policy (same as standard).
+
+### Template Create/Edit Page
+
+**Route:** `/policy-v2/templates/new` (create) and `/policy-v2/templates/:id/edit` (edit)
+
+Same layout as the standard policy create page but without scope:
+
+- **Zone 1: Template Info** — Name, description
+- **Zone 2: Ingress Rules** — `V2RuleTable` with inline editing (uses draft mode for create, API mode for edit)
+- **Zone 3: Egress Rules** — Same as Zone 2
+
+**Footer:** Cancel + Create Template (or Save Template for edit).
+
+### Template Detail Page
+
+**Route:** `/policy-v2/templates/:id`
+
+- **Header:** Template name, source badge (Illumio Suggested / User Created), Edit button, MoreMenu (Delete)
+- **Linked Policies section:** List of guardrail policies using this template (name, enforcement points summary, clickable to navigate)
+- **Ingress Rules section:** Read-only rule table
+- **Egress Rules section:** Read-only rule table
+
+### Guardrail Policy Detail Page
+
+When viewing a guardrail policy (`policy_type === 'guardrail'`), the detail page differs from standard:
+
+- **Scope section** displays enforcement points (clusters, namespaces, labels) instead of "Who am I"
+- **Banner** above rules: "Rules managed by template: {template name}" with a link to the template detail page
+- **Ingress/Egress rule tables** are **read-only** — no Add Rule, no inline editing, no MoreMenu on rows. Rules come from the template.
+- **MoreMenu** on the policy includes "Edit Enforcement Points" but not "Edit Rules"
+
+### Convert Policy to Template
+
+A **"Convert to Template"** action in the MoreMenu of any standard policy. Flow:
+
+1. User clicks "Convert to Template" on a standard policy's MoreMenu
+2. A dialog appears:
+   - `TextInput` for template name (pre-filled with policy name + " Template")
+   - `TextArea` for description (optional)
+   - Checkbox: "Convert this policy to a guardrail referencing the new template" (default: checked)
+3. On confirm:
+   - Creates a new template with the policy's rules copied to `v2_template_rules`
+   - If checkbox is checked: updates the policy to `policy_type = 'guardrail'`, sets `template_id`, deletes the policy's `v2_rules` (now live-linked from template). The existing scope becomes enforcement points.
+   - If unchecked: only creates the template, the original policy stays as-is.
+
+### Delete Template — Guard
+
+Deleting a template that has linked guardrail policies is blocked. The delete action shows an error: "Cannot delete template — {N} policies reference it. Remove or reassign those policies first."
+
+### Seed Data
+
+**Templates:**
+
+1. **"DNS Egress Baseline"** (`illumio_suggested`)
+   - Egress rule: Entity = kube-dns service in kube-system namespace, Service = UDP/53, Action = Allow
+
+2. **"Monitoring Ingress Access"** (`illumio_suggested`)
+   - Ingress rule: Entity = any workload with `role=prometheus`, Service = TCP/9090, Action = Allow
+   - Ingress rule: Entity = any workload with `role=grafana`, Service = TCP/3000, Action = Allow
+
+3. **"Production Deny External"** (`user_created`)
+   - Egress rule: Entity = FQDN `*.external.com`, Service = All Services, Action = Deny
+
+**Guardrail Policy:**
+
+1. **"DNS Access — All Production Clusters"** (`policy_type = 'guardrail'`)
+   - Template: DNS Egress Baseline
+   - Enforcement points: clusters = [us-east-prod, eu-west-prod], namespaces = [], labels = []
+
+### Files Summary (additions for section 7)
+
+**New Files:**
+
+| File | Responsibility |
+|------|----------------|
+| `client/src/api/v2-templates.ts` | API client functions for template endpoints |
+| `client/src/pages/V2TemplateDetailPage.tsx` | Template detail page (rules, linked policies) |
+| `client/src/pages/V2TemplateCreatePage.tsx` | Template create/edit page |
+| `client/src/features/v2-rules/ConvertToTemplateDialog.tsx` | Convert policy to template dialog |
+| `server/src/routes/v2-templates.ts` | Template API routes |
+
+**Modified Files (in addition to section 1-6 changes):**
+
+| File | Changes |
+|------|---------|
+| `server/src/db/schema.sql` | Add `v2_templates` and `v2_template_rules` tables, add `policy_type` and `template_id` to `v2_policies` |
+| `server/src/db/seed.ts` | Add template and guardrail policy seed data |
+| `server/src/index.ts` | Mount template routes |
+| `client/src/app/routes.tsx` | Add template routes (`/policy-v2/templates/:id`, `/policy-v2/templates/new`, `/policy-v2/templates/:id/edit`) |
+| `client/src/pages/V2PolicyListPage.tsx` | Add Policies/Templates tab view, template table |
+| `client/src/pages/V2PolicyDetailPage.tsx` | Handle guardrail type (read-only rules, enforcement points, template banner) |
+| `client/src/pages/V2CreatePolicyPage.tsx` | Add policy type selector, guardrail mode with template picker |
+| `client/src/api/v2-policies.ts` | Add `policy_type` and `template_id` to V2Policy type |
+
+---
+
 ## Pending Items (Future Specs)
 
 ### Policy Objects Management
@@ -292,28 +491,3 @@ A separate spec is needed to add full CRUD management for Illumio Policy Objects
 ### Direction Visuals — Icons & Illustration
 
 The ingress/egress direction visual (section 6) needs icon and illustration design work. The current spec describes the conceptual layout (globe → arrow → cube for ingress, cube → arrow → globe for egress), but the specific icon style, illustration treatment, and Astryx-compatible SVG assets need to be designed. Nick shared initial ideas with two visual styles — the simpler arrow-only style was chosen. Final icon/illustration design is pending.
-
-### Guardrail Policies & Template Model
-
-A future spec is needed to explore **guardrail policies** — a template-based policy model discussed by Nick Sappa, Anand, Romain, and Kunal. This introduces several new concepts:
-
-**Core Ideas:**
-- **Template policies** — Illumio-suggested policy templates that are editable. Customers can use them as-is or customize them.
-- **Convert policy to template** — Ability to take an existing policy and save it as a reusable template.
-- **Scope-less policies (templates)** — A policy without a fixed scope that can be attached to multiple enforcement points. Think: "I have guardrail policies I want to assign to all my Production clusters."
-
-**Key Requirement — Decouple Enforcement Point from Source/Destination:**
-
-The current model ties scope (enforcement point) and rules (source/destination) together. Guardrail policies require separating:
-- **(a) Enforcement point selection** — which clusters, namespaces, and workloads the policy is enforced at
-- **(b) Source/destination selection** — the ingress/egress entity expressions in each rule, expressed as local to each cluster
-
-This decoupling allows a single policy to cover many clusters without creating one rule per cluster.
-
-**Use Cases (from Nick):**
-
-1. A K8s admin defines a policy allowing ingress from namespace `illumio-cloud` to namespace `gke-dataplane-v2` across 100 GKE clusters — as a single Illumio policy, not 100 separate rules.
-
-2. A K8s admin defines a policy allowing egress from any workload in any namespace to `kube-dns` in `kube-system` across 300 clusters — as a single policy.
-
-**Status:** Concept stage. Requires its own brainstorming and design cycle to work through the enforcement-point-vs-scope model, template CRUD, and how templates compose with the existing V2 scope-centric model.
