@@ -280,3 +280,40 @@ The icons should be simple, monochrome, approximately 20-24px, using Astryx colo
 | File | Reason |
 |------|--------|
 | `client/src/features/v2-rules/V2CreatePolicyDialog.tsx` | Replaced by V2CreatePolicyPage |
+
+---
+
+## Pending Items (Future Specs)
+
+### Policy Objects Management
+
+A separate spec is needed to add full CRUD management for Illumio Policy Objects within the prototype. Priority objects: Services, IP Lists, Label Groups, and Virtual Services. Research has been completed and saved to `docs/research/illumio-policy-objects.md`. The spec, UX design, and implementation are pending.
+
+### Direction Visuals — Icons & Illustration
+
+The ingress/egress direction visual (section 6) needs icon and illustration design work. The current spec describes the conceptual layout (globe → arrow → cube for ingress, cube → arrow → globe for egress), but the specific icon style, illustration treatment, and Astryx-compatible SVG assets need to be designed. Nick shared initial ideas with two visual styles — the simpler arrow-only style was chosen. Final icon/illustration design is pending.
+
+### Guardrail Policies & Template Model
+
+A future spec is needed to explore **guardrail policies** — a template-based policy model discussed by Nick Sappa, Anand, Romain, and Kunal. This introduces several new concepts:
+
+**Core Ideas:**
+- **Template policies** — Illumio-suggested policy templates that are editable. Customers can use them as-is or customize them.
+- **Convert policy to template** — Ability to take an existing policy and save it as a reusable template.
+- **Scope-less policies (templates)** — A policy without a fixed scope that can be attached to multiple enforcement points. Think: "I have guardrail policies I want to assign to all my Production clusters."
+
+**Key Requirement — Decouple Enforcement Point from Source/Destination:**
+
+The current model ties scope (enforcement point) and rules (source/destination) together. Guardrail policies require separating:
+- **(a) Enforcement point selection** — which clusters, namespaces, and workloads the policy is enforced at
+- **(b) Source/destination selection** — the ingress/egress entity expressions in each rule, expressed as local to each cluster
+
+This decoupling allows a single policy to cover many clusters without creating one rule per cluster.
+
+**Use Cases (from Nick):**
+
+1. A K8s admin defines a policy allowing ingress from namespace `illumio-cloud` to namespace `gke-dataplane-v2` across 100 GKE clusters — as a single Illumio policy, not 100 separate rules.
+
+2. A K8s admin defines a policy allowing egress from any workload in any namespace to `kube-dns` in `kube-system` across 300 clusters — as a single policy.
+
+**Status:** Concept stage. Requires its own brainstorming and design cycle to work through the enforcement-point-vs-scope model, template CRUD, and how templates compose with the existing V2 scope-centric model.
