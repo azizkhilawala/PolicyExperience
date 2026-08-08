@@ -155,11 +155,13 @@ CREATE TABLE IF NOT EXISTS v2_policies (
   name TEXT NOT NULL,
   description TEXT DEFAULT '',
   scope_type TEXT NOT NULL CHECK (scope_type IN ('all_workloads', 'labels', 'k8s')),
-  scope_cluster_id TEXT REFERENCES k8s_clusters(id),
-  scope_namespace_id TEXT REFERENCES k8s_namespaces(id),
+  scope_cluster_ids TEXT NOT NULL DEFAULT '[]',
+  scope_namespace_ids TEXT NOT NULL DEFAULT '[]',
   scope_labels TEXT NOT NULL DEFAULT '[]',
   enabled INTEGER NOT NULL DEFAULT 1,
   provision_status TEXT NOT NULL DEFAULT 'draft' CHECK (provision_status IN ('draft', 'provisioned')),
+  policy_type TEXT NOT NULL DEFAULT 'standard' CHECK (policy_type IN ('standard', 'guardrail')),
+  template_id TEXT,
   created_by TEXT NOT NULL REFERENCES users(id),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -171,9 +173,31 @@ CREATE TABLE IF NOT EXISTS v2_rules (
   direction TEXT NOT NULL CHECK (direction IN ('ingress', 'egress')),
   entity TEXT NOT NULL DEFAULT '[]',
   services TEXT NOT NULL DEFAULT '[]',
-  action TEXT NOT NULL DEFAULT 'allow' CHECK (action IN ('allow', 'deny')),
+  action TEXT NOT NULL DEFAULT 'allow' CHECK (action IN ('allow', 'deny', 'override_deny')),
   enabled INTEGER NOT NULL DEFAULT 1,
   provision_status TEXT NOT NULL DEFAULT 'draft' CHECK (provision_status IN ('draft', 'provisioned')),
+  position INTEGER NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS v2_templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'user_created' CHECK (source IN ('illumio_suggested', 'user_created')),
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS v2_template_rules (
+  id TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES v2_templates(id) ON DELETE CASCADE,
+  direction TEXT NOT NULL CHECK (direction IN ('ingress', 'egress')),
+  entity TEXT NOT NULL DEFAULT '[]',
+  services TEXT NOT NULL DEFAULT '[]',
+  action TEXT NOT NULL DEFAULT 'allow' CHECK (action IN ('allow', 'deny', 'override_deny')),
+  enabled INTEGER NOT NULL DEFAULT 1,
   position INTEGER NOT NULL DEFAULT 0,
   notes TEXT DEFAULT ''
 );

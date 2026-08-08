@@ -26,6 +26,8 @@ import type { K8sCluster, K8sNamespace } from '../api/policies.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { V2RuleTable } from '../features/v2-rules/V2RuleTable.js';
+import { DirectionVisual } from '../features/v2-rules/DirectionVisual.js';
+import { ConvertToTemplateDialog } from '../features/v2-rules/ConvertToTemplateDialog.js';
 
 export default function V2PolicyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +38,7 @@ export default function V2PolicyDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [clusters, setClusters] = useState<K8sCluster[]>([]);
   const [namespaces, setNamespaces] = useState<K8sNamespace[]>([]);
+  const [convertToTemplateOpen, setConvertToTemplateOpen] = useState(false);
 
   // Fetch clusters and namespaces for name resolution
   useEffect(() => {
@@ -45,11 +48,11 @@ export default function V2PolicyDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (!policy?.scope_cluster_id) return;
-    fetchNamespaces(policy.scope_cluster_id)
+    if (!policy?.scope_cluster_ids?.length) return;
+    fetchNamespaces(policy.scope_cluster_ids)
       .then(setNamespaces)
       .catch(() => {});
-  }, [policy?.scope_cluster_id]);
+  }, [policy?.scope_cluster_ids]);
 
   if (loading) {
     return (
@@ -71,15 +74,11 @@ export default function V2PolicyDetailPage() {
     );
   }
 
-  const clusterName =
-    policy.scope_cluster_id
-      ? (clusters.find((c) => c.id === policy.scope_cluster_id)?.name ?? policy.scope_cluster_id)
-      : null;
+  const clusterNames = (policy.scope_cluster_ids ?? [])
+    .map((id) => clusters.find((c) => c.id === id)?.name ?? id);
 
-  const namespaceName =
-    policy.scope_namespace_id
-      ? (namespaces.find((n) => n.id === policy.scope_namespace_id)?.name ?? policy.scope_namespace_id)
-      : null;
+  const namespaceNames = (policy.scope_namespace_ids ?? [])
+    .map((id) => namespaces.find((n) => n.id === id)?.name ?? id);
 
   const ingressRules = (policy.rules ?? []).filter((r) => r.direction === 'ingress');
   const egressRules = (policy.rules ?? []).filter((r) => r.direction === 'egress');
@@ -153,6 +152,15 @@ export default function V2PolicyDetailPage() {
                 label: policy.enabled ? 'Disable' : 'Enable',
                 onClick: handleEnable,
               },
+              ...(policy.policy_type === 'standard'
+                ? [
+                    { type: 'divider' as const },
+                    {
+                      label: 'Convert to Template',
+                      onClick: () => setConvertToTemplateOpen(true),
+                    },
+                  ]
+                : []),
               { type: 'divider' as const },
               {
                 label: 'Delete',
@@ -164,18 +172,28 @@ export default function V2PolicyDetailPage() {
       </HStack>
 
       {/* Zone 2: Scope Display */}
-      <Heading level={2}>Scope (Who am I)</Heading>
+      <Heading level={2}>
+        {policy.policy_type === 'guardrail' ? 'Enforcement Points' : 'Scope (Who am I)'}
+      </Heading>
 
       {policy.scope_type === 'k8s' ? (
         <MetadataList columns="multi">
-          {clusterName && (
-            <MetadataListItem label="Cluster">
-              <Text>{clusterName}</Text>
+          {clusterNames.length > 0 && (
+            <MetadataListItem label="Clusters">
+              <HStack gap={0.5} wrap="wrap">
+                {clusterNames.map((name) => (
+                  <Token key={name} label={name} color="teal" size="sm" />
+                ))}
+              </HStack>
             </MetadataListItem>
           )}
-          {namespaceName && (
-            <MetadataListItem label="Namespace">
-              <Text>{namespaceName}</Text>
+          {namespaceNames.length > 0 && (
+            <MetadataListItem label="Namespaces">
+              <HStack gap={0.5} wrap="wrap">
+                {namespaceNames.map((name) => (
+                  <Token key={name} label={name} color="cyan" size="sm" />
+                ))}
+              </HStack>
             </MetadataListItem>
           )}
           {policy.scope_labels && policy.scope_labels.length > 0 && (
@@ -207,14 +225,26 @@ export default function V2PolicyDetailPage() {
 
       <Divider />
 
+      {/* Guardrail banner */}
+      {policy.policy_type === 'guardrail' && (
+        <Banner
+          status="info"
+          title={`Rules managed by template: ${policy.template_name ?? policy.template_id ?? 'unknown'}`}
+        />
+      )}
+
       {/* Zone 3: Ingress Rules Section */}
       <VStack gap={3}>
-        <Heading level={2}>Ingress Rules (Who can talk to me)</Heading>
+        <HStack gap={2} vAlign="center">
+          <Heading level={2}>Ingress Rules (Who can talk to me)</Heading>
+          <DirectionVisual direction="ingress" />
+        </HStack>
         <V2RuleTable
           policyId={policy.id}
           direction="ingress"
           rules={ingressRules}
           onRulesChanged={refetch}
+          readOnly={policy.policy_type === 'guardrail'}
         />
       </VStack>
 
@@ -222,14 +252,27 @@ export default function V2PolicyDetailPage() {
 
       {/* Zone 3: Egress Rules Section */}
       <VStack gap={3}>
-        <Heading level={2}>Egress Rules (Who can I talk to)</Heading>
+        <HStack gap={2} vAlign="center">
+          <Heading level={2}>Egress Rules (Who can I talk to)</Heading>
+          <DirectionVisual direction="egress" />
+        </HStack>
         <V2RuleTable
           policyId={policy.id}
           direction="egress"
           rules={egressRules}
           onRulesChanged={refetch}
+          readOnly={policy.policy_type === 'guardrail'}
         />
       </VStack>
+
+      {policy.policy_type === 'standard' && (
+        <ConvertToTemplateDialog
+          isOpen={convertToTemplateOpen}
+          onClose={() => setConvertToTemplateOpen(false)}
+          policy={policy}
+          onConverted={refetch}
+        />
+      )}
     </VStack>
   );
 }

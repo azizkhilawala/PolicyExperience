@@ -96,6 +96,12 @@ const V2_POLICY_PAYMENTS = 'v2-policy-payments-frontend-0001';
 const V2_POLICY_MONITORING = 'v2-policy-monitoring-stack-0002';
 const V2_POLICY_BACKEND = 'v2-policy-backend-deny-0003';
 
+// V2 Templates
+const V2_TPL_DNS = 'v2-tpl-dns-egress-baseline-0001';
+const V2_TPL_MONITORING = 'v2-tpl-monitoring-ingress-0002';
+const V2_TPL_PROD_DENY = 'v2-tpl-prod-deny-external-0003';
+const V2_POLICY_DNS_GUARDRAIL = 'v2-policy-dns-guardrail-0004';
+
 // Policies
 const POLICY_HRM = 'policy-hrm-prod-access-0001';
 const POLICY_ERP = 'policy-erp-db-access-0002';
@@ -115,7 +121,9 @@ const seed = db.transaction(() => {
     DELETE FROM rules;
     DELETE FROM policies;
     DELETE FROM v2_rules;
+    DELETE FROM v2_template_rules;
     DELETE FROM v2_policies;
+    DELETE FROM v2_templates;
     DELETE FROM workloads;
     DELETE FROM k8s_namespaces;
     DELETE FROM k8s_clusters;
@@ -604,35 +612,35 @@ const seed = db.transaction(() => {
   // ── V2 Policies (scope-centric) ──────────────────────────────────────────
   const insertV2Policy = db.prepare(`
     INSERT INTO v2_policies
-      (id, name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels, enabled, provision_status, created_by, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, name, description, scope_type, scope_cluster_ids, scope_namespace_ids, scope_labels, enabled, provision_status, policy_type, template_id, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   insertV2Policy.run(
     V2_POLICY_PAYMENTS,
     'Payments Frontend Access',
     'Controls ingress/egress for the payments frontend scope',
-    'k8s', CLUSTER_USEAST, NS_PAYMENTS,
+    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_PAYMENTS]),
     JSON.stringify([{ key: 'app', value: 'frontend' }]),
-    1, 'draft', USER_ALEX, now, now
+    1, 'draft', 'standard', null, USER_ALEX, now, now
   );
 
   insertV2Policy.run(
     V2_POLICY_MONITORING,
     'Monitoring Stack',
     'Monitoring scope for API role workloads',
-    'k8s', CLUSTER_USEAST, NS_MONITORING,
+    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_MONITORING]),
     JSON.stringify([{ key: 'role', value: 'api' }]),
-    1, 'draft', USER_ALEX, now, now
+    1, 'draft', 'standard', null, USER_ALEX, now, now
   );
 
   insertV2Policy.run(
     V2_POLICY_BACKEND,
     'Backend Services Deny',
     'Deny non-production access to backend services',
-    'k8s', CLUSTER_USEAST, NS_BACKEND,
+    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_BACKEND]),
     JSON.stringify([{ key: 'tier', value: 'web' }, { key: 'env', value: 'production' }]),
-    1, 'provisioned', USER_MORGAN, now, now
+    1, 'provisioned', 'standard', null, USER_MORGAN, now, now
   );
 
   // ── V2 Rules ─────────────────────────────────────────────────────────────
@@ -721,6 +729,57 @@ const seed = db.transaction(() => {
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
     'allow', 1, 'provisioned', 0, ''
   );
+
+  // ── V2 Templates ─────────────────────────────────────────────────────────
+  const insertV2Template = db.prepare(`
+    INSERT INTO v2_templates (id, name, description, source, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  insertV2Template.run(V2_TPL_DNS, 'DNS Egress Baseline', 'Allows DNS egress to kube-dns in kube-system', 'illumio_suggested', USER_ALEX, now, now);
+  insertV2Template.run(V2_TPL_MONITORING, 'Monitoring Ingress Access', 'Allows Prometheus and Grafana scraping', 'illumio_suggested', USER_ALEX, now, now);
+  insertV2Template.run(V2_TPL_PROD_DENY, 'Production Deny External', 'Denies egress to external domains', 'user_created', USER_MORGAN, now, now);
+
+  const insertV2TemplateRule = db.prepare(`
+    INSERT INTO v2_template_rules (id, template_id, direction, entity, services, action, enabled, position, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // DNS Egress Baseline — 1 egress rule
+  insertV2TemplateRule.run(uuid(), V2_TPL_DNS, 'egress',
+    JSON.stringify([{ field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'kube-dns' } }]),
+    JSON.stringify([{ type: 'port', protocol: 'UDP', port: '53' }]),
+    'allow', 1, 0, ''
+  );
+
+  // Monitoring Ingress Access — 2 ingress rules
+  insertV2TemplateRule.run(uuid(), V2_TPL_MONITORING, 'ingress',
+    JSON.stringify([{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'prometheus' } }]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '9090' }]),
+    'allow', 1, 0, ''
+  );
+  insertV2TemplateRule.run(uuid(), V2_TPL_MONITORING, 'ingress',
+    JSON.stringify([{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'grafana' } }]),
+    JSON.stringify([{ type: 'port', protocol: 'TCP', port: '3000' }]),
+    'allow', 1, 1, ''
+  );
+
+  // Production Deny External — 1 egress rule
+  insertV2TemplateRule.run(uuid(), V2_TPL_PROD_DENY, 'egress',
+    JSON.stringify([{ field: 'fqdn', operator: 'matches', value: { type: 'enum', value: '*.external.com' } }]),
+    JSON.stringify([{ type: 'named', name: 'All Services' }]),
+    'deny', 1, 0, ''
+  );
+
+  // Guardrail Policy: DNS Access — All Production Clusters
+  insertV2Policy.run(
+    V2_POLICY_DNS_GUARDRAIL,
+    'DNS Access — All Production Clusters',
+    'Guardrail: DNS egress across production clusters',
+    'k8s', JSON.stringify([CLUSTER_USEAST, CLUSTER_EUWEST]), JSON.stringify([]),
+    JSON.stringify([]),
+    1, 'draft', 'guardrail', V2_TPL_DNS, USER_ALEX, now, now
+  );
 });
 
 // Run the transaction
@@ -747,3 +806,5 @@ console.log('  cloud_vpcs:', (db2.prepare('SELECT count(*) as c FROM cloud_vpcs'
 console.log('  cloud_subnets:', (db2.prepare('SELECT count(*) as c FROM cloud_subnets').get() as { c: number }).c);
 console.log('  v2_policies:', (db2.prepare('SELECT count(*) as c FROM v2_policies').get() as { c: number }).c);
 console.log('  v2_rules:', (db2.prepare('SELECT count(*) as c FROM v2_rules').get() as { c: number }).c);
+console.log('  v2_templates:', (db2.prepare('SELECT count(*) as c FROM v2_templates').get() as { c: number }).c);
+console.log('  v2_template_rules:', (db2.prepare('SELECT count(*) as c FROM v2_template_rules').get() as { c: number }).c);
