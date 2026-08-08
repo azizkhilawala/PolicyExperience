@@ -69,8 +69,13 @@ export function fetchClusters() {
   return apiFetch<K8sCluster[]>('/api/k8s/clusters');
 }
 
-export function fetchNamespaces(clusterId?: string) {
-  const query = clusterId ? `?cluster_id=${clusterId}` : '';
+export function fetchNamespaces(clusterIdOrIds?: string | string[]) {
+  let query = '';
+  if (Array.isArray(clusterIdOrIds)) {
+    query = clusterIdOrIds.length > 0 ? `?cluster_ids=${clusterIdOrIds.join(',')}` : '';
+  } else if (clusterIdOrIds) {
+    query = `?cluster_id=${clusterIdOrIds}`;
+  }
   return apiFetch<K8sNamespace[]>(`/api/k8s/namespaces${query}`);
 }
 

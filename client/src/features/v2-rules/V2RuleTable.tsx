@@ -32,7 +32,7 @@ interface V2RuleTableProps {
 interface EditDraft {
   entity: EndpointFilter[];
   services: V2RuleService[];
-  action: 'allow' | 'deny';
+  action: 'allow' | 'deny' | 'override_deny';
 }
 
 type V2RuleRow = V2Rule & Record<string, unknown>;
@@ -40,6 +40,7 @@ type V2RuleRow = V2Rule & Record<string, unknown>;
 const actionOptions: SelectorOptionData[] = [
   { value: 'allow', label: 'Allow' },
   { value: 'deny', label: 'Deny' },
+  { value: 'override_deny', label: 'Override Deny' },
 ];
 
 function renderEntityTokens(filters: EndpointFilter[]) {
@@ -223,12 +224,12 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
                 options={actionOptions}
                 value={editDraft.action}
                 onChange={(v: string) => setEditDraft((prev) =>
-                  prev ? { ...prev, action: v as 'allow' | 'deny' } : prev
+                  prev ? { ...prev, action: v as 'allow' | 'deny' | 'override_deny' } : prev
                 )}
               />
             );
           }
-          return <ActionToken action={row.action as 'allow' | 'deny'} />;
+          return <ActionToken action={row.action as 'allow' | 'deny' | 'override_deny'} />;
         },
       },
       {

@@ -43,14 +43,14 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
 
   // k8s scope
   const tokens: ReactNode[] = [];
-  if (policy.scope_cluster_id) {
+  for (const id of (policy.scope_cluster_ids ?? [])) {
     tokens.push(
-      <Token key="cluster" label={`Cluster: ${policy.scope_cluster_id}`} color="teal" size="sm" />
+      <Token key={`cluster-${id}`} label={`Cluster: ${id}`} color="teal" size="sm" />
     );
   }
-  if (policy.scope_namespace_id) {
+  for (const id of (policy.scope_namespace_ids ?? [])) {
     tokens.push(
-      <Token key="ns" label={`NS: ${policy.scope_namespace_id}`} color="cyan" size="sm" />
+      <Token key={`ns-${id}`} label={`NS: ${id}`} color="cyan" size="sm" />
     );
   }
   for (const l of policy.scope_labels) {

@@ -45,11 +45,11 @@ export default function V2PolicyDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (!policy?.scope_cluster_id) return;
-    fetchNamespaces(policy.scope_cluster_id)
+    if (!policy?.scope_cluster_ids?.length) return;
+    fetchNamespaces(policy.scope_cluster_ids)
       .then(setNamespaces)
       .catch(() => {});
-  }, [policy?.scope_cluster_id]);
+  }, [policy?.scope_cluster_ids]);
 
   if (loading) {
     return (
@@ -71,15 +71,11 @@ export default function V2PolicyDetailPage() {
     );
   }
 
-  const clusterName =
-    policy.scope_cluster_id
-      ? (clusters.find((c) => c.id === policy.scope_cluster_id)?.name ?? policy.scope_cluster_id)
-      : null;
+  const clusterNames = (policy.scope_cluster_ids ?? [])
+    .map((id) => clusters.find((c) => c.id === id)?.name ?? id);
 
-  const namespaceName =
-    policy.scope_namespace_id
-      ? (namespaces.find((n) => n.id === policy.scope_namespace_id)?.name ?? policy.scope_namespace_id)
-      : null;
+  const namespaceNames = (policy.scope_namespace_ids ?? [])
+    .map((id) => namespaces.find((n) => n.id === id)?.name ?? id);
 
   const ingressRules = (policy.rules ?? []).filter((r) => r.direction === 'ingress');
   const egressRules = (policy.rules ?? []).filter((r) => r.direction === 'egress');
@@ -168,14 +164,22 @@ export default function V2PolicyDetailPage() {
 
       {policy.scope_type === 'k8s' ? (
         <MetadataList columns="multi">
-          {clusterName && (
-            <MetadataListItem label="Cluster">
-              <Text>{clusterName}</Text>
+          {clusterNames.length > 0 && (
+            <MetadataListItem label="Clusters">
+              <HStack gap={0.5} wrap="wrap">
+                {clusterNames.map((name) => (
+                  <Token key={name} label={name} color="teal" size="sm" />
+                ))}
+              </HStack>
             </MetadataListItem>
           )}
-          {namespaceName && (
-            <MetadataListItem label="Namespace">
-              <Text>{namespaceName}</Text>
+          {namespaceNames.length > 0 && (
+            <MetadataListItem label="Namespaces">
+              <HStack gap={0.5} wrap="wrap">
+                {namespaceNames.map((name) => (
+                  <Token key={name} label={name} color="cyan" size="sm" />
+                ))}
+              </HStack>
             </MetadataListItem>
           )}
           {policy.scope_labels && policy.scope_labels.length > 0 && (

@@ -11,7 +11,7 @@ export interface V2Rule {
   direction: 'ingress' | 'egress';
   entity: EndpointFilter[];
   services: V2RuleService[];
-  action: 'allow' | 'deny';
+  action: 'allow' | 'deny' | 'override_deny';
   enabled: number;
   provision_status: 'draft' | 'provisioned';
   position: number;
@@ -23,11 +23,13 @@ export interface V2Policy {
   name: string;
   description: string;
   scope_type: 'all_workloads' | 'labels' | 'k8s';
-  scope_cluster_id: string | null;
-  scope_namespace_id: string | null;
+  scope_cluster_ids: string[];
+  scope_namespace_ids: string[];
   scope_labels: Array<{ key: string; value: string }>;
   enabled: number;
   provision_status: 'draft' | 'provisioned';
+  policy_type: 'standard' | 'guardrail';
+  template_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -46,9 +48,11 @@ export function createV2Policy(data: {
   name: string;
   description?: string;
   scope_type: V2Policy['scope_type'];
-  scope_cluster_id?: string;
-  scope_namespace_id?: string;
+  scope_cluster_ids?: string[];
+  scope_namespace_ids?: string[];
   scope_labels?: Array<{ key: string; value: string }>;
+  policy_type?: 'standard' | 'guardrail';
+  template_id?: string;
 }) {
   return apiFetch<V2Policy>('/api/v2/policies', {
     method: 'POST',
@@ -80,7 +84,7 @@ export function createV2Rule(policyId: string, data: {
   direction: 'ingress' | 'egress';
   entity?: EndpointFilter[];
   services?: V2RuleService[];
-  action?: 'allow' | 'deny';
+  action?: 'allow' | 'deny' | 'override_deny';
 }) {
   return apiFetch<V2Rule>(`/api/v2/policies/${policyId}/rules`, {
     method: 'POST',
@@ -91,7 +95,7 @@ export function createV2Rule(policyId: string, data: {
 export function updateV2Rule(ruleId: string, data: Partial<{
   entity: EndpointFilter[];
   services: V2RuleService[];
-  action: 'allow' | 'deny';
+  action: 'allow' | 'deny' | 'override_deny';
   enabled: boolean;
   notes: string;
 }>) {

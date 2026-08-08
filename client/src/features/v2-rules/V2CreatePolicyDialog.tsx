@@ -121,8 +121,8 @@ export function V2CreatePolicyDialog({ isOpen, onClose, onCreated }: V2CreatePol
         name: name.trim(),
         description: description.trim(),
         scope_type: scopeType as V2Policy['scope_type'],
-        scope_cluster_id: scopeType === 'k8s' ? selectedCluster : undefined,
-        scope_namespace_id: scopeType === 'k8s' ? selectedNamespace : undefined,
+        scope_cluster_ids: scopeType === 'k8s' && selectedCluster ? [selectedCluster] : undefined,
+        scope_namespace_ids: scopeType === 'k8s' && selectedNamespace ? [selectedNamespace] : undefined,
         scope_labels: scopeType === 'k8s' ? scopeLabels : [],
       });
       resetForm();
