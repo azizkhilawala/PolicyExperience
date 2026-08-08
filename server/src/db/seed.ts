@@ -71,6 +71,13 @@ const VS_PAYMENT_API = 'vs-payment-api-0001';
 const VS_INTERNAL_DNS = 'vs-internal-dns-0002';
 const VS_METRICS = 'vs-metrics-endpoint-0003';
 
+// Services
+const SVC_HTTPS = 'svc-https-443-tcp-0001';
+const SVC_HTTP = 'svc-http-80-tcp-0002';
+const SVC_DNS = 'svc-dns-53-udp-0003';
+const SVC_SSH = 'svc-ssh-22-tcp-0004';
+const SVC_PG = 'svc-postgres-5432-tcp-0005';
+
 // Cloud accounts
 const CA_AWS_PROD = 'ca-aws-prod-0001';
 const CA_AWS_STAGING = 'ca-aws-staging-0002';
@@ -113,6 +120,8 @@ const POLICY_PAYMENT = 'policy-payment-gw-0005';
 
 const db = getDb();
 
+const now = '2026-07-28T10:00:00Z';
+
 const seed = db.transaction(() => {
   // Clear all tables in reverse FK order
   db.exec(`
@@ -131,6 +140,7 @@ const seed = db.transaction(() => {
     DELETE FROM cloud_vpcs;
     DELETE FROM cloud_accounts;
     DELETE FROM virtual_services;
+    DELETE FROM services;
     DELETE FROM user_groups;
     DELETE FROM ip_lists;
     DELETE FROM label_groups;
@@ -174,21 +184,21 @@ const seed = db.transaction(() => {
 
   // ── Label Groups ───────────────────────────────────────────────────────────
   const insertLabelGroup = db.prepare(
-    'INSERT INTO label_groups (id, name, label_ids) VALUES (?, ?, ?)'
+    'INSERT INTO label_groups (id, name, label_ids, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
   );
-  insertLabelGroup.run(LG_WEB_TIER, 'Web Tier', JSON.stringify([LBL_ROLE_WEB, LBL_ROLE_LB]));
-  insertLabelGroup.run(LG_DB_TIER, 'Database Tier', JSON.stringify([LBL_ROLE_DB, LBL_ROLE_CACHE]));
-  insertLabelGroup.run(LG_PROD_APPS, 'Production Apps', JSON.stringify([LBL_APP_HRM, LBL_APP_ERP, LBL_APP_PAYMENT]));
+  insertLabelGroup.run(LG_WEB_TIER, 'Web Tier', JSON.stringify([LBL_ROLE_WEB, LBL_ROLE_LB]), USER_ALEX, now, now);
+  insertLabelGroup.run(LG_DB_TIER, 'Database Tier', JSON.stringify([LBL_ROLE_DB, LBL_ROLE_CACHE]), USER_ALEX, now, now);
+  insertLabelGroup.run(LG_PROD_APPS, 'Production Apps', JSON.stringify([LBL_APP_HRM, LBL_APP_ERP, LBL_APP_PAYMENT]), USER_ALEX, now, now);
 
   // ── IP Lists ───────────────────────────────────────────────────────────────
   const insertIpList = db.prepare(
-    'INSERT INTO ip_lists (id, name, cidr, description) VALUES (?, ?, ?, ?)'
+    'INSERT INTO ip_lists (id, name, cidr, description, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
-  insertIpList.run(IPL_CORPORATE, 'Corporate Network', '10.0.0.0/8', '');
-  insertIpList.run(IPL_VPN, 'VPN Gateway', '172.16.0.0/12', '');
-  insertIpList.run(IPL_CDN, 'Public CDN', '203.0.113.0/24', '');
-  insertIpList.run(IPL_PAYMENT, 'Payment Processor Network', '192.168.1.0/24', '');
-  insertIpList.run(IPL_MONITORING, 'Monitoring Subnet', '10.100.0.0/16', '');
+  insertIpList.run(IPL_CORPORATE, 'Corporate Network', '10.0.0.0/8', '', USER_ALEX, now, now);
+  insertIpList.run(IPL_VPN, 'VPN Gateway', '172.16.0.0/12', '', USER_ALEX, now, now);
+  insertIpList.run(IPL_CDN, 'Public CDN', '203.0.113.0/24', '', USER_ALEX, now, now);
+  insertIpList.run(IPL_PAYMENT, 'Payment Processor Network', '192.168.1.0/24', '', USER_ALEX, now, now);
+  insertIpList.run(IPL_MONITORING, 'Monitoring Subnet', '10.100.0.0/16', '', USER_ALEX, now, now);
 
   // ── User Groups ────────────────────────────────────────────────────────────
   const insertUserGroup = db.prepare(
@@ -201,11 +211,21 @@ const seed = db.transaction(() => {
 
   // ── Virtual Services ───────────────────────────────────────────────────────
   const insertVirtualService = db.prepare(
-    'INSERT INTO virtual_services (id, name, port, protocol) VALUES (?, ?, ?, ?)'
+    'INSERT INTO virtual_services (id, name, port, protocol, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
-  insertVirtualService.run(VS_PAYMENT_API, 'Payment API', 443, 'TCP');
-  insertVirtualService.run(VS_INTERNAL_DNS, 'Internal DNS', 53, 'UDP');
-  insertVirtualService.run(VS_METRICS, 'Metrics Endpoint', 9090, 'TCP');
+  insertVirtualService.run(VS_PAYMENT_API, 'Payment API', 443, 'TCP', USER_ALEX, now, now);
+  insertVirtualService.run(VS_INTERNAL_DNS, 'Internal DNS', 53, 'UDP', USER_ALEX, now, now);
+  insertVirtualService.run(VS_METRICS, 'Metrics Endpoint', 9090, 'TCP', USER_ALEX, now, now);
+
+  // ── Services ──────────────────────────────────────────────────────────────
+  const insertService = db.prepare(
+    'INSERT INTO services (id, name, description, port, to_port, protocol, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  insertService.run(SVC_HTTPS, 'HTTPS', 'Secure HTTP over TLS', 443, null, 'TCP', USER_ALEX, now, now);
+  insertService.run(SVC_HTTP, 'HTTP', 'Standard HTTP traffic', 80, null, 'TCP', USER_ALEX, now, now);
+  insertService.run(SVC_DNS, 'DNS', 'Domain name resolution', 53, null, 'UDP', USER_ALEX, now, now);
+  insertService.run(SVC_SSH, 'SSH', 'Secure shell access', 22, null, 'TCP', USER_ALEX, now, now);
+  insertService.run(SVC_PG, 'PostgreSQL', 'PostgreSQL database', 5432, null, 'TCP', USER_ALEX, now, now);
 
   // ── Cloud Accounts ─────────────────────────────────────────────────────────
   const insertCloudAccount = db.prepare(
@@ -402,8 +422,6 @@ const seed = db.transaction(() => {
       (id, name, description, type, scope, enabled, provision_status, is_locked, locked_by, locked_at, created_by, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-
-  const now = '2026-07-28T10:00:00Z';
 
   // Policy 1: HRM Production Access
   insertPolicy.run(
@@ -801,6 +819,7 @@ console.log('  label_groups:', (db2.prepare('SELECT count(*) as c FROM label_gro
 console.log('  ip_lists:', (db2.prepare('SELECT count(*) as c FROM ip_lists').get() as { c: number }).c);
 console.log('  user_groups:', (db2.prepare('SELECT count(*) as c FROM user_groups').get() as { c: number }).c);
 console.log('  virtual_services:', (db2.prepare('SELECT count(*) as c FROM virtual_services').get() as { c: number }).c);
+console.log('  services:', (db2.prepare('SELECT count(*) as c FROM services').get() as { c: number }).c);
 console.log('  cloud_accounts:', (db2.prepare('SELECT count(*) as c FROM cloud_accounts').get() as { c: number }).c);
 console.log('  cloud_vpcs:', (db2.prepare('SELECT count(*) as c FROM cloud_vpcs').get() as { c: number }).c);
 console.log('  cloud_subnets:', (db2.prepare('SELECT count(*) as c FROM cloud_subnets').get() as { c: number }).c);

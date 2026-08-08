@@ -16,7 +16,10 @@ CREATE TABLE IF NOT EXISTS labels (
 CREATE TABLE IF NOT EXISTS label_groups (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  label_ids TEXT NOT NULL DEFAULT '[]'
+  label_ids TEXT NOT NULL DEFAULT '[]',
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z',
+  updated_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z'
 );
 
 CREATE TABLE IF NOT EXISTS k8s_clusters (
@@ -36,7 +39,10 @@ CREATE TABLE IF NOT EXISTS ip_lists (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   cidr TEXT NOT NULL,
-  description TEXT DEFAULT ''
+  description TEXT DEFAULT '',
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z',
+  updated_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z'
 );
 
 CREATE TABLE IF NOT EXISTS user_groups (
@@ -49,7 +55,22 @@ CREATE TABLE IF NOT EXISTS virtual_services (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   port INTEGER NOT NULL,
-  protocol TEXT NOT NULL DEFAULT 'TCP'
+  protocol TEXT NOT NULL DEFAULT 'TCP',
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z',
+  updated_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z'
+);
+
+CREATE TABLE IF NOT EXISTS services (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  port INTEGER NOT NULL,
+  to_port INTEGER,
+  protocol TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS cloud_accounts (
