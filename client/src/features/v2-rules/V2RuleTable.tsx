@@ -10,6 +10,7 @@ import { Button } from '@astryxdesign/core/Button';
 import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { Selector } from '@astryxdesign/core/Selector';
 import type { SelectorOptionData } from '@astryxdesign/core/Selector';
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Banner } from '@astryxdesign/core/Banner';
@@ -22,11 +23,24 @@ import { ActionToken } from '../rules/ActionToken.js';
 import { V2EntityEditor } from './V2EntityEditor.js';
 import { V2ServiceEditor } from './V2ServiceEditor.js';
 
+export interface DraftRule {
+  tempId: string;
+  direction: 'ingress' | 'egress';
+  entity: EndpointFilter[];
+  services: V2RuleService[];
+  action: 'allow' | 'deny' | 'override_deny';
+  enabled: number;
+}
+
 interface V2RuleTableProps {
   policyId: string;
   direction: 'ingress' | 'egress';
   rules: V2Rule[];
   onRulesChanged: () => void;
+  draftMode?: boolean;
+  draftRules?: DraftRule[];
+  onDraftRulesChange?: (rules: DraftRule[]) => void;
+  readOnly?: boolean;
 }
 
 interface EditDraft {
@@ -35,7 +49,7 @@ interface EditDraft {
   action: 'allow' | 'deny' | 'override_deny';
 }
 
-type V2RuleRow = V2Rule & Record<string, unknown>;
+type V2RuleRow = (V2Rule | (DraftRule & { id: string })) & Record<string, unknown>;
 
 const actionOptions: SelectorOptionData[] = [
   { value: 'allow', label: 'Allow' },
@@ -70,14 +84,41 @@ function renderServiceTokens(services: V2RuleService[]) {
   );
 }
 
-export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2RuleTableProps) {
+export function V2RuleTable({
+  policyId,
+  direction,
+  rules,
+  onRulesChanged,
+  draftMode = false,
+  draftRules,
+  onDraftRulesChange,
+  readOnly = false,
+}: V2RuleTableProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
   const [newRuleMode, setNewRuleMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [filterAction, setFilterAction] = useState<string>('all');
 
   const handleAddRule = useCallback(async () => {
+    if (draftMode) {
+      const tempId = crypto.randomUUID();
+      const newDraft: DraftRule = {
+        tempId,
+        direction,
+        entity: [],
+        services: [],
+        action: 'allow',
+        enabled: 1,
+      };
+      onDraftRulesChange?.([...(draftRules ?? []), newDraft]);
+      setEditingId(tempId);
+      setEditDraft({ entity: [], services: [], action: 'allow' });
+      setNewRuleMode(true);
+      return;
+    }
+
     try {
       const newRule = await createV2Rule(policyId, {
         direction,
@@ -92,7 +133,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
     } catch (e) {
       setMutationError(e instanceof Error ? e.message : 'Failed to add rule');
     }
-  }, [policyId, direction, onRulesChanged]);
+  }, [policyId, direction, onRulesChanged, draftMode, draftRules, onDraftRulesChange]);
 
   const handleStartEdit = useCallback((rule: V2Rule) => {
     setEditingId(rule.id);
@@ -106,6 +147,20 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingId || !editDraft) return;
+
+    if (draftMode) {
+      const updatedRules = (draftRules ?? []).map((r) =>
+        r.tempId === editingId
+          ? { ...r, entity: editDraft.entity, services: editDraft.services, action: editDraft.action }
+          : r
+      );
+      onDraftRulesChange?.(updatedRules);
+      setEditingId(null);
+      setEditDraft(null);
+      setNewRuleMode(false);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateV2Rule(editingId, {
@@ -122,9 +177,19 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
     } finally {
       setIsSaving(false);
     }
-  }, [editingId, editDraft, onRulesChanged]);
+  }, [editingId, editDraft, draftMode, draftRules, onDraftRulesChange, onRulesChanged]);
 
   const handleCancelEdit = useCallback(async () => {
+    if (draftMode) {
+      if (newRuleMode && editingId) {
+        onDraftRulesChange?.((draftRules ?? []).filter((r) => r.tempId !== editingId));
+      }
+      setEditingId(null);
+      setEditDraft(null);
+      setNewRuleMode(false);
+      return;
+    }
+
     if (newRuleMode && editingId) {
       const rule = rules.find((r) => r.id === editingId);
       const isEmpty =
@@ -139,10 +204,14 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
     setEditingId(null);
     setEditDraft(null);
     setNewRuleMode(false);
-  }, [newRuleMode, editingId, rules, onRulesChanged]);
+  }, [newRuleMode, editingId, rules, onRulesChanged, draftMode, draftRules, onDraftRulesChange]);
 
   const handleDelete = useCallback(
     async (ruleId: string) => {
+      if (draftMode) {
+        onDraftRulesChange?.((draftRules ?? []).filter((r) => r.tempId !== ruleId));
+        return;
+      }
       try {
         await deleteV2Rule(ruleId);
         onRulesChanged();
@@ -150,11 +219,18 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         setMutationError(e instanceof Error ? e.message : 'Failed to delete rule');
       }
     },
-    [onRulesChanged]
+    [onRulesChanged, draftMode, draftRules, onDraftRulesChange]
   );
 
   const handleToggleEnabled = useCallback(
     async (ruleId: string, currentEnabled: number) => {
+      if (draftMode) {
+        const updatedRules = (draftRules ?? []).map((r) =>
+          r.tempId === ruleId ? { ...r, enabled: currentEnabled ? 0 : 1 } : r
+        );
+        onDraftRulesChange?.(updatedRules);
+        return;
+      }
       try {
         await updateV2Rule(ruleId, { enabled: !currentEnabled });
         onRulesChanged();
@@ -162,7 +238,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         setMutationError(e instanceof Error ? e.message : 'Failed to update rule');
       }
     },
-    [onRulesChanged]
+    [onRulesChanged, draftMode, draftRules, onDraftRulesChange]
   );
 
   const columns: TableColumn<V2RuleRow>[] = useMemo(
@@ -180,7 +256,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         header: 'Entity',
         width: proportional(3),
         renderCell: (row: V2RuleRow) => {
-          const isEditing = editingId === row.id;
+          const isEditing = !readOnly && editingId === row.id;
           if (isEditing && editDraft) {
             return (
               <V2EntityEditor
@@ -198,7 +274,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         header: 'Service',
         width: proportional(1.5),
         renderCell: (row: V2RuleRow) => {
-          const isEditing = editingId === row.id;
+          const isEditing = !readOnly && editingId === row.id;
           if (isEditing && editDraft) {
             return (
               <V2ServiceEditor
@@ -215,7 +291,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         header: 'Rule Type',
         width: pixel(100),
         renderCell: (row: V2RuleRow) => {
-          const isEditing = editingId === row.id;
+          const isEditing = !readOnly && editingId === row.id;
           if (isEditing && editDraft) {
             return (
               <Selector
@@ -249,7 +325,8 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         header: 'Provision',
         width: pixel(110),
         renderCell: (row: V2RuleRow) => {
-          const status = row.provision_status as string;
+          const status = row.provision_status as string | undefined;
+          if (!status) return null;
           return (
             <Token
               label={status === 'provisioned' ? 'Provisioned' : 'Draft'}
@@ -264,6 +341,8 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         header: '',
         width: pixel(80),
         renderCell: (row: V2RuleRow) => {
+          if (readOnly) return null;
+
           const isEditing = editingId === row.id;
           if (isEditing) {
             return (
@@ -309,6 +388,7 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
       },
     ],
     [
+      readOnly,
       editingId,
       editDraft,
       direction,
@@ -321,10 +401,15 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
     ]
   );
 
-  const tableData: V2RuleRow[] = useMemo(
-    () => rules.map((r) => r as V2RuleRow),
-    [rules]
-  );
+  const tableData: V2RuleRow[] = useMemo(() => {
+    const source = draftMode
+      ? (draftRules ?? []).map((r, i) => ({ ...r, id: r.tempId, position: i } as V2RuleRow))
+      : rules.map((r) => r as V2RuleRow);
+    if (filterAction === 'all') return source;
+    return source.filter((r) => (r as any).action === filterAction);
+  }, [draftMode, draftRules, rules, filterAction]);
+
+  const isEmpty = draftMode ? (draftRules ?? []).length === 0 : rules.length === 0;
 
   return (
     <VStack gap={2}>
@@ -337,16 +422,31 @@ export function V2RuleTable({ policyId, direction, rules, onRulesChanged }: V2Ru
         />
       ) : null}
 
-      <HStack hAlign="end">
-        <Button label="Add Rule" variant="primary" size="sm" onClick={handleAddRule} />
-      </HStack>
+      {!readOnly && (
+        <HStack hAlign="between" vAlign="center">
+          <SegmentedControl
+            label="Filter by action"
+            value={filterAction}
+            onChange={setFilterAction}
+            size="sm"
+          >
+            <SegmentedControlItem value="all" label="All" />
+            <SegmentedControlItem value="allow" label="Allow" />
+            <SegmentedControlItem value="deny" label="Deny" />
+            <SegmentedControlItem value="override_deny" label="Override Deny" />
+          </SegmentedControl>
+          <Button label="+ Add Rule" variant="secondary" size="sm" onClick={handleAddRule} />
+        </HStack>
+      )}
 
-      {rules.length === 0 ? (
+      {isEmpty ? (
         <EmptyState
           title={`No ${direction} rules`}
           description="Add a rule to define which entities and services are allowed or denied."
           actions={
-            <Button label="Add Rule" variant="primary" size="sm" onClick={handleAddRule} />
+            !readOnly ? (
+              <Button label="Add Rule" variant="primary" size="sm" onClick={handleAddRule} />
+            ) : undefined
           }
         />
       ) : (
