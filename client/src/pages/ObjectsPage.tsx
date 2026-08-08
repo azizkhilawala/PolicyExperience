@@ -138,7 +138,7 @@ export default function ObjectsPage() {
     { key: 'description', header: 'Description' },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: ServiceRow) => (
         <MoreMenu items={[
@@ -155,7 +155,7 @@ export default function ObjectsPage() {
     { key: 'description', header: 'Description' },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: IpListRow) => (
         <MoreMenu items={[
@@ -181,7 +181,7 @@ export default function ObjectsPage() {
     },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: LabelGroupRow) => (
         <MoreMenu items={[
@@ -198,7 +198,7 @@ export default function ObjectsPage() {
     { key: 'protocol', header: 'Protocol' },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: VirtualServiceRow) => (
         <MoreMenu items={[

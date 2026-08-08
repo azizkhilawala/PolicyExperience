@@ -155,7 +155,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             variant={row.enabled ? 'success' : 'neutral'}
             label={row.enabled ? 'Enabled' : 'Disabled'}
           />
-          <Text type="supporting" color={row.enabled ? 'primary' : 'secondary'}>
+          <Text type="supporting">
             {row.enabled ? 'Enabled' : 'Disabled'}
           </Text>
         </HStack>
@@ -227,7 +227,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
     },
     {
       key: 'arrow',
-      header: '',
+      header: 'Direction',
       width: pixel(32),
       renderCell: (row: RuleTableRow) => dimIfDisabled(
         row,
@@ -352,7 +352,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
     },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(80),
       renderCell: (row: RuleTableRow) => {
         const isEditing = editingId === row.id;

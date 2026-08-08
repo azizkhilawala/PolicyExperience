@@ -80,9 +80,7 @@ export default function PolicyListPage() {
       header: 'Status',
       width: pixel(140),
       renderCell: (row: PolicyTableRow) => (
-        <HStack style={!row.enabled ? { opacity: 0.5 } : undefined}>
-          <StatusIndicator enabled={!!row.enabled} />
-        </HStack>
+        <StatusIndicator enabled={!!row.enabled} />
       ),
     },
     {
@@ -95,7 +93,7 @@ export default function PolicyListPage() {
     },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: PolicyTableRow) => (
         <MoreMenu

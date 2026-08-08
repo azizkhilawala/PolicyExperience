@@ -1,5 +1,5 @@
 import { BrowserRouter, useRoutes, useLocation } from 'react-router-dom';
-import { Theme } from '@astryxdesign/core/theme';
+import { Theme, defineTheme } from '@astryxdesign/core/theme';
 import { neutralTheme } from '@astryxdesign/theme-neutral';
 import { AppShell } from '@astryxdesign/core/AppShell';
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav';
@@ -14,6 +14,19 @@ import { LabelsProvider } from '../hooks/useLabels.js';
 import { useColorMode } from '../hooks/useColorMode.js';
 import { routes } from './routes.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
+
+const a11yTheme = defineTheme({
+  name: 'a11y-neutral',
+  extends: neutralTheme,
+  components: {
+    avatar: {
+      base: { color: '#525252' },
+    },
+    'segmented-control-item': {
+      base: { color: '#525252' },
+    },
+  },
+});
 
 function AppLayout() {
   const location = useLocation();
@@ -97,7 +110,7 @@ function ThemedApp() {
   const { mode } = useColorMode();
 
   return (
-    <Theme theme={neutralTheme} mode={mode}>
+    <Theme theme={a11yTheme} mode={mode}>
       <BrowserRouter>
         <AuthProvider>
           <SettingsProvider>

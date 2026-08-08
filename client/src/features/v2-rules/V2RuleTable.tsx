@@ -346,7 +346,7 @@ export function V2RuleTable({
               variant={(row.enabled as number) ? 'success' : 'neutral'}
               label={(row.enabled as number) ? 'Enabled' : 'Disabled'}
             />
-            <Text type="supporting" color={(row.enabled as number) ? 'primary' : 'secondary'}>
+            <Text type="supporting">
               {(row.enabled as number) ? 'Enabled' : 'Disabled'}
             </Text>
           </HStack>
@@ -371,7 +371,7 @@ export function V2RuleTable({
       },
       {
         key: 'actions',
-        header: '',
+        header: 'Actions',
         width: pixel(80),
         renderCell: (row: V2RuleRow) => {
           if (readOnly) return null;

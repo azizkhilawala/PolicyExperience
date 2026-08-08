@@ -188,7 +188,7 @@ export default function V2PolicyListPage() {
     },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: V2PolicyRow) => (
         <MoreMenu
@@ -270,7 +270,7 @@ export default function V2PolicyListPage() {
     },
     {
       key: 'actions',
-      header: '',
+      header: 'Actions',
       width: pixel(60),
       renderCell: (row: V2TemplateRow) => (
         <MoreMenu
