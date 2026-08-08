@@ -19,7 +19,6 @@ import { useApi } from '../hooks/useApi.js';
 import { fetchV2Policies, deleteV2Policy, type V2Policy } from '../api/v2-policies.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
-import { V2CreatePolicyDialog } from '../features/v2-rules/V2CreatePolicyDialog.js';
 
 // V2Policy must satisfy Table's Record<string, unknown> generic constraint
 type V2PolicyRow = V2Policy & Record<string, unknown>;
@@ -71,7 +70,6 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
 export default function V2PolicyListPage() {
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useApi(() => fetchV2Policies());
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const policies: V2PolicyRow[] = (data ?? []).map((p) => p as V2PolicyRow);
@@ -83,7 +81,12 @@ export default function V2PolicyListPage() {
       width: proportional(2),
       renderCell: (row: V2PolicyRow) => (
         <VStack gap={0} onClick={() => navigate(`/policy-v2/${row.id}`)} style={{ cursor: 'pointer' }}>
-          <Text weight="medium">{row.name as string}</Text>
+          <HStack gap={1} vAlign="center">
+            <Text weight="medium">{row.name as string}</Text>
+            {(row as V2Policy).policy_type === 'guardrail' && (
+              <Token label="Guardrail" color="orange" size="sm" />
+            )}
+          </HStack>
           {row.description ? (
             <Text type="supporting" color="secondary">{row.description as string}</Text>
           ) : null}
@@ -156,7 +159,7 @@ export default function V2PolicyListPage() {
 
       <HStack hAlign="between" vAlign="center">
         <Heading level={1}>Policies (v2)</Heading>
-        <Button label="Create Policy" variant="primary" onClick={() => setDialogOpen(true)} />
+        <Button label="Create Policy" variant="primary" onClick={() => navigate('/policy-v2/new')} />
       </HStack>
 
       {actionError ? (
@@ -180,7 +183,7 @@ export default function V2PolicyListPage() {
           description="Create your first scope-centric policy to get started."
           headingLevel={3}
           actions={
-            <Button label="Create Policy" variant="primary" onClick={() => setDialogOpen(true)} />
+            <Button label="Create Policy" variant="primary" onClick={() => navigate('/policy-v2/new')} />
           }
         />
       ) : (
@@ -193,14 +196,6 @@ export default function V2PolicyListPage() {
         />
       )}
 
-      <V2CreatePolicyDialog
-        isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onCreated={(policy) => {
-          setDialogOpen(false);
-          navigate(`/policy-v2/${policy.id}`);
-        }}
-      />
     </VStack>
   );
 }
