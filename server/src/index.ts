@@ -32,5 +32,5 @@ app.use('/api/v2', v2PoliciesRoutes);
 app.use('/api/v2', v2TemplatesRoutes);
 
 app.listen(PORT, () => {
-  console.log(`PolicyExperience API running on http://localhost:${PORT}`);
+  console.log(`PolicyExperience API v2 running on http://localhost:${PORT}`);
 });
