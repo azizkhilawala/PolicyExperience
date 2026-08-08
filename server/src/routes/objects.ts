@@ -5,6 +5,10 @@ import { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
+function escapeLike(s: string): string {
+  return s.replace(/[%_\\]/g, (ch) => '\\' + ch);
+}
+
 // ─── Services (/services) ───────────────────────────────────────────────────
 
 router.get('/services', (_req, res) => {
@@ -43,16 +47,18 @@ router.patch('/services/:id', (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Service not found' });
   const { name, description, port, to_port, protocol } = req.body;
   const now = new Date().toISOString();
+  const toPortProvided = to_port !== undefined ? 1 : 0;
+  const toPortValue = to_port !== undefined ? (to_port ?? null) : null;
   db.prepare(
     `UPDATE services SET
       name = COALESCE(?, name),
       description = COALESCE(?, description),
       port = COALESCE(?, port),
-      to_port = COALESCE(?, to_port),
+      to_port = CASE WHEN ? = 1 THEN ? ELSE to_port END,
       protocol = COALESCE(?, protocol),
       updated_at = ?
      WHERE id = ?`
-  ).run(name ?? null, description ?? null, port ?? null, to_port !== undefined ? to_port : null, protocol ?? null, now, req.params.id);
+  ).run(name ?? null, description ?? null, port ?? null, toPortProvided, toPortValue, protocol ?? null, now, req.params.id);
   const updated = db.prepare('SELECT * FROM services WHERE id = ?').get(req.params.id);
   res.json(updated);
 });
@@ -62,12 +68,13 @@ router.delete('/services/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM services WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Service not found' });
   const serviceName = existing.name;
+  const svcPattern = `%"name":"${escapeLike(serviceName)}"%`;
   const v2Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM v2_rules WHERE services LIKE ?`
-  ).get(`%"name":"${serviceName}"%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM v2_rules WHERE services LIKE ? ESCAPE '\\'`
+  ).get(svcPattern) as { c: number }).c;
   const v1Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM rules WHERE services LIKE ?`
-  ).get(`%"name":"${serviceName}"%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM rules WHERE services LIKE ? ESCAPE '\\'`
+  ).get(svcPattern) as { c: number }).c;
   const total = v2Count + v1Count;
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
@@ -78,21 +85,17 @@ router.delete('/services/:id', (req, res) => {
 
 // ─── IP Lists (/ip-lists) ──────────────────────────────────────────────────
 
-function parseIpList(row: any) {
-  return row;
-}
-
 router.get('/ip-lists', (_req, res) => {
   const db = getDb();
   const rows = db.prepare('SELECT * FROM ip_lists ORDER BY name').all();
-  res.json(rows.map(parseIpList));
+  res.json(rows);
 });
 
 router.get('/ip-lists/:id', (req, res) => {
   const db = getDb();
   const row = db.prepare('SELECT * FROM ip_lists WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'IP List not found' });
-  res.json(parseIpList(row));
+  res.json(row);
 });
 
 router.post('/ip-lists', (req, res) => {
@@ -109,7 +112,7 @@ router.post('/ip-lists', (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?)`
   ).run(id, name, cidr, description ?? '', user.id, now, now);
   const created = db.prepare('SELECT * FROM ip_lists WHERE id = ?').get(id);
-  res.status(201).json(parseIpList(created));
+  res.status(201).json(created);
 });
 
 router.patch('/ip-lists/:id', (req, res) => {
@@ -127,7 +130,7 @@ router.patch('/ip-lists/:id', (req, res) => {
      WHERE id = ?`
   ).run(name ?? null, cidr ?? null, description ?? null, now, req.params.id);
   const updated = db.prepare('SELECT * FROM ip_lists WHERE id = ?').get(req.params.id);
-  res.json(parseIpList(updated));
+  res.json(updated);
 });
 
 router.delete('/ip-lists/:id', (req, res) => {
@@ -135,12 +138,13 @@ router.delete('/ip-lists/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM ip_lists WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'IP List not found' });
   const ipName = existing.name;
+  const ipPattern = `%"field":"ip_list"%${escapeLike(ipName)}%`;
   const v2Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM v2_rules WHERE entity LIKE ?`
-  ).get(`%"field":"ip_list"%${ipName}%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM v2_rules WHERE entity LIKE ? ESCAPE '\\'`
+  ).get(ipPattern) as { c: number }).c;
   const v1Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM rules WHERE source LIKE ? OR destination LIKE ?`
-  ).get(`%"field":"ip_list"%${ipName}%`, `%"field":"ip_list"%${ipName}%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM rules WHERE source LIKE ? ESCAPE '\\' OR destination LIKE ? ESCAPE '\\'`
+  ).get(ipPattern, ipPattern) as { c: number }).c;
   const total = v2Count + v1Count;
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
@@ -208,12 +212,13 @@ router.delete('/label-groups/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM label_groups WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Label Group not found' });
   const lgName = existing.name;
+  const lgPattern = `%"field":"label_group"%${escapeLike(lgName)}%`;
   const v2Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM v2_rules WHERE entity LIKE ?`
-  ).get(`%"field":"label_group"%${lgName}%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM v2_rules WHERE entity LIKE ? ESCAPE '\\'`
+  ).get(lgPattern) as { c: number }).c;
   const v1Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM rules WHERE source LIKE ? OR destination LIKE ?`
-  ).get(`%"field":"label_group"%${lgName}%`, `%"field":"label_group"%${lgName}%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM rules WHERE source LIKE ? ESCAPE '\\' OR destination LIKE ? ESCAPE '\\'`
+  ).get(lgPattern, lgPattern) as { c: number }).c;
   const total = v2Count + v1Count;
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
@@ -277,12 +282,13 @@ router.delete('/virtual-services/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM virtual_services WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Virtual Service not found' });
   const vsName = existing.name;
+  const vsPattern = `%"field":"virtual_service"%${escapeLike(vsName)}%`;
   const v2Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM v2_rules WHERE entity LIKE ?`
-  ).get(`%"field":"virtual_service"%${vsName}%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM v2_rules WHERE entity LIKE ? ESCAPE '\\'`
+  ).get(vsPattern) as { c: number }).c;
   const v1Count = (db.prepare(
-    `SELECT COUNT(*) as c FROM rules WHERE source LIKE ? OR destination LIKE ?`
-  ).get(`%"field":"virtual_service"%${vsName}%`, `%"field":"virtual_service"%${vsName}%`) as { c: number }).c;
+    `SELECT COUNT(*) as c FROM rules WHERE source LIKE ? ESCAPE '\\' OR destination LIKE ? ESCAPE '\\'`
+  ).get(vsPattern, vsPattern) as { c: number }).c;
   const total = v2Count + v1Count;
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
