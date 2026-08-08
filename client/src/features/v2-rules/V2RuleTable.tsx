@@ -18,6 +18,7 @@ import { Banner } from '@astryxdesign/core/Banner';
 import type { V2Rule, V2RuleService } from '../../api/v2-policies.js';
 import { createV2Rule, updateV2Rule, deleteV2Rule } from '../../api/v2-policies.js';
 import type { EndpointFilter } from '../../api/policies.js';
+import { ProductIcon, ProductIllustration } from '../../components/ProductVisuals.js';
 import { getFilterColor, getDisplayValue } from '../rules/endpointDisplay.js';
 import { ActionToken } from '../rules/ActionToken.js';
 import { V2EntityEditor } from './V2EntityEditor.js';
@@ -59,12 +60,23 @@ const actionOptions: SelectorOptionData[] = [
 
 function renderEntityTokens(filters: EndpointFilter[]) {
   if (!filters || filters.length === 0) {
-    return <Text type="supporting" color="secondary">All workloads</Text>;
+    return (
+      <HStack gap={0.5} vAlign="center">
+        <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
+        <Text type="supporting" color="secondary">All workloads</Text>
+      </HStack>
+    );
   }
   return (
     <HStack gap={0.5} wrap="wrap">
       {filters.map((f, i) => (
-        <Token key={i} label={getDisplayValue(f)} color={getFilterColor(f.field)} size="sm" />
+        <Token
+          key={i}
+          label={getDisplayValue(f)}
+          color={getFilterColor(f.field)}
+          size="sm"
+          icon={<ProductIcon name="label" color="inherit" />}
+        />
       ))}
     </HStack>
   );
@@ -72,13 +84,26 @@ function renderEntityTokens(filters: EndpointFilter[]) {
 
 function renderServiceTokens(services: V2RuleService[]) {
   if (!services || services.length === 0) {
-    return <Text type="supporting" color="secondary">All Services</Text>;
+    return (
+      <HStack gap={0.5} vAlign="center">
+        <ProductIcon name="service" size="sm" color="tertiary" />
+        <Text type="supporting" color="secondary">All Services</Text>
+      </HStack>
+    );
   }
   return (
     <HStack gap={0.5} wrap="wrap">
       {services.map((s, i) => {
         const label = s.type === 'named' ? s.name : `${s.protocol}/${s.port}`;
-        return <Token key={i} label={label} color="default" size="sm" />;
+        return (
+          <Token
+            key={i}
+            label={label}
+            color="default"
+            size="sm"
+            icon={<ProductIcon name="service" color="inherit" />}
+          />
+        );
       })}
     </HStack>
   );
@@ -332,6 +357,7 @@ export function V2RuleTable({
               label={status === 'provisioned' ? 'Provisioned' : 'Draft'}
               color={status === 'provisioned' ? 'green' : 'gray'}
               size="sm"
+              icon={<ProductIcon name={status === 'provisioned' ? 'provision' : 'diff'} color="inherit" />}
             />
           );
         },
@@ -435,7 +461,13 @@ export function V2RuleTable({
             <SegmentedControlItem value="deny" label="Deny" />
             <SegmentedControlItem value="override_deny" label="Override Deny" />
           </SegmentedControl>
-          <Button label="+ Add Rule" variant="secondary" size="sm" onClick={handleAddRule} />
+          <Button
+            label="Add Rule"
+            variant="secondary"
+            size="sm"
+            icon={<ProductIcon name="add" color="inherit" />}
+            onClick={handleAddRule}
+          />
         </HStack>
       )}
 
@@ -443,9 +475,16 @@ export function V2RuleTable({
         <EmptyState
           title={`No ${direction} rules`}
           description="Add a rule to define which entities and services are allowed or denied."
+          icon={<ProductIllustration kind={direction} />}
           actions={
             !readOnly ? (
-              <Button label="Add Rule" variant="primary" size="sm" onClick={handleAddRule} />
+              <Button
+                label="Add Rule"
+                variant="primary"
+                size="sm"
+                icon={<ProductIcon name="add" color="inherit" />}
+                onClick={handleAddRule}
+              />
             ) : undefined
           }
         />

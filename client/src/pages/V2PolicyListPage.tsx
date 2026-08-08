@@ -19,6 +19,7 @@ import { TabList, Tab } from '@astryxdesign/core/TabList';
 import { useApi } from '../hooks/useApi.js';
 import { fetchV2Policies, deleteV2Policy, type V2Policy } from '../api/v2-policies.js';
 import { fetchV2Templates, deleteV2Template, type V2Template } from '../api/v2-templates.js';
+import { ProductIcon, ProductIllustration } from '../components/ProductVisuals.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 
@@ -29,16 +30,36 @@ type V2TemplateRow = V2Template & Record<string, unknown>;
 // Render scope tokens based on scope_type and available scope fields
 function ScopeTokens({ policy }: { policy: V2Policy }) {
   if (policy.scope_type === 'all_workloads') {
-    return <Token label="All Workloads" color="blue" size="sm" />;
+    return (
+      <Token
+        label="All Workloads"
+        color="blue"
+        size="sm"
+        icon={<ProductIcon name="allWorkloads" color="inherit" />}
+      />
+    );
   }
 
   if (policy.scope_type === 'labels') {
     const labelTokens = policy.scope_labels.map((l) => (
-      <Token key={`${l.key}=${l.value}`} label={`${l.key}=${l.value}`} color="purple" size="sm" />
+      <Token
+        key={`${l.key}=${l.value}`}
+        label={`${l.key}=${l.value}`}
+        color="purple"
+        size="sm"
+        icon={<ProductIcon name="label" color="inherit" />}
+      />
     ));
     return (
       <HStack gap={1} vAlign="center" wrap="wrap">
-        {labelTokens.length > 0 ? labelTokens : <Token label="Labels" color="purple" size="sm" />}
+        {labelTokens.length > 0 ? labelTokens : (
+          <Token
+            label="Labels"
+            color="purple"
+            size="sm"
+            icon={<ProductIcon name="label" color="inherit" />}
+          />
+        )}
       </HStack>
     );
   }
@@ -47,21 +68,46 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   const tokens: ReactNode[] = [];
   for (const id of (policy.scope_cluster_ids ?? [])) {
     tokens.push(
-      <Token key={`cluster-${id}`} label={`Cluster: ${id}`} color="teal" size="sm" />
+      <Token
+        key={`cluster-${id}`}
+        label={`Cluster: ${id}`}
+        color="teal"
+        size="sm"
+        icon={<ProductIcon name="cluster" color="inherit" />}
+      />
     );
   }
   for (const id of (policy.scope_namespace_ids ?? [])) {
     tokens.push(
-      <Token key={`ns-${id}`} label={`NS: ${id}`} color="cyan" size="sm" />
+      <Token
+        key={`ns-${id}`}
+        label={`NS: ${id}`}
+        color="cyan"
+        size="sm"
+        icon={<ProductIcon name="cluster" color="inherit" />}
+      />
     );
   }
   for (const l of policy.scope_labels) {
     tokens.push(
-      <Token key={`${l.key}=${l.value}`} label={`${l.key}=${l.value}`} color="purple" size="sm" />
+      <Token
+        key={`${l.key}=${l.value}`}
+        label={`${l.key}=${l.value}`}
+        color="purple"
+        size="sm"
+        icon={<ProductIcon name="label" color="inherit" />}
+      />
     );
   }
   if (tokens.length === 0) {
-    return <Token label="Kubernetes" color="teal" size="sm" />;
+    return (
+      <Token
+        label="Kubernetes"
+        color="teal"
+        size="sm"
+        icon={<ProductIcon name="cluster" color="inherit" />}
+      />
+    );
   }
   return (
     <HStack gap={1} vAlign="center" wrap="wrap">
@@ -89,9 +135,19 @@ export default function V2PolicyListPage() {
       renderCell: (row: V2PolicyRow) => (
         <VStack gap={0} onClick={() => navigate(`/policy-v2/${row.id}`)} style={{ cursor: 'pointer' }}>
           <HStack gap={1} vAlign="center">
+            <ProductIcon
+              name={(row as V2Policy).policy_type === 'guardrail' ? 'template' : 'policy'}
+              size="sm"
+              color={(row as V2Policy).policy_type === 'guardrail' ? 'warning' : 'secondary'}
+            />
             <Text weight="medium">{row.name as string}</Text>
             {(row as V2Policy).policy_type === 'guardrail' && (
-              <Token label="Guardrail" color="orange" size="sm" />
+              <Token
+                label="Guardrail"
+                color="orange"
+                size="sm"
+                icon={<ProductIcon name="template" color="inherit" />}
+              />
             )}
           </HStack>
           {row.description ? (
@@ -165,7 +221,10 @@ export default function V2PolicyListPage() {
       width: proportional(2),
       renderCell: (row: V2TemplateRow) => (
         <VStack gap={0} onClick={() => navigate(`/policy-v2/templates/${row.id}`)} style={{ cursor: 'pointer' }}>
-          <Text weight="medium">{row.name as string}</Text>
+          <HStack gap={0.5} vAlign="center">
+            <ProductIcon name="template" size="sm" color="secondary" />
+            <Text weight="medium">{row.name as string}</Text>
+          </HStack>
           {row.description ? (
             <Text type="supporting" color="secondary">{row.description as string}</Text>
           ) : null}
@@ -182,6 +241,7 @@ export default function V2PolicyListPage() {
             label={(row.source as string) === 'illumio_suggested' ? 'Illumio Suggested' : 'User Created'}
             color={(row.source as string) === 'illumio_suggested' ? 'orange' : 'blue'}
             size="sm"
+            icon={<ProductIcon name={(row.source as string) === 'illumio_suggested' ? 'template' : 'policy'} color="inherit" />}
           />
         </HStack>
       ),
@@ -191,7 +251,8 @@ export default function V2PolicyListPage() {
       header: 'Rules',
       width: pixel(80),
       renderCell: (row: V2TemplateRow) => (
-        <HStack onClick={() => navigate(`/policy-v2/templates/${row.id}`)} style={{ cursor: 'pointer' }}>
+        <HStack gap={0.5} vAlign="center" onClick={() => navigate(`/policy-v2/templates/${row.id}`)} style={{ cursor: 'pointer' }}>
+          <ProductIcon name="rules" size="sm" color="tertiary" />
           <Text>{String(row.rule_count ?? 0)}</Text>
         </HStack>
       ),
@@ -201,7 +262,8 @@ export default function V2PolicyListPage() {
       header: 'Policies',
       width: pixel(80),
       renderCell: (row: V2TemplateRow) => (
-        <HStack onClick={() => navigate(`/policy-v2/templates/${row.id}`)} style={{ cursor: 'pointer' }}>
+        <HStack gap={0.5} vAlign="center" onClick={() => navigate(`/policy-v2/templates/${row.id}`)} style={{ cursor: 'pointer' }}>
+          <ProductIcon name="policy" size="sm" color="tertiary" />
           <Text>{String(row.linked_policy_count ?? 0)}</Text>
         </HStack>
       ),
@@ -243,9 +305,19 @@ export default function V2PolicyListPage() {
       <HStack hAlign="between" vAlign="center">
         <Heading level={1}>Policies (v2)</Heading>
         {activeTab === 'policies' ? (
-          <Button label="Create Policy" variant="primary" onClick={() => navigate('/policy-v2/new')} />
+          <Button
+            label="Create Policy"
+            variant="primary"
+            icon={<ProductIcon name="add" color="inherit" />}
+            onClick={() => navigate('/policy-v2/new')}
+          />
         ) : (
-          <Button label="Create Template" variant="primary" onClick={() => navigate('/policy-v2/templates/new')} />
+          <Button
+            label="Create Template"
+            variant="primary"
+            icon={<ProductIcon name="add" color="inherit" />}
+            onClick={() => navigate('/policy-v2/templates/new')}
+          />
         )}
       </HStack>
 
@@ -274,9 +346,15 @@ export default function V2PolicyListPage() {
           <EmptyState
             title="No v2 policies found"
             description="Create your first scope-centric policy to get started."
+            icon={<ProductIllustration kind="policies" />}
             headingLevel={3}
             actions={
-              <Button label="Create Policy" variant="primary" onClick={() => navigate('/policy-v2/new')} />
+              <Button
+                label="Create Policy"
+                variant="primary"
+                icon={<ProductIcon name="add" color="inherit" />}
+                onClick={() => navigate('/policy-v2/new')}
+              />
             }
           />
         ) : (
@@ -299,9 +377,15 @@ export default function V2PolicyListPage() {
           <EmptyState
             title="No templates found"
             description="Create a template to reuse rules across multiple guardrail policies."
+            icon={<ProductIllustration kind="templates" />}
             headingLevel={3}
             actions={
-              <Button label="Create Template" variant="primary" onClick={() => navigate('/policy-v2/templates/new')} />
+              <Button
+                label="Create Template"
+                variant="primary"
+                icon={<ProductIcon name="add" color="inherit" />}
+                onClick={() => navigate('/policy-v2/templates/new')}
+              />
             }
           />
         ) : (

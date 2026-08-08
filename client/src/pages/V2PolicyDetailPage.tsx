@@ -23,6 +23,7 @@ import {
 } from '../api/v2-policies.js';
 import { fetchClusters, fetchNamespaces } from '../api/policies.js';
 import type { K8sCluster, K8sNamespace } from '../api/policies.js';
+import { ProductIcon } from '../components/ProductVisuals.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { V2RuleTable } from '../features/v2-rules/V2RuleTable.js';
@@ -132,7 +133,14 @@ export default function V2PolicyDetailPage() {
 
       <HStack hAlign="between" vAlign="center">
         <HStack gap={2} vAlign="center">
-          <Heading level={1}>{policy.name}</Heading>
+          <HStack gap={1} vAlign="center">
+            <ProductIcon
+              name={policy.policy_type === 'guardrail' ? 'template' : 'policy'}
+              size="md"
+              color={policy.policy_type === 'guardrail' ? 'warning' : 'accent'}
+            />
+            <Heading level={1}>{policy.name}</Heading>
+          </HStack>
           <ProvisionBadge status={policy.provision_status} />
           <StatusIndicator enabled={!!policy.enabled} />
         </HStack>
@@ -140,6 +148,7 @@ export default function V2PolicyDetailPage() {
           <Button
             label="Provision"
             variant="primary"
+            icon={<ProductIcon name="provision" color="inherit" />}
             isDisabled={policy.provision_status === 'provisioned'}
             tooltip={
               policy.provision_status === 'provisioned' ? 'Already provisioned' : undefined
@@ -172,9 +181,12 @@ export default function V2PolicyDetailPage() {
       </HStack>
 
       {/* Zone 2: Scope Display */}
-      <Heading level={2}>
-        {policy.policy_type === 'guardrail' ? 'Enforcement Points' : 'Scope (Who am I)'}
-      </Heading>
+      <HStack gap={1} vAlign="center">
+        <ProductIcon name={policy.scope_type === 'k8s' ? 'cluster' : 'scope'} size="md" color="secondary" />
+        <Heading level={2}>
+          {policy.policy_type === 'guardrail' ? 'Enforcement Points' : 'Scope (Who am I)'}
+        </Heading>
+      </HStack>
 
       {policy.scope_type === 'k8s' ? (
         <MetadataList columns="multi">
@@ -182,7 +194,13 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Clusters">
               <HStack gap={0.5} wrap="wrap">
                 {clusterNames.map((name) => (
-                  <Token key={name} label={name} color="teal" size="sm" />
+                  <Token
+                    key={name}
+                    label={name}
+                    color="teal"
+                    size="sm"
+                    icon={<ProductIcon name="cluster" color="inherit" />}
+                  />
                 ))}
               </HStack>
             </MetadataListItem>
@@ -191,7 +209,13 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Namespaces">
               <HStack gap={0.5} wrap="wrap">
                 {namespaceNames.map((name) => (
-                  <Token key={name} label={name} color="cyan" size="sm" />
+                  <Token
+                    key={name}
+                    label={name}
+                    color="cyan"
+                    size="sm"
+                    icon={<ProductIcon name="cluster" color="inherit" />}
+                  />
                 ))}
               </HStack>
             </MetadataListItem>
@@ -200,7 +224,13 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="K8s Labels">
               <HStack gap={0.5} wrap="wrap">
                 {policy.scope_labels.map((lbl, i) => (
-                  <Token key={i} label={`${lbl.key}=${lbl.value}`} color="blue" size="sm" />
+                  <Token
+                    key={i}
+                    label={`${lbl.key}=${lbl.value}`}
+                    color="blue"
+                    size="sm"
+                    icon={<ProductIcon name="label" color="inherit" />}
+                  />
                 ))}
               </HStack>
             </MetadataListItem>
@@ -215,7 +245,13 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Labels">
               <HStack gap={0.5} wrap="wrap">
                 {policy.scope_labels.map((lbl, i) => (
-                  <Token key={i} label={`${lbl.key}=${lbl.value}`} color="blue" size="sm" />
+                  <Token
+                    key={i}
+                    label={`${lbl.key}=${lbl.value}`}
+                    color="blue"
+                    size="sm"
+                    icon={<ProductIcon name="label" color="inherit" />}
+                  />
                 ))}
               </HStack>
             </MetadataListItem>

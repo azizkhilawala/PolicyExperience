@@ -104,7 +104,7 @@ export function ProductIcon({
 export function ProductIllustration({
   kind,
 }: {
-  kind: 'policies' | 'rules' | 'ingress' | 'egress';
+  kind: 'policies' | 'templates' | 'rules' | 'ingress' | 'egress';
 }) {
   if (kind === 'rules') {
     return (
@@ -132,6 +132,16 @@ export function ProductIllustration({
         <ProductIcon name="scope" size="lg" color="secondary" />
         <ProductIcon name="arrowRight" size="md" color="accent" />
         <ProductIcon name="allWorkloads" size="lg" color="tertiary" />
+      </HStack>
+    );
+  }
+
+  if (kind === 'templates') {
+    return (
+      <HStack gap={1} hAlign="center" vAlign="center">
+        <ProductIcon name="template" size="lg" color="accent" />
+        <ProductIcon name="rules" size="md" color="secondary" />
+        <ProductIcon name="policy" size="lg" color="tertiary" />
       </HStack>
     );
   }
