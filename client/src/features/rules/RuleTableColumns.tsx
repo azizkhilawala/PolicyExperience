@@ -18,7 +18,7 @@ import { ActionToken } from './ActionToken.js';
 import { GhostTokens } from './GhostTokens.js';
 import { EndpointEditor } from './EndpointEditor.js';
 import { ServiceEditor } from './ServiceEditor.js';
-import { getFilterColor, getDisplayValue } from './endpointDisplay.js';
+import { getFilterColor, getDisplayValue, isNegatedOperator } from './endpointDisplay.js';
 
 export type RuleTableRow = Rule & Record<string, unknown>;
 
@@ -60,15 +60,18 @@ function renderEndpointTokens(endpoint: RuleEndpoint): React.ReactNode {
 
   return (
     <HStack gap={0.5} wrap="wrap">
-      {endpoint.filters.map((f, i) => (
-        <Token
-          key={i}
-          label={getDisplayValue(f)}
-          color={getFilterColor(f.field)}
-          size="sm"
-          icon={<ProductIcon name="label" color="inherit" />}
-        />
-      ))}
+      {endpoint.filters.map((f, i) => {
+        const negated = isNegatedOperator(f.operator);
+        return (
+          <Token
+            key={i}
+            label={getDisplayValue(f)}
+            color={negated ? 'red' : getFilterColor(f.field)}
+            size="sm"
+            icon={<ProductIcon name={negated ? 'removed' : 'label'} color="inherit" />}
+          />
+        );
+      })}
     </HStack>
   );
 }
@@ -145,13 +148,17 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
     {
       key: 'status',
       header: 'Status',
-      width: pixel(80),
+      width: pixel(110),
       renderCell: (row: RuleTableRow) => (
-        <StatusDot
-          variant={row.enabled ? 'success' : 'neutral'}
-          label={row.enabled ? 'Enabled' : 'Disabled'}
-          tooltip={row.enabled ? 'Enabled' : 'Disabled'}
-        />
+        <HStack gap={0.5} vAlign="center">
+          <StatusDot
+            variant={row.enabled ? 'success' : 'neutral'}
+            label={row.enabled ? 'Enabled' : 'Disabled'}
+          />
+          <Text type="supporting" color={row.enabled ? 'primary' : 'secondary'}>
+            {row.enabled ? 'Enabled' : 'Disabled'}
+          </Text>
+        </HStack>
       ),
     },
   ];

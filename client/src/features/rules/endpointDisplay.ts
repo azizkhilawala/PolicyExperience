@@ -60,6 +60,10 @@ export function fieldLabel(field: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+export function isNegatedOperator(operator: string): boolean {
+  return ['is_not', 'is_none_of', 'does_not_exist', 'does_not_match'].includes(operator);
+}
+
 const OPERATOR_LABELS: Record<string, string> = {
   is: '=',
   is_not: '!=',
@@ -78,8 +82,14 @@ export function getDisplayValue(filter: EndpointFilter): string {
   if (!val || val.type === 'empty') return `${label} ${op}`;
   if (val.type === 'enum') return `${label}${op === '=' ? '=' : ` ${op} `}${val.value as string}`;
   if (val.type === 'enum_list') return `${label} ${op} [${(val.value as string[]).join(', ')}]`;
-  if (val.type === 'entity_list') return (val.value as Array<{ id: string; label: string }>).map((e) => e.label).join(', ');
+  if (val.type === 'entity_list') {
+    const names = (val.value as Array<{ id: string; label: string }>).map((e) => e.label).join(', ');
+    return isNegatedOperator(filter.operator) ? `${label}: is not ${names}` : names;
+  }
   if (val.type === 'string') return `${label} ${op} ${val.value as string}`;
-  if (val.type === 'string_list') return (val.value as string[]).join(', ');
+  if (val.type === 'string_list') {
+    const items = (val.value as string[]).join(', ');
+    return isNegatedOperator(filter.operator) ? `${label}: is not ${items}` : items;
+  }
   return String(val.value ?? '');
 }

@@ -19,7 +19,7 @@ import type { V2Rule, V2RuleService } from '../../api/v2-policies.js';
 import { createV2Rule, updateV2Rule, deleteV2Rule } from '../../api/v2-policies.js';
 import type { EndpointFilter } from '../../api/policies.js';
 import { ProductIcon, ProductIllustration } from '../../components/ProductVisuals.js';
-import { getFilterColor, getDisplayValue } from '../rules/endpointDisplay.js';
+import { getFilterColor, getDisplayValue, isNegatedOperator } from '../rules/endpointDisplay.js';
 import { ActionToken } from '../rules/ActionToken.js';
 import { V2EntityEditor } from './V2EntityEditor.js';
 import { V2ServiceEditor } from './V2ServiceEditor.js';
@@ -69,15 +69,18 @@ function renderEntityTokens(filters: EndpointFilter[]) {
   }
   return (
     <HStack gap={0.5} wrap="wrap">
-      {filters.map((f, i) => (
-        <Token
-          key={i}
-          label={getDisplayValue(f)}
-          color={getFilterColor(f.field)}
-          size="sm"
-          icon={<ProductIcon name="label" color="inherit" />}
-        />
-      ))}
+      {filters.map((f, i) => {
+        const negated = isNegatedOperator(f.operator);
+        return (
+          <Token
+            key={i}
+            label={getDisplayValue(f)}
+            color={negated ? 'red' : getFilterColor(f.field)}
+            size="sm"
+            icon={<ProductIcon name={negated ? 'removed' : 'label'} color="inherit" />}
+          />
+        );
+      })}
     </HStack>
   );
 }
@@ -314,7 +317,7 @@ export function V2RuleTable({
       {
         key: 'action',
         header: 'Rule Type',
-        width: pixel(100),
+        width: pixel(150),
         renderCell: (row: V2RuleRow) => {
           const isEditing = !readOnly && editingId === row.id;
           if (isEditing && editDraft) {
@@ -336,13 +339,17 @@ export function V2RuleTable({
       {
         key: 'status',
         header: 'Status',
-        width: pixel(100),
+        width: pixel(110),
         renderCell: (row: V2RuleRow) => (
-          <StatusDot
-            variant={(row.enabled as number) ? 'success' : 'neutral'}
-            label={(row.enabled as number) ? 'Enabled' : 'Disabled'}
-            tooltip={(row.enabled as number) ? 'Enabled' : 'Disabled'}
-          />
+          <HStack gap={0.5} vAlign="center">
+            <StatusDot
+              variant={(row.enabled as number) ? 'success' : 'neutral'}
+              label={(row.enabled as number) ? 'Enabled' : 'Disabled'}
+            />
+            <Text type="supporting" color={(row.enabled as number) ? 'primary' : 'secondary'}>
+              {(row.enabled as number) ? 'Enabled' : 'Disabled'}
+            </Text>
+          </HStack>
         ),
       },
       {
