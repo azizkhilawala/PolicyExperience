@@ -27,6 +27,7 @@ import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { V2RuleTable } from '../features/v2-rules/V2RuleTable.js';
 import { DirectionVisual } from '../features/v2-rules/DirectionVisual.js';
+import { ConvertToTemplateDialog } from '../features/v2-rules/ConvertToTemplateDialog.js';
 
 export default function V2PolicyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -264,8 +265,14 @@ export default function V2PolicyDetailPage() {
         />
       </VStack>
 
-      {/* Convert to Template dialog placeholder (wired up in Task 8) */}
-      {convertToTemplateOpen && null}
+      {policy.policy_type === 'standard' && (
+        <ConvertToTemplateDialog
+          isOpen={convertToTemplateOpen}
+          onClose={() => setConvertToTemplateOpen(false)}
+          policy={policy}
+          onConverted={refetch}
+        />
+      )}
     </VStack>
   );
 }

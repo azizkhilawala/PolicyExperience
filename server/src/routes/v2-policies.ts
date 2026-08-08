@@ -101,6 +101,39 @@ router.post('/policies/:id/provision', (req, res) => {
   res.json(parseV2Policy(updated));
 });
 
+// POST /policies/:id/convert-to-template
+router.post('/policies/:id/convert-to-template', (req, res) => {
+  const db = getDb();
+  const policy = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id) as any;
+  if (!policy) return res.status(404).json({ error: 'Policy not found' });
+  if (policy.policy_type !== 'standard') return res.status(400).json({ error: 'Only standard policies can be converted' });
+  const { template_name, template_description, convert_policy } = req.body;
+  if (!template_name) return res.status(400).json({ error: 'template_name is required' });
+  const user = (req as unknown as AuthenticatedRequest).user;
+  const now = new Date().toISOString();
+  const templateId = uuidv4();
+  db.transaction(() => {
+    db.prepare(
+      `INSERT INTO v2_templates (id, name, description, source, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, 'user_created', ?, ?, ?)`
+    ).run(templateId, template_name, template_description ?? '', user.id, now, now);
+    const rules = db.prepare('SELECT * FROM v2_rules WHERE policy_id = ?').all(req.params.id);
+    const insertTplRule = db.prepare(
+      `INSERT INTO v2_template_rules (id, template_id, direction, entity, services, action, enabled, position, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    for (const r of rules as any[]) {
+      insertTplRule.run(uuidv4(), templateId, r.direction, r.entity, r.services, r.action, r.enabled, r.position, r.notes);
+    }
+    if (convert_policy) {
+      db.prepare("UPDATE v2_policies SET policy_type = 'guardrail', template_id = ?, updated_at = ? WHERE id = ?").run(templateId, now, req.params.id);
+      db.prepare('DELETE FROM v2_rules WHERE policy_id = ?').run(req.params.id);
+    }
+  })();
+  const template = db.prepare('SELECT * FROM v2_templates WHERE id = ?').get(templateId);
+  res.status(201).json(template);
+});
+
 // GET /policies/:id/rules — list rules for a v2 policy
 router.get('/policies/:id/rules', (req, res) => {
   const db = getDb();
