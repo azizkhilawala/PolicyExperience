@@ -208,7 +208,7 @@ test.describe('Objects page — Create Service flow', () => {
 
     await page.getByRole('button', { name: /^create$/i }).click();
 
-    await expect(page.getByText('E2E Test Service')).toBeVisible({
+    await expect(page.getByText('E2E Test Service').first()).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -227,7 +227,7 @@ test.describe('Objects page — Create IP List flow', () => {
 
     await page.getByRole('button', { name: /^create$/i }).click();
 
-    await expect(page.getByText('E2E Test IP List')).toBeVisible({
+    await expect(page.getByText('E2E Test IP List').first()).toBeVisible({
       timeout: 10_000,
     });
   });

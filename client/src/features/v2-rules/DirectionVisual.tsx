@@ -12,14 +12,14 @@ export function DirectionVisual({ direction }: DirectionVisualProps) {
       <HStack gap={0.5} vAlign="center">
         <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
         <ProductIcon name="arrowRight" size="sm" color="accent" />
-        <ProductIcon name="scope" size="sm" color="secondary" />
+        <ProductIcon name="workload" size="sm" color="secondary" />
       </HStack>
     );
   }
 
   return (
     <HStack gap={0.5} vAlign="center">
-      <ProductIcon name="scope" size="sm" color="secondary" />
+      <ProductIcon name="workload" size="sm" color="secondary" />
       <ProductIcon name="arrowRight" size="sm" color="accent" />
       <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
     </HStack>

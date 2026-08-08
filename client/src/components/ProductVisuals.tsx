@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
+  Box,
   Boxes,
   CheckCircle2,
   FileSearch,
@@ -41,7 +42,8 @@ export type ProductIconName =
   | 'rules'
   | 'scope'
   | 'service'
-  | 'template';
+  | 'template'
+  | 'workload';
 
 type ProductIconColor =
   | 'primary'
@@ -74,6 +76,7 @@ const icons = {
   scope: Route,
   service: Network,
   template: ShieldCheck,
+  workload: Box,
 };
 
 interface ProductIconProps {
@@ -121,7 +124,7 @@ export function ProductIllustration({
       <HStack gap={1} hAlign="center" vAlign="center">
         <ProductIcon name="allWorkloads" size="lg" color="tertiary" />
         <ProductIcon name="arrowRight" size="md" color="accent" />
-        <ProductIcon name="scope" size="lg" color="secondary" />
+        <ProductIcon name="workload" size="lg" color="secondary" />
       </HStack>
     );
   }
@@ -129,7 +132,7 @@ export function ProductIllustration({
   if (kind === 'egress') {
     return (
       <HStack gap={1} hAlign="center" vAlign="center">
-        <ProductIcon name="scope" size="lg" color="secondary" />
+        <ProductIcon name="workload" size="lg" color="secondary" />
         <ProductIcon name="arrowRight" size="md" color="accent" />
         <ProductIcon name="allWorkloads" size="lg" color="tertiary" />
       </HStack>
@@ -151,22 +154,6 @@ export function ProductIllustration({
       <ProductIcon name="policy" size="lg" color="accent" />
       <ProductIcon name="label" size="md" color="secondary" />
       <ProductIcon name="cluster" size="lg" color="tertiary" />
-    </HStack>
-  );
-}
-
-export function DirectionVisual({ direction }: { direction: 'ingress' | 'egress' }) {
-  return direction === 'ingress' ? (
-    <HStack gap={0.5} vAlign="center">
-      <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
-      <ProductIcon name="arrowRight" size="sm" color="accent" />
-      <ProductIcon name="scope" size="sm" color="secondary" />
-    </HStack>
-  ) : (
-    <HStack gap={0.5} vAlign="center">
-      <ProductIcon name="scope" size="sm" color="secondary" />
-      <ProductIcon name="arrowRight" size="sm" color="accent" />
-      <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
     </HStack>
   );
 }
