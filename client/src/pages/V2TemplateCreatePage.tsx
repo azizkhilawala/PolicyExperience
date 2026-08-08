@@ -17,25 +17,22 @@ import {
   createV2Template,
   updateV2Template,
   createV2TemplateRule,
+  fetchV2TemplateRules,
+  deleteV2TemplateRule,
 } from '../api/v2-templates.js';
 import type { V2TemplateRule } from '../api/v2-templates.js';
-import type { V2Rule } from '../api/v2-policies.js';
 import { V2RuleTable } from '../features/v2-rules/V2RuleTable.js';
 import type { DraftRule } from '../features/v2-rules/V2RuleTable.js';
 import { DirectionVisual } from '../features/v2-rules/DirectionVisual.js';
 
-function templateRuleToV2Rule(r: V2TemplateRule): V2Rule {
+function templateRuleToDraft(r: V2TemplateRule): DraftRule {
   return {
-    id: r.id,
-    policy_id: '',
+    tempId: r.id,
     direction: r.direction,
     entity: r.entity,
     services: r.services,
     action: r.action,
     enabled: r.enabled,
-    provision_status: 'draft',
-    position: r.position,
-    notes: r.notes,
   };
 }
 
@@ -47,13 +44,8 @@ export default function V2TemplateCreatePage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  // Draft rules (create mode)
   const [ingressDraftRules, setIngressDraftRules] = useState<DraftRule[]>([]);
   const [egressDraftRules, setEgressDraftRules] = useState<DraftRule[]>([]);
-
-  // API rules (edit mode)
-  const [ingressRules, setIngressRules] = useState<V2Rule[]>([]);
-  const [egressRules, setEgressRules] = useState<V2Rule[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -69,8 +61,8 @@ export default function V2TemplateCreatePage() {
         setName(t.name);
         setDescription(t.description ?? '');
         const rules = t.rules ?? [];
-        setIngressRules(rules.filter((r) => r.direction === 'ingress').map(templateRuleToV2Rule));
-        setEgressRules(rules.filter((r) => r.direction === 'egress').map(templateRuleToV2Rule));
+        setIngressDraftRules(rules.filter((r) => r.direction === 'ingress').map(templateRuleToDraft));
+        setEgressDraftRules(rules.filter((r) => r.direction === 'egress').map(templateRuleToDraft));
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : 'Failed to load template'))
       .finally(() => setLoading(false));
@@ -86,6 +78,18 @@ export default function V2TemplateCreatePage() {
     try {
       if (isEdit && id) {
         await updateV2Template(id, { name: name.trim(), description: description.trim() });
+        const existingRules = await fetchV2TemplateRules(id);
+        for (const r of existingRules) {
+          await deleteV2TemplateRule(r.id);
+        }
+        for (const rule of [...ingressDraftRules, ...egressDraftRules]) {
+          await createV2TemplateRule(id, {
+            direction: rule.direction,
+            entity: rule.entity,
+            services: rule.services,
+            action: rule.action,
+          });
+        }
         navigate(`/policy-v2/templates/${id}`);
       } else {
         const template = await createV2Template({
@@ -175,32 +179,15 @@ export default function V2TemplateCreatePage() {
           <DirectionVisual direction="ingress" />
           <Heading level={2}>Ingress Rules</Heading>
         </HStack>
-        {isEdit ? (
-          <V2RuleTable
-            policyId=""
-            direction="ingress"
-            rules={ingressRules}
-            onRulesChanged={() => {
-              fetchV2Template(id!)
-                .then((t) => {
-                  const rules = t.rules ?? [];
-                  setIngressRules(rules.filter((r) => r.direction === 'ingress').map(templateRuleToV2Rule));
-                  setEgressRules(rules.filter((r) => r.direction === 'egress').map(templateRuleToV2Rule));
-                })
-                .catch(() => {});
-            }}
-          />
-        ) : (
-          <V2RuleTable
-            policyId=""
-            direction="ingress"
-            rules={[]}
-            onRulesChanged={() => {}}
-            draftMode
-            draftRules={ingressDraftRules}
-            onDraftRulesChange={setIngressDraftRules}
-          />
-        )}
+        <V2RuleTable
+          policyId=""
+          direction="ingress"
+          rules={[]}
+          onRulesChanged={() => {}}
+          draftMode
+          draftRules={ingressDraftRules}
+          onDraftRulesChange={setIngressDraftRules}
+        />
       </VStack>
 
       <Divider />
@@ -211,32 +198,15 @@ export default function V2TemplateCreatePage() {
           <DirectionVisual direction="egress" />
           <Heading level={2}>Egress Rules</Heading>
         </HStack>
-        {isEdit ? (
-          <V2RuleTable
-            policyId=""
-            direction="egress"
-            rules={egressRules}
-            onRulesChanged={() => {
-              fetchV2Template(id!)
-                .then((t) => {
-                  const rules = t.rules ?? [];
-                  setIngressRules(rules.filter((r) => r.direction === 'ingress').map(templateRuleToV2Rule));
-                  setEgressRules(rules.filter((r) => r.direction === 'egress').map(templateRuleToV2Rule));
-                })
-                .catch(() => {});
-            }}
-          />
-        ) : (
-          <V2RuleTable
-            policyId=""
-            direction="egress"
-            rules={[]}
-            onRulesChanged={() => {}}
-            draftMode
-            draftRules={egressDraftRules}
-            onDraftRulesChange={setEgressDraftRules}
-          />
-        )}
+        <V2RuleTable
+          policyId=""
+          direction="egress"
+          rules={[]}
+          onRulesChanged={() => {}}
+          draftMode
+          draftRules={egressDraftRules}
+          onDraftRulesChange={setEgressDraftRules}
+        />
       </VStack>
 
       <Divider />
