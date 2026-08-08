@@ -34,6 +34,8 @@ router.get('/policies/:id', (req, res) => {
   if (!policy) return res.status(404).json({ error: 'Policy not found' });
   const parsed = parseV2Policy(policy) as any;
   if (parsed.policy_type === 'guardrail' && parsed.template_id) {
+    const template = db.prepare('SELECT name FROM v2_templates WHERE id = ?').get(parsed.template_id) as { name: string } | undefined;
+    parsed.template_name = template?.name ?? null;
     const templateRules = db.prepare('SELECT * FROM v2_template_rules WHERE template_id = ? ORDER BY direction, position').all(parsed.template_id);
     parsed.rules = templateRules.map(parseV2Rule);
   } else {

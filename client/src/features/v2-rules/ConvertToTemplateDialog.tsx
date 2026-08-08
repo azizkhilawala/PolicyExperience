@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { FormLayout } from '@astryxdesign/core/FormLayout';
 import { TextInput } from '@astryxdesign/core/TextInput';
@@ -25,6 +25,15 @@ export function ConvertToTemplateDialog({ isOpen, onClose, policy, onConverted }
   const [convertPolicy, setConvertPolicy] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTemplateName(`${policy.name} Template`);
+      setTemplateDescription('');
+      setConvertPolicy(true);
+      setError(null);
+    }
+  }, [isOpen, policy.name]);
 
   const handleSubmit = useCallback(async () => {
     if (!templateName.trim()) { setError('Template name is required'); return; }

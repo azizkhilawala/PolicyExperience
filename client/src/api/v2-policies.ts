@@ -30,6 +30,7 @@ export interface V2Policy {
   provision_status: 'draft' | 'provisioned';
   policy_type: 'standard' | 'guardrail';
   template_id: string | null;
+  template_name?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

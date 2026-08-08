@@ -229,7 +229,7 @@ export default function V2PolicyDetailPage() {
       {policy.policy_type === 'guardrail' && (
         <Banner
           status="info"
-          title={`Rules managed by template: ${policy.template_id ?? 'unknown'}`}
+          title={`Rules managed by template: ${policy.template_name ?? policy.template_id ?? 'unknown'}`}
         />
       )}
 
