@@ -8,6 +8,7 @@ import V2PolicyDetailPage from '../pages/V2PolicyDetailPage.js';
 import V2CreatePolicyPage from '../pages/V2CreatePolicyPage.js';
 import V2TemplateDetailPage from '../pages/V2TemplateDetailPage.js';
 import V2TemplateCreatePage from '../pages/V2TemplateCreatePage.js';
+import ObjectsPage from '../pages/ObjectsPage.js';
 
 export const routes = [
   { path: '/', element: <Navigate to="/policies" replace /> },
@@ -20,5 +21,6 @@ export const routes = [
   { path: '/policy-v2/templates/:id/edit', element: <V2TemplateCreatePage /> },
   { path: '/policy-v2/templates/:id', element: <V2TemplateDetailPage /> },
   { path: '/policy-v2/:id', element: <V2PolicyDetailPage /> },
+  { path: '/objects', element: <ObjectsPage /> },
   { path: '*', element: <Navigate to="/policies" replace /> },
 ];
