@@ -9,6 +9,9 @@ import { VStack } from '@astryxdesign/core/VStack';
 import type { V2RuleService } from '../../api/v2-policies.js';
 import type { VirtualService } from '../../api/policies.js';
 import { fetchVirtualServices } from '../../api/policies.js';
+import type { Service } from '../../api/objects.js';
+import { fetchServices } from '../../api/objects.js';
+import { ServiceDialog } from '../objects/ServiceDialog.js';
 
 interface V2ServiceEditorProps {
   value: V2RuleService[];
@@ -29,6 +32,8 @@ function serviceLabel(s: V2RuleService): string {
 export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditorProps) {
   const [mode, setMode] = useState<'pick' | 'custom'>('pick');
   const [virtualServices, setVirtualServices] = useState<VirtualService[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [protocol, setProtocol] = useState<string>('TCP');
   const [port, setPort] = useState<string>('');
 
@@ -36,14 +41,25 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
     fetchVirtualServices().then(setVirtualServices).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetchServices().then(setServices).catch(() => {});
+  }, []);
+
   const selectorOptions = [
     { value: 'all', label: 'All Services' },
+    { type: 'divider' as const },
+    ...services.map((s) => ({
+      value: `svc__${s.id}`,
+      label: `${s.name} (${s.protocol}/${s.port})`,
+    })),
+    { type: 'divider' as const },
     ...virtualServices.map((vs) => ({
       value: vs.id,
       label: `${vs.name} (TCP/${vs.port})`,
     })),
     { type: 'divider' as const },
     { value: '__custom__', label: 'Add custom port…' },
+    { value: '__create_service__', label: '+ Create Service…' },
   ];
 
   const handleSelectorChange = useCallback(
@@ -52,8 +68,19 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
         setMode('custom');
         return;
       }
+      if (selectedValue === '__create_service__') {
+        setServiceDialogOpen(true);
+        return;
+      }
       if (selectedValue === 'all') {
         onChange([...value, { type: 'named', name: 'All Services' }]);
+        return;
+      }
+      if (selectedValue.startsWith('svc__')) {
+        const svc = services.find((s) => `svc__${s.id}` === selectedValue);
+        if (svc) {
+          onChange([...value, { type: 'named', name: svc.name }]);
+        }
         return;
       }
       const vs = virtualServices.find((v) => v.id === selectedValue);
@@ -61,7 +88,7 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
         onChange([...value, { type: 'named', name: vs.name }]);
       }
     },
-    [value, onChange, virtualServices]
+    [value, onChange, virtualServices, services]
   );
 
   const handleAddCustom = useCallback(() => {
@@ -133,6 +160,14 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
           <Button label="Cancel" variant="ghost" size="sm" onClick={handleCancelCustom} />
         </HStack>
       )}
+      <ServiceDialog
+        isOpen={serviceDialogOpen}
+        onClose={() => setServiceDialogOpen(false)}
+        onSaved={(newService) => {
+          onChange([...value, { type: 'named', name: newService.name }]);
+          fetchServices().then(setServices).catch(() => {});
+        }}
+      />
     </VStack>
   );
 }
