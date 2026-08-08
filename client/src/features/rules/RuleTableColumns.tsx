@@ -5,7 +5,6 @@ import { proportional, pixel } from '@astryxdesign/core/Table';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Token } from '@astryxdesign/core/Token';
 import { Text } from '@astryxdesign/core/Text';
-import { Icon } from '@astryxdesign/core/Icon';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Button } from '@astryxdesign/core/Button';
@@ -14,6 +13,7 @@ import { Selector, SelectorOption } from '@astryxdesign/core/Selector';
 import type { SelectorOptionData } from '@astryxdesign/core/Selector';
 
 import type { Rule, PolicyLabel, RuleEndpoint, RuleService } from '../../api/policies.js';
+import { ProductIcon } from '../../components/ProductVisuals.js';
 import { ActionToken } from './ActionToken.js';
 import { GhostTokens } from './GhostTokens.js';
 import { EndpointEditor } from './EndpointEditor.js';
@@ -50,13 +50,24 @@ export function getGhostLabels(
 
 function renderEndpointTokens(endpoint: RuleEndpoint): React.ReactNode {
   if (!endpoint.filters || endpoint.filters.length === 0) {
-    return <Text type="supporting" color="secondary">All workloads</Text>;
+    return (
+      <HStack gap={0.5} vAlign="center">
+        <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
+        <Text type="supporting" color="secondary">All workloads</Text>
+      </HStack>
+    );
   }
 
   return (
     <HStack gap={0.5} wrap="wrap">
       {endpoint.filters.map((f, i) => (
-        <Token key={i} label={getDisplayValue(f)} color={getFilterColor(f.field)} size="sm" />
+        <Token
+          key={i}
+          label={getDisplayValue(f)}
+          color={getFilterColor(f.field)}
+          size="sm"
+          icon={<ProductIcon name="label" color="inherit" />}
+        />
       ))}
     </HStack>
   );
@@ -171,6 +182,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             label={row.scope_type === 'intra' ? 'Intra' : 'Extra'}
             color={row.scope_type === 'intra' ? 'blue' : 'purple'}
             size="sm"
+            icon={<ProductIcon name="scope" color="inherit" />}
           />
         );
       },
@@ -212,7 +224,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
       width: pixel(32),
       renderCell: (row: RuleTableRow) => dimIfDisabled(
         row,
-        <Icon icon="chevronRight" size="sm" color="secondary" label="to" />
+        <ProductIcon name="arrowRight" size="sm" color="secondary" label="to" />
       ),
     },
     {
@@ -261,7 +273,13 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           row,
           <HStack gap={0.5} wrap="wrap">
             {row.services.map((s, i) => (
-              <Token key={i} label={`${s.protocol} ${s.port}`} color="default" size="sm" />
+              <Token
+                key={i}
+                label={`${s.protocol} ${s.port}`}
+                color="default"
+                size="sm"
+                icon={<ProductIcon name="service" color="inherit" />}
+              />
             ))}
           </HStack>
         );
@@ -295,11 +313,32 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
       renderCell: (row: RuleTableRow) => {
         let token: React.ReactNode;
         if (provisionStatus === 'provisioned') {
-          token = <Token label="Active" color="green" size="sm" />;
+          token = (
+            <Token
+              label="Active"
+              color="green"
+              size="sm"
+              icon={<ProductIcon name="provision" color="inherit" />}
+            />
+          );
         } else if (provisionStatus === 'pending') {
-          token = <Token label="Modified" color="orange" size="sm" />;
+          token = (
+            <Token
+              label="Modified"
+              color="orange"
+              size="sm"
+              icon={<ProductIcon name="modified" color="inherit" />}
+            />
+          );
         } else {
-          token = <Token label="Draft" color="gray" size="sm" />;
+          token = (
+            <Token
+              label="Draft"
+              color="gray"
+              size="sm"
+              icon={<ProductIcon name="diff" color="inherit" />}
+            />
+          );
         }
         return dimIfDisabled(row, token);
       },

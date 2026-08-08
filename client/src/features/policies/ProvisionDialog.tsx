@@ -17,6 +17,7 @@ import {
   type ProvisionDiffRule,
   type RuleEndpoint,
 } from '../../api/policies.js';
+import { ProductIcon } from '../../components/ProductVisuals.js';
 import { getFilterColor, getDisplayValue } from '../rules/endpointDisplay.js';
 
 interface ProvisionDialogProps {
@@ -45,7 +46,7 @@ function RuleSummary({ rule }: { rule: ProvisionDiffRule }) {
   return (
     <HStack gap={2} vAlign="center" wrap="wrap">
       <EndpointTokens endpoint={rule.source} />
-      <Text type="supporting">→</Text>
+      <ProductIcon name="arrowRight" size="sm" color="tertiary" />
       <EndpointTokens endpoint={rule.destination} />
       {services.length > 0 && (
         <>
@@ -160,16 +161,19 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
 
             {diff.added.length > 0 && (
               <VStack gap={2}>
-                <Text weight="medium" style={{ color: 'var(--color-positive)' }}>
-                  + Added ({diff.added.length})
-                </Text>
+                <HStack gap={1} vAlign="center">
+                  <ProductIcon name="add" size="sm" color="success" />
+                  <Text weight="medium" style={{ color: 'var(--color-positive)' }}>
+                    Added ({diff.added.length})
+                  </Text>
+                </HStack>
                 <VStack gap={1}>
                   {diff.added.map((rule) => (
                     <HStack key={rule.id} gap={2} vAlign="center" padding={2} style={{
                       background: 'var(--color-surface-positive)',
                       borderRadius: 'var(--radius-sm)',
                     }}>
-                      <Text weight="medium" style={{ color: 'var(--color-positive)', minWidth: 16 }}>+</Text>
+                      <ProductIcon name="add" size="sm" color="success" label="Added rule" />
                       <Text type="supporting" style={{ minWidth: 24 }}>#{rule.position}</Text>
                       <RuleSummary rule={rule} />
                     </HStack>
@@ -184,9 +188,12 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
 
             {diff.modified.length > 0 && (
               <VStack gap={2}>
-                <Text weight="medium" style={{ color: 'var(--color-warning)' }}>
-                  ~ Modified ({diff.modified.length})
-                </Text>
+                <HStack gap={1} vAlign="center">
+                  <ProductIcon name="modified" size="sm" color="warning" />
+                  <Text weight="medium" style={{ color: 'var(--color-warning)' }}>
+                    Modified ({diff.modified.length})
+                  </Text>
+                </HStack>
                 <VStack gap={1}>
                   {diff.modified.map(({ before, after }) => (
                     <VStack key={after.id} gap={0} padding={2} style={{
@@ -194,14 +201,14 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
                       borderRadius: 'var(--radius-sm)',
                     }}>
                       <HStack gap={2} vAlign="center">
-                        <Text weight="medium" style={{ color: 'var(--color-warning)', minWidth: 16 }}>~</Text>
+                        <ProductIcon name="modified" size="sm" color="warning" label="Modified rule" />
                         <Text type="supporting" style={{ minWidth: 24 }}>#{before.position}</Text>
                         <VStack gap={0} style={{ opacity: 0.6, textDecoration: 'line-through' }}>
                           <RuleSummary rule={before} />
                         </VStack>
                       </HStack>
                       <HStack gap={2} vAlign="center">
-                        <Text style={{ minWidth: 16 }}> </Text>
+                        <ProductIcon name="provision" size="sm" color="success" label="Updated rule" />
                         <Text type="supporting" style={{ minWidth: 24 }}>#{after.position}</Text>
                         <RuleSummary rule={after} />
                       </HStack>
@@ -217,9 +224,12 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
 
             {diff.removed.length > 0 && (
               <VStack gap={2}>
-                <Text weight="medium" style={{ color: 'var(--color-negative)' }}>
-                  − Removed ({diff.removed.length})
-                </Text>
+                <HStack gap={1} vAlign="center">
+                  <ProductIcon name="removed" size="sm" color="error" />
+                  <Text weight="medium" style={{ color: 'var(--color-negative)' }}>
+                    Removed ({diff.removed.length})
+                  </Text>
+                </HStack>
                 <VStack gap={1}>
                   {diff.removed.map((rule) => (
                     <HStack key={rule.id} gap={2} vAlign="center" padding={2} style={{
@@ -227,7 +237,7 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
                       borderRadius: 'var(--radius-sm)',
                       opacity: 0.8,
                     }}>
-                      <Text weight="medium" style={{ color: 'var(--color-negative)', minWidth: 16 }}>−</Text>
+                      <ProductIcon name="removed" size="sm" color="error" label="Removed rule" />
                       <Text type="supporting" style={{ minWidth: 24, textDecoration: 'line-through' }}>#{rule.position}</Text>
                       <VStack gap={0} style={{ textDecoration: 'line-through', color: 'var(--color-negative)' }}>
                         <RuleSummary rule={rule} />
@@ -251,6 +261,7 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
         <Button
           label="Provision"
           variant="primary"
+          icon={<ProductIcon name="provision" color="inherit" />}
           onClick={handleProvision}
           isLoading={committing}
           isDisabled={loading || !!error || totalChanges === 0}

@@ -17,6 +17,7 @@ import {
   type Rule,
 } from '../../api/policies.js';
 import { useApi } from '../../hooks/useApi.js';
+import { ProductIcon, ProductIllustration } from '../../components/ProductVisuals.js';
 import { RuleTable } from './RuleTable.js';
 
 interface RuleEditorProps {
@@ -141,8 +142,9 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
       <HStack hAlign="between" vAlign="center">
         <Heading level={2}>Rules</Heading>
         <Button
-          label="+ Add Rule"
+          label="Add Rule"
           variant="secondary"
+          icon={<ProductIcon name="add" color="inherit" />}
           onClick={handleAddRule}
           isDisabled={isLocked}
           tooltip={isLocked ? 'Unlock policy to add rules' : undefined}
@@ -153,6 +155,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
         <EmptyState
           title="No rules yet"
           description="Add rules to define what traffic this policy allows or denies."
+          icon={<ProductIllustration kind="rules" />}
           headingLevel={3}
         />
       ) : (
