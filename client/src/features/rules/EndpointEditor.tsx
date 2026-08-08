@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { PowerSearch } from '@astryxdesign/core/PowerSearch';
 import type {
   PowerSearchFilter,
@@ -6,10 +6,15 @@ import type {
   FilterValue,
 } from '@astryxdesign/core/PowerSearch';
 import { VStack } from '@astryxdesign/core/VStack';
+import { HStack } from '@astryxdesign/core/HStack';
+import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 
 import type { RuleEndpoint, EndpointFilter, PolicyLabel } from '../../api/policies.js';
+import type { ObjIpList, ObjLabelGroup } from '../../api/objects.js';
 import { GhostTokens } from './GhostTokens.js';
 import { useEndpointResources, buildEndpointConfig } from './endpointConfig.js';
+import { IpListDialog } from '../objects/IpListDialog.js';
+import { LabelGroupDialog } from '../objects/LabelGroupDialog.js';
 
 interface EndpointEditorProps {
   value: RuleEndpoint;
@@ -38,6 +43,9 @@ function toEndpointFilter(f: PowerSearchFilter): EndpointFilter {
 }
 
 export function EndpointEditor({ value, onChange, ghostLabels, isDisabled, side }: EndpointEditorProps) {
+  const [ipListDialogOpen, setIpListDialogOpen] = useState(false);
+  const [labelGroupDialogOpen, setLabelGroupDialogOpen] = useState(false);
+
   const resources = useEndpointResources();
   const config = useMemo(() => buildEndpointConfig(resources, side), [resources, side]);
 
@@ -59,16 +67,53 @@ export function EndpointEditor({ value, onChange, ghostLabels, isDisabled, side 
 
   return (
     <VStack gap={0.5}>
-      <PowerSearch
-        config={config}
-        filters={psFilters}
-        onChange={handleChange}
-        placeholder="Add labels, workloads, IP lists..."
-        label="Endpoint"
-        isDisabled={isDisabled}
-        size="sm"
-      />
+      <HStack gap={1} vAlign="end">
+        <div style={{ flex: 1 }}>
+          <PowerSearch
+            config={config}
+            filters={psFilters}
+            onChange={handleChange}
+            placeholder="Add labels, workloads, IP lists..."
+            label="Endpoint"
+            isDisabled={isDisabled}
+            size="sm"
+          />
+        </div>
+        <DropdownMenu
+          button={{ label: '+ Create', variant: 'ghost', size: 'sm' }}
+          items={[
+            { label: 'Create IP List', onClick: () => setIpListDialogOpen(true) },
+            { label: 'Create Label Group', onClick: () => setLabelGroupDialogOpen(true) },
+          ]}
+        />
+      </HStack>
       {ghostLabels && ghostLabels.length > 0 && <GhostTokens labels={ghostLabels} />}
+      <IpListDialog
+        isOpen={ipListDialogOpen}
+        onClose={() => setIpListDialogOpen(false)}
+        onSaved={(newIpList: ObjIpList) => {
+          onChange({
+            filters: [...value.filters, {
+              field: 'ip_list',
+              operator: 'is',
+              value: { type: 'entity_list', value: [{ id: newIpList.id, label: `${newIpList.name} (${newIpList.cidr})` }] },
+            }],
+          });
+        }}
+      />
+      <LabelGroupDialog
+        isOpen={labelGroupDialogOpen}
+        onClose={() => setLabelGroupDialogOpen(false)}
+        onSaved={(newLG: ObjLabelGroup) => {
+          onChange({
+            filters: [...value.filters, {
+              field: 'label_group',
+              operator: 'is',
+              value: { type: 'entity_list', value: [{ id: newLG.id, label: newLG.name }] },
+            }],
+          });
+        }}
+      />
     </VStack>
   );
 }
