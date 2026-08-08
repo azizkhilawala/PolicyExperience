@@ -7,7 +7,12 @@ const router = Router();
 
 function parseV2Policy(row: any) {
   if (!row) return null;
-  return { ...row, scope_labels: JSON.parse(row.scope_labels) };
+  return {
+    ...row,
+    scope_cluster_ids: JSON.parse(row.scope_cluster_ids),
+    scope_namespace_ids: JSON.parse(row.scope_namespace_ids),
+    scope_labels: JSON.parse(row.scope_labels),
+  };
 }
 
 function parseV2Rule(row: any) {
@@ -27,22 +32,29 @@ router.get('/policies/:id', (req, res) => {
   const db = getDb();
   const policy = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
   if (!policy) return res.status(404).json({ error: 'Policy not found' });
-  const rules = db.prepare('SELECT * FROM v2_rules WHERE policy_id = ? ORDER BY direction, position').all(req.params.id);
-  res.json({ ...parseV2Policy(policy), rules: rules.map(parseV2Rule) });
+  const parsed = parseV2Policy(policy) as any;
+  if (parsed.policy_type === 'guardrail' && parsed.template_id) {
+    const templateRules = db.prepare('SELECT * FROM v2_template_rules WHERE template_id = ? ORDER BY direction, position').all(parsed.template_id);
+    parsed.rules = templateRules.map(parseV2Rule);
+  } else {
+    const rules = db.prepare('SELECT * FROM v2_rules WHERE policy_id = ? ORDER BY direction, position').all(req.params.id);
+    parsed.rules = rules.map(parseV2Rule);
+  }
+  res.json(parsed);
 });
 
 // POST /policies — create v2 policy
 router.post('/policies', (req, res) => {
   const db = getDb();
-  const { name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels } = req.body;
+  const { name, description, scope_type, scope_cluster_ids, scope_namespace_ids, scope_labels, policy_type, template_id } = req.body;
   if (!name || !scope_type) return res.status(400).json({ error: 'name and scope_type are required' });
   const user = (req as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
   db.prepare(
-    `INSERT INTO v2_policies (id, name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels, enabled, provision_status, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'draft', ?, ?, ?)`
-  ).run(id, name, description ?? '', scope_type, scope_cluster_id ?? null, scope_namespace_id ?? null, JSON.stringify(scope_labels ?? []), user.id, now, now);
+    `INSERT INTO v2_policies (id, name, description, scope_type, scope_cluster_ids, scope_namespace_ids, scope_labels, enabled, provision_status, policy_type, template_id, created_by, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'draft', ?, ?, ?, ?, ?)`
+  ).run(id, name, description ?? '', scope_type, JSON.stringify(scope_cluster_ids ?? []), JSON.stringify(scope_namespace_ids ?? []), JSON.stringify(scope_labels ?? []), policy_type ?? 'standard', template_id ?? null, user.id, now, now);
   const created = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(id);
   res.status(201).json(parseV2Policy(created));
 });

@@ -604,35 +604,35 @@ const seed = db.transaction(() => {
   // ── V2 Policies (scope-centric) ──────────────────────────────────────────
   const insertV2Policy = db.prepare(`
     INSERT INTO v2_policies
-      (id, name, description, scope_type, scope_cluster_id, scope_namespace_id, scope_labels, enabled, provision_status, created_by, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, name, description, scope_type, scope_cluster_ids, scope_namespace_ids, scope_labels, enabled, provision_status, policy_type, template_id, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   insertV2Policy.run(
     V2_POLICY_PAYMENTS,
     'Payments Frontend Access',
     'Controls ingress/egress for the payments frontend scope',
-    'k8s', CLUSTER_USEAST, NS_PAYMENTS,
+    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_PAYMENTS]),
     JSON.stringify([{ key: 'app', value: 'frontend' }]),
-    1, 'draft', USER_ALEX, now, now
+    1, 'draft', 'standard', null, USER_ALEX, now, now
   );
 
   insertV2Policy.run(
     V2_POLICY_MONITORING,
     'Monitoring Stack',
     'Monitoring scope for API role workloads',
-    'k8s', CLUSTER_USEAST, NS_MONITORING,
+    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_MONITORING]),
     JSON.stringify([{ key: 'role', value: 'api' }]),
-    1, 'draft', USER_ALEX, now, now
+    1, 'draft', 'standard', null, USER_ALEX, now, now
   );
 
   insertV2Policy.run(
     V2_POLICY_BACKEND,
     'Backend Services Deny',
     'Deny non-production access to backend services',
-    'k8s', CLUSTER_USEAST, NS_BACKEND,
+    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_BACKEND]),
     JSON.stringify([{ key: 'tier', value: 'web' }, { key: 'env', value: 'production' }]),
-    1, 'provisioned', USER_MORGAN, now, now
+    1, 'provisioned', 'standard', null, USER_MORGAN, now, now
   );
 
   // ── V2 Rules ─────────────────────────────────────────────────────────────
