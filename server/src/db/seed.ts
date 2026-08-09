@@ -150,16 +150,12 @@ const seed = db.transaction(() => {
   `);
 
   // ── Users ──────────────────────────────────────────────────────────────────
-  const insertUser = db.prepare(
-    'INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, ?)'
-  );
+  const insertUser = db.prepare('INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, ?)');
   insertUser.run(USER_ALEX, 'Alex Chen', 'alex.chen@illumio.com', 'author');
   insertUser.run(USER_MORGAN, 'Morgan Davis', 'morgan.davis@illumio.com', 'global_admin');
 
   // ── Labels ─────────────────────────────────────────────────────────────────
-  const insertLabel = db.prepare(
-    'INSERT INTO labels (id, key, value, type) VALUES (?, ?, ?, ?)'
-  );
+  const insertLabel = db.prepare('INSERT INTO labels (id, key, value, type) VALUES (?, ?, ?, ?)');
   // app labels
   insertLabel.run(LBL_APP_HRM, 'app', 'HRM', 'illumio');
   insertLabel.run(LBL_APP_ERP, 'app', 'ERP', 'illumio');
@@ -184,25 +180,54 @@ const seed = db.transaction(() => {
 
   // ── Label Groups ───────────────────────────────────────────────────────────
   const insertLabelGroup = db.prepare(
-    'INSERT INTO label_groups (id, name, label_ids, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO label_groups (id, name, label_ids, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
   );
-  insertLabelGroup.run(LG_WEB_TIER, 'Web Tier', JSON.stringify([LBL_ROLE_WEB, LBL_ROLE_LB]), USER_ALEX, now, now);
-  insertLabelGroup.run(LG_DB_TIER, 'Database Tier', JSON.stringify([LBL_ROLE_DB, LBL_ROLE_CACHE]), USER_ALEX, now, now);
-  insertLabelGroup.run(LG_PROD_APPS, 'Production Apps', JSON.stringify([LBL_APP_HRM, LBL_APP_ERP, LBL_APP_PAYMENT]), USER_ALEX, now, now);
+  insertLabelGroup.run(
+    LG_WEB_TIER,
+    'Web Tier',
+    JSON.stringify([LBL_ROLE_WEB, LBL_ROLE_LB]),
+    USER_ALEX,
+    now,
+    now,
+  );
+  insertLabelGroup.run(
+    LG_DB_TIER,
+    'Database Tier',
+    JSON.stringify([LBL_ROLE_DB, LBL_ROLE_CACHE]),
+    USER_ALEX,
+    now,
+    now,
+  );
+  insertLabelGroup.run(
+    LG_PROD_APPS,
+    'Production Apps',
+    JSON.stringify([LBL_APP_HRM, LBL_APP_ERP, LBL_APP_PAYMENT]),
+    USER_ALEX,
+    now,
+    now,
+  );
 
   // ── IP Lists ───────────────────────────────────────────────────────────────
   const insertIpList = db.prepare(
-    'INSERT INTO ip_lists (id, name, cidr, description, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO ip_lists (id, name, cidr, description, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
   insertIpList.run(IPL_CORPORATE, 'Corporate Network', '10.0.0.0/8', '', USER_ALEX, now, now);
   insertIpList.run(IPL_VPN, 'VPN Gateway', '172.16.0.0/12', '', USER_ALEX, now, now);
   insertIpList.run(IPL_CDN, 'Public CDN', '203.0.113.0/24', '', USER_ALEX, now, now);
-  insertIpList.run(IPL_PAYMENT, 'Payment Processor Network', '192.168.1.0/24', '', USER_ALEX, now, now);
+  insertIpList.run(
+    IPL_PAYMENT,
+    'Payment Processor Network',
+    '192.168.1.0/24',
+    '',
+    USER_ALEX,
+    now,
+    now,
+  );
   insertIpList.run(IPL_MONITORING, 'Monitoring Subnet', '10.100.0.0/16', '', USER_ALEX, now, now);
 
   // ── User Groups ────────────────────────────────────────────────────────────
   const insertUserGroup = db.prepare(
-    'INSERT INTO user_groups (id, name, member_ids) VALUES (?, ?, ?)'
+    'INSERT INTO user_groups (id, name, member_ids) VALUES (?, ?, ?)',
   );
   insertUserGroup.run(UG_ENGINEERING, 'Engineering', JSON.stringify([USER_ALEX]));
   insertUserGroup.run(UG_OPERATIONS, 'Operations', JSON.stringify([USER_MORGAN]));
@@ -211,7 +236,7 @@ const seed = db.transaction(() => {
 
   // ── Virtual Services ───────────────────────────────────────────────────────
   const insertVirtualService = db.prepare(
-    'INSERT INTO virtual_services (id, name, port, protocol, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO virtual_services (id, name, port, protocol, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
   insertVirtualService.run(VS_PAYMENT_API, 'Payment API', 443, 'TCP', USER_ALEX, now, now);
   insertVirtualService.run(VS_INTERNAL_DNS, 'Internal DNS', 53, 'UDP', USER_ALEX, now, now);
@@ -219,17 +244,47 @@ const seed = db.transaction(() => {
 
   // ── Services ──────────────────────────────────────────────────────────────
   const insertService = db.prepare(
-    'INSERT INTO services (id, name, description, port, to_port, protocol, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO services (id, name, description, port, to_port, protocol, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
   );
-  insertService.run(SVC_HTTPS, 'HTTPS', 'Secure HTTP over TLS', 443, null, 'TCP', USER_ALEX, now, now);
-  insertService.run(SVC_HTTP, 'HTTP', 'Standard HTTP traffic', 80, null, 'TCP', USER_ALEX, now, now);
+  insertService.run(
+    SVC_HTTPS,
+    'HTTPS',
+    'Secure HTTP over TLS',
+    443,
+    null,
+    'TCP',
+    USER_ALEX,
+    now,
+    now,
+  );
+  insertService.run(
+    SVC_HTTP,
+    'HTTP',
+    'Standard HTTP traffic',
+    80,
+    null,
+    'TCP',
+    USER_ALEX,
+    now,
+    now,
+  );
   insertService.run(SVC_DNS, 'DNS', 'Domain name resolution', 53, null, 'UDP', USER_ALEX, now, now);
   insertService.run(SVC_SSH, 'SSH', 'Secure shell access', 22, null, 'TCP', USER_ALEX, now, now);
-  insertService.run(SVC_PG, 'PostgreSQL', 'PostgreSQL database', 5432, null, 'TCP', USER_ALEX, now, now);
+  insertService.run(
+    SVC_PG,
+    'PostgreSQL',
+    'PostgreSQL database',
+    5432,
+    null,
+    'TCP',
+    USER_ALEX,
+    now,
+    now,
+  );
 
   // ── Cloud Accounts ─────────────────────────────────────────────────────────
   const insertCloudAccount = db.prepare(
-    'INSERT INTO cloud_accounts (id, provider, name, account_id, region) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO cloud_accounts (id, provider, name, account_id, region) VALUES (?, ?, ?, ?, ?)',
   );
   insertCloudAccount.run(CA_AWS_PROD, 'aws', 'Production', '123456789012', 'us-east-1');
   insertCloudAccount.run(CA_AWS_STAGING, 'aws', 'Staging', '987654321098', 'us-west-2');
@@ -238,49 +293,146 @@ const seed = db.transaction(() => {
 
   // ── Cloud VPCs ─────────────────────────────────────────────────────────────
   const insertCloudVpc = db.prepare(
-    'INSERT INTO cloud_vpcs (id, provider, name, vpc_id, cloud_account_id, region, resource_group) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO cloud_vpcs (id, provider, name, vpc_id, cloud_account_id, region, resource_group) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
-  insertCloudVpc.run(CV_AWS_PROD, 'aws', 'prod-vpc', 'vpc-0a1b2c3d', CA_AWS_PROD, 'us-east-1', null);
-  insertCloudVpc.run(CV_AWS_STAGING, 'aws', 'staging-vpc', 'vpc-9z8y7x6w', CA_AWS_STAGING, 'us-west-2', null);
-  insertCloudVpc.run(CV_AZURE_PROD, 'azure', 'prod-vnet', 'prod-vnet', CA_AZURE_PROD, null, 'prod-rg');
+  insertCloudVpc.run(
+    CV_AWS_PROD,
+    'aws',
+    'prod-vpc',
+    'vpc-0a1b2c3d',
+    CA_AWS_PROD,
+    'us-east-1',
+    null,
+  );
+  insertCloudVpc.run(
+    CV_AWS_STAGING,
+    'aws',
+    'staging-vpc',
+    'vpc-9z8y7x6w',
+    CA_AWS_STAGING,
+    'us-west-2',
+    null,
+  );
+  insertCloudVpc.run(
+    CV_AZURE_PROD,
+    'azure',
+    'prod-vnet',
+    'prod-vnet',
+    CA_AZURE_PROD,
+    null,
+    'prod-rg',
+  );
   insertCloudVpc.run(CV_AZURE_DEV, 'azure', 'dev-vnet', 'dev-vnet', CA_AZURE_DEV, null, 'dev-rg');
 
   // ── Cloud Subnets ──────────────────────────────────────────────────────────
   const insertCloudSubnet = db.prepare(
-    'INSERT INTO cloud_subnets (id, provider, name, subnet_id, cloud_vpc_id, region) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO cloud_subnets (id, provider, name, subnet_id, cloud_vpc_id, region) VALUES (?, ?, ?, ?, ?, ?)',
   );
-  insertCloudSubnet.run(CS_AWS_PROD_1A, 'aws', 'prod-private-1a', 'subnet-aaa', CV_AWS_PROD, 'us-east-1');
-  insertCloudSubnet.run(CS_AWS_PROD_1B, 'aws', 'prod-private-1b', 'subnet-bbb', CV_AWS_PROD, 'us-east-1');
-  insertCloudSubnet.run(CS_AWS_STAGING, 'aws', 'staging-public', 'subnet-ccc', CV_AWS_STAGING, 'us-west-2');
-  insertCloudSubnet.run(CS_AZURE_PROD_APP, 'azure', 'prod-app-subnet', 'prod-app-subnet', CV_AZURE_PROD, null);
-  insertCloudSubnet.run(CS_AZURE_PROD_DB, 'azure', 'prod-db-subnet', 'prod-db-subnet', CV_AZURE_PROD, null);
+  insertCloudSubnet.run(
+    CS_AWS_PROD_1A,
+    'aws',
+    'prod-private-1a',
+    'subnet-aaa',
+    CV_AWS_PROD,
+    'us-east-1',
+  );
+  insertCloudSubnet.run(
+    CS_AWS_PROD_1B,
+    'aws',
+    'prod-private-1b',
+    'subnet-bbb',
+    CV_AWS_PROD,
+    'us-east-1',
+  );
+  insertCloudSubnet.run(
+    CS_AWS_STAGING,
+    'aws',
+    'staging-public',
+    'subnet-ccc',
+    CV_AWS_STAGING,
+    'us-west-2',
+  );
+  insertCloudSubnet.run(
+    CS_AZURE_PROD_APP,
+    'azure',
+    'prod-app-subnet',
+    'prod-app-subnet',
+    CV_AZURE_PROD,
+    null,
+  );
+  insertCloudSubnet.run(
+    CS_AZURE_PROD_DB,
+    'azure',
+    'prod-db-subnet',
+    'prod-db-subnet',
+    CV_AZURE_PROD,
+    null,
+  );
   insertCloudSubnet.run(CS_AZURE_DEV, 'azure', 'dev-default', 'dev-default', CV_AZURE_DEV, null);
 
   // ── K8s Clusters ───────────────────────────────────────────────────────────
-  const insertCluster = db.prepare(
-    'INSERT INTO k8s_clusters (id, name, region) VALUES (?, ?, ?)'
-  );
+  const insertCluster = db.prepare('INSERT INTO k8s_clusters (id, name, region) VALUES (?, ?, ?)');
   insertCluster.run(CLUSTER_USEAST, 'us-east-prod', 'us-east-1');
   insertCluster.run(CLUSTER_EUWEST, 'eu-west-staging', 'eu-west-1');
 
   // ── K8s Namespaces ─────────────────────────────────────────────────────────
   const insertNs = db.prepare(
-    'INSERT INTO k8s_namespaces (id, name, cluster_id, labels) VALUES (?, ?, ?, ?)'
+    'INSERT INTO k8s_namespaces (id, name, cluster_id, labels) VALUES (?, ?, ?, ?)',
   );
   // us-east-prod namespaces
-  insertNs.run(NS_PAYMENTS, 'payments', CLUSTER_USEAST, JSON.stringify([{ key: 'team', value: 'payments' }]));
-  insertNs.run(NS_WEB_FRONTEND, 'web-frontend', CLUSTER_USEAST, JSON.stringify([{ key: 'team', value: 'frontend' }]));
-  insertNs.run(NS_MONITORING, 'monitoring', CLUSTER_USEAST, JSON.stringify([{ key: 'team', value: 'ops' }]));
-  insertNs.run(NS_BACKEND, 'backend-services', CLUSTER_USEAST, JSON.stringify([{ key: 'team', value: 'backend' }]));
+  insertNs.run(
+    NS_PAYMENTS,
+    'payments',
+    CLUSTER_USEAST,
+    JSON.stringify([{ key: 'team', value: 'payments' }]),
+  );
+  insertNs.run(
+    NS_WEB_FRONTEND,
+    'web-frontend',
+    CLUSTER_USEAST,
+    JSON.stringify([{ key: 'team', value: 'frontend' }]),
+  );
+  insertNs.run(
+    NS_MONITORING,
+    'monitoring',
+    CLUSTER_USEAST,
+    JSON.stringify([{ key: 'team', value: 'ops' }]),
+  );
+  insertNs.run(
+    NS_BACKEND,
+    'backend-services',
+    CLUSTER_USEAST,
+    JSON.stringify([{ key: 'team', value: 'backend' }]),
+  );
   // eu-west-staging namespaces
-  insertNs.run(NS_PAYMENTS_STG, 'payments-stg', CLUSTER_EUWEST, JSON.stringify([{ key: 'team', value: 'payments' }]));
-  insertNs.run(NS_WEB_STG, 'web-stg', CLUSTER_EUWEST, JSON.stringify([{ key: 'team', value: 'frontend' }]));
-  insertNs.run(NS_MONITORING_STG, 'monitoring-stg', CLUSTER_EUWEST, JSON.stringify([{ key: 'team', value: 'ops' }]));
-  insertNs.run(NS_BACKEND_STG, 'backend-stg', CLUSTER_EUWEST, JSON.stringify([{ key: 'team', value: 'backend' }]));
+  insertNs.run(
+    NS_PAYMENTS_STG,
+    'payments-stg',
+    CLUSTER_EUWEST,
+    JSON.stringify([{ key: 'team', value: 'payments' }]),
+  );
+  insertNs.run(
+    NS_WEB_STG,
+    'web-stg',
+    CLUSTER_EUWEST,
+    JSON.stringify([{ key: 'team', value: 'frontend' }]),
+  );
+  insertNs.run(
+    NS_MONITORING_STG,
+    'monitoring-stg',
+    CLUSTER_EUWEST,
+    JSON.stringify([{ key: 'team', value: 'ops' }]),
+  );
+  insertNs.run(
+    NS_BACKEND_STG,
+    'backend-stg',
+    CLUSTER_EUWEST,
+    JSON.stringify([{ key: 'team', value: 'backend' }]),
+  );
 
   // ── Workloads ──────────────────────────────────────────────────────────────
   const insertWorkload = db.prepare(
-    'INSERT INTO workloads (id, name, hostname, ip, type, labels, cluster_id, namespace_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO workloads (id, name, hostname, ip, type, labels, cluster_id, namespace_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
   );
 
   // VMs (~30): HRM (10), ERP (10), CRM (10)
@@ -300,14 +452,19 @@ const seed = db.transaction(() => {
 
   for (const vm of hrmVms) {
     insertWorkload.run(
-      uuid(), vm.name, `${vm.name}.illumio.internal`, vm.ip, 'vm',
+      uuid(),
+      vm.name,
+      `${vm.name}.illumio.internal`,
+      vm.ip,
+      'vm',
       JSON.stringify([
         { key: 'app', value: 'HRM' },
         { key: 'role', value: vm.role },
         { key: 'env', value: vm.env },
         { key: 'loc', value: vm.loc },
       ]),
-      null, null
+      null,
+      null,
     );
   }
 
@@ -327,14 +484,19 @@ const seed = db.transaction(() => {
 
   for (const vm of erpVms) {
     insertWorkload.run(
-      uuid(), vm.name, `${vm.name}.illumio.internal`, vm.ip, 'vm',
+      uuid(),
+      vm.name,
+      `${vm.name}.illumio.internal`,
+      vm.ip,
+      'vm',
       JSON.stringify([
         { key: 'app', value: 'ERP' },
         { key: 'role', value: vm.role },
         { key: 'env', value: vm.env },
         { key: 'loc', value: vm.loc },
       ]),
-      null, null
+      null,
+      null,
     );
   }
 
@@ -354,65 +516,220 @@ const seed = db.transaction(() => {
 
   for (const vm of crmVms) {
     insertWorkload.run(
-      uuid(), vm.name, `${vm.name}.illumio.internal`, vm.ip, 'vm',
+      uuid(),
+      vm.name,
+      `${vm.name}.illumio.internal`,
+      vm.ip,
+      'vm',
       JSON.stringify([
         { key: 'app', value: 'CRM' },
         { key: 'role', value: vm.role },
         { key: 'env', value: vm.env },
         { key: 'loc', value: vm.loc },
       ]),
-      null, null
+      null,
+      null,
     );
   }
 
   // K8s pods (~20) — 10 in us-east-prod, 10 in eu-west-staging
   const usEastPods = [
-    { name: 'payment-processor-abc12', ns: NS_PAYMENTS, app: 'payment-processor', tier: 'backend', version: 'v2.1', ip: '172.16.1.1' },
-    { name: 'payment-processor-def34', ns: NS_PAYMENTS, app: 'payment-processor', tier: 'backend', version: 'v2.1', ip: '172.16.1.2' },
-    { name: 'checkout-ghi56', ns: NS_PAYMENTS, app: 'checkout', tier: 'frontend', version: 'v1.5', ip: '172.16.1.3' },
-    { name: 'web-frontend-jkl78', ns: NS_WEB_FRONTEND, app: 'web', tier: 'frontend', version: 'v3.0', ip: '172.16.2.1' },
-    { name: 'web-frontend-mno90', ns: NS_WEB_FRONTEND, app: 'web', tier: 'frontend', version: 'v3.0', ip: '172.16.2.2' },
-    { name: 'prometheus-pqr12', ns: NS_MONITORING, app: 'prometheus', tier: 'monitoring', version: 'v2.45', ip: '172.16.3.1' },
-    { name: 'grafana-stu34', ns: NS_MONITORING, app: 'grafana', tier: 'monitoring', version: 'v9.4', ip: '172.16.3.2' },
-    { name: 'backend-api-vwx56', ns: NS_BACKEND, app: 'backend-api', tier: 'backend', version: 'v1.8', ip: '172.16.4.1' },
-    { name: 'backend-api-yza78', ns: NS_BACKEND, app: 'backend-api', tier: 'backend', version: 'v1.8', ip: '172.16.4.2' },
-    { name: 'worker-bcd90', ns: NS_BACKEND, app: 'worker', tier: 'worker', version: 'v1.2', ip: '172.16.4.3' },
+    {
+      name: 'payment-processor-abc12',
+      ns: NS_PAYMENTS,
+      app: 'payment-processor',
+      tier: 'backend',
+      version: 'v2.1',
+      ip: '172.16.1.1',
+    },
+    {
+      name: 'payment-processor-def34',
+      ns: NS_PAYMENTS,
+      app: 'payment-processor',
+      tier: 'backend',
+      version: 'v2.1',
+      ip: '172.16.1.2',
+    },
+    {
+      name: 'checkout-ghi56',
+      ns: NS_PAYMENTS,
+      app: 'checkout',
+      tier: 'frontend',
+      version: 'v1.5',
+      ip: '172.16.1.3',
+    },
+    {
+      name: 'web-frontend-jkl78',
+      ns: NS_WEB_FRONTEND,
+      app: 'web',
+      tier: 'frontend',
+      version: 'v3.0',
+      ip: '172.16.2.1',
+    },
+    {
+      name: 'web-frontend-mno90',
+      ns: NS_WEB_FRONTEND,
+      app: 'web',
+      tier: 'frontend',
+      version: 'v3.0',
+      ip: '172.16.2.2',
+    },
+    {
+      name: 'prometheus-pqr12',
+      ns: NS_MONITORING,
+      app: 'prometheus',
+      tier: 'monitoring',
+      version: 'v2.45',
+      ip: '172.16.3.1',
+    },
+    {
+      name: 'grafana-stu34',
+      ns: NS_MONITORING,
+      app: 'grafana',
+      tier: 'monitoring',
+      version: 'v9.4',
+      ip: '172.16.3.2',
+    },
+    {
+      name: 'backend-api-vwx56',
+      ns: NS_BACKEND,
+      app: 'backend-api',
+      tier: 'backend',
+      version: 'v1.8',
+      ip: '172.16.4.1',
+    },
+    {
+      name: 'backend-api-yza78',
+      ns: NS_BACKEND,
+      app: 'backend-api',
+      tier: 'backend',
+      version: 'v1.8',
+      ip: '172.16.4.2',
+    },
+    {
+      name: 'worker-bcd90',
+      ns: NS_BACKEND,
+      app: 'worker',
+      tier: 'worker',
+      version: 'v1.2',
+      ip: '172.16.4.3',
+    },
   ];
 
   for (const pod of usEastPods) {
     insertWorkload.run(
-      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
+      uuid(),
+      pod.name,
+      `${pod.name}.${pod.ns}`,
+      pod.ip,
+      'k8s_pod',
       JSON.stringify([
         { key: 'app', value: pod.app },
         { key: 'tier', value: pod.tier },
         { key: 'version', value: pod.version },
       ]),
-      CLUSTER_USEAST, pod.ns
+      CLUSTER_USEAST,
+      pod.ns,
     );
   }
 
   const euWestPods = [
-    { name: 'payment-stg-abc12', ns: NS_PAYMENTS_STG, app: 'payment-processor', tier: 'backend', version: 'v2.0', ip: '172.17.1.1' },
-    { name: 'payment-stg-def34', ns: NS_PAYMENTS_STG, app: 'payment-processor', tier: 'backend', version: 'v2.0', ip: '172.17.1.2' },
-    { name: 'checkout-stg-ghi56', ns: NS_PAYMENTS_STG, app: 'checkout', tier: 'frontend', version: 'v1.4', ip: '172.17.1.3' },
-    { name: 'web-stg-jkl78', ns: NS_WEB_STG, app: 'web', tier: 'frontend', version: 'v2.9', ip: '172.17.2.1' },
-    { name: 'web-stg-mno90', ns: NS_WEB_STG, app: 'web', tier: 'frontend', version: 'v2.9', ip: '172.17.2.2' },
-    { name: 'prometheus-stg-pqr12', ns: NS_MONITORING_STG, app: 'prometheus', tier: 'monitoring', version: 'v2.44', ip: '172.17.3.1' },
-    { name: 'grafana-stg-stu34', ns: NS_MONITORING_STG, app: 'grafana', tier: 'monitoring', version: 'v9.3', ip: '172.17.3.2' },
-    { name: 'backend-stg-vwx56', ns: NS_BACKEND_STG, app: 'backend-api', tier: 'backend', version: 'v1.7', ip: '172.17.4.1' },
-    { name: 'backend-stg-yza78', ns: NS_BACKEND_STG, app: 'backend-api', tier: 'backend', version: 'v1.7', ip: '172.17.4.2' },
-    { name: 'worker-stg-bcd90', ns: NS_BACKEND_STG, app: 'worker', tier: 'worker', version: 'v1.1', ip: '172.17.4.3' },
+    {
+      name: 'payment-stg-abc12',
+      ns: NS_PAYMENTS_STG,
+      app: 'payment-processor',
+      tier: 'backend',
+      version: 'v2.0',
+      ip: '172.17.1.1',
+    },
+    {
+      name: 'payment-stg-def34',
+      ns: NS_PAYMENTS_STG,
+      app: 'payment-processor',
+      tier: 'backend',
+      version: 'v2.0',
+      ip: '172.17.1.2',
+    },
+    {
+      name: 'checkout-stg-ghi56',
+      ns: NS_PAYMENTS_STG,
+      app: 'checkout',
+      tier: 'frontend',
+      version: 'v1.4',
+      ip: '172.17.1.3',
+    },
+    {
+      name: 'web-stg-jkl78',
+      ns: NS_WEB_STG,
+      app: 'web',
+      tier: 'frontend',
+      version: 'v2.9',
+      ip: '172.17.2.1',
+    },
+    {
+      name: 'web-stg-mno90',
+      ns: NS_WEB_STG,
+      app: 'web',
+      tier: 'frontend',
+      version: 'v2.9',
+      ip: '172.17.2.2',
+    },
+    {
+      name: 'prometheus-stg-pqr12',
+      ns: NS_MONITORING_STG,
+      app: 'prometheus',
+      tier: 'monitoring',
+      version: 'v2.44',
+      ip: '172.17.3.1',
+    },
+    {
+      name: 'grafana-stg-stu34',
+      ns: NS_MONITORING_STG,
+      app: 'grafana',
+      tier: 'monitoring',
+      version: 'v9.3',
+      ip: '172.17.3.2',
+    },
+    {
+      name: 'backend-stg-vwx56',
+      ns: NS_BACKEND_STG,
+      app: 'backend-api',
+      tier: 'backend',
+      version: 'v1.7',
+      ip: '172.17.4.1',
+    },
+    {
+      name: 'backend-stg-yza78',
+      ns: NS_BACKEND_STG,
+      app: 'backend-api',
+      tier: 'backend',
+      version: 'v1.7',
+      ip: '172.17.4.2',
+    },
+    {
+      name: 'worker-stg-bcd90',
+      ns: NS_BACKEND_STG,
+      app: 'worker',
+      tier: 'worker',
+      version: 'v1.1',
+      ip: '172.17.4.3',
+    },
   ];
 
   for (const pod of euWestPods) {
     insertWorkload.run(
-      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
+      uuid(),
+      pod.name,
+      `${pod.name}.${pod.ns}`,
+      pod.ip,
+      'k8s_pod',
       JSON.stringify([
         { key: 'app', value: pod.app },
         { key: 'tier', value: pod.tier },
         { key: 'version', value: pod.version },
       ]),
-      CLUSTER_EUWEST, pod.ns
+      CLUSTER_EUWEST,
+      pod.ns,
     );
   }
 
@@ -429,9 +746,18 @@ const seed = db.transaction(() => {
     'HRM Production Access',
     'Controls traffic within the HRM production environment',
     'application',
-    JSON.stringify([{ key: 'app', value: 'HRM' }, { key: 'env', value: 'prod' }]),
-    1, 'provisioned', 0, null, null,
-    USER_ALEX, now, now
+    JSON.stringify([
+      { key: 'app', value: 'HRM' },
+      { key: 'env', value: 'prod' },
+    ]),
+    1,
+    'provisioned',
+    0,
+    null,
+    null,
+    USER_ALEX,
+    now,
+    now,
   );
 
   // Policy 2: ERP Database Access
@@ -441,8 +767,14 @@ const seed = db.transaction(() => {
     'Manages database access rules for ERP application',
     'application',
     JSON.stringify([{ key: 'app', value: 'ERP' }]),
-    1, 'draft', 0, null, null,
-    USER_ALEX, now, now
+    1,
+    'draft',
+    0,
+    null,
+    null,
+    USER_ALEX,
+    now,
+    now,
   );
 
   // Policy 3: K8s Frontend Services
@@ -452,8 +784,14 @@ const seed = db.transaction(() => {
     'Kubernetes frontend services traffic policy for Analytics',
     'application',
     JSON.stringify([{ key: 'app', value: 'Analytics' }]),
-    1, 'pending', 0, null, null,
-    USER_ALEX, now, now
+    1,
+    'pending',
+    0,
+    null,
+    null,
+    USER_ALEX,
+    now,
+    now,
   );
 
   // Policy 4: Global Deny Logging
@@ -463,8 +801,14 @@ const seed = db.transaction(() => {
     'Organizational policy for logging denied traffic globally',
     'organizational',
     JSON.stringify([]),
-    0, 'provisioned', 0, null, null,
-    USER_MORGAN, now, now
+    0,
+    'provisioned',
+    0,
+    null,
+    null,
+    USER_MORGAN,
+    now,
+    now,
   );
 
   // Policy 5: Payment Gateway (locked by Morgan)
@@ -473,9 +817,18 @@ const seed = db.transaction(() => {
     'Payment Gateway',
     'Strict access control for payment gateway services',
     'application',
-    JSON.stringify([{ key: 'app', value: 'PaymentGateway' }, { key: 'env', value: 'prod' }]),
-    1, 'draft', 1, USER_MORGAN, '2026-07-28T10:00:00Z',
-    USER_ALEX, now, now
+    JSON.stringify([
+      { key: 'app', value: 'PaymentGateway' },
+      { key: 'env', value: 'prod' },
+    ]),
+    1,
+    'draft',
+    1,
+    USER_MORGAN,
+    '2026-07-28T10:00:00Z',
+    USER_ALEX,
+    now,
+    now,
   );
 
   // ── Rules ──────────────────────────────────────────────────────────────────
@@ -487,129 +840,282 @@ const seed = db.transaction(() => {
 
   // Policy 1 rules (HRM Production Access) — 4 intra allow
   insertRule.run(
-    uuid(), POLICY_HRM,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    uuid(),
+    POLICY_HRM,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'intra', 1, 0,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    0,
+    '',
+    0,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_HRM,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }] }),
+    uuid(),
+    POLICY_HRM,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '5432' }]),
-    'allow', 'intra', 1, 1,
-    'Database access for API tier', 1, 0
+    'allow',
+    'intra',
+    1,
+    1,
+    'Database access for API tier',
+    1,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_HRM,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'cache' } }] }),
+    uuid(),
+    POLICY_HRM,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'cache' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '6379' }]),
-    'allow', 'intra', 1, 2,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    2,
+    '',
+    0,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_HRM,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'load-balancer' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
-    JSON.stringify([{ protocol: 'TCP', port: '443' }, { protocol: 'TCP', port: '80' }]),
-    'allow', 'intra', 1, 3,
-    '', 0, 0
+    uuid(),
+    POLICY_HRM,
+    JSON.stringify({
+      filters: [
+        { field: 'label_role', operator: 'is', value: { type: 'enum', value: 'load-balancer' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }],
+    }),
+    JSON.stringify([
+      { protocol: 'TCP', port: '443' },
+      { protocol: 'TCP', port: '80' },
+    ]),
+    'allow',
+    'intra',
+    1,
+    3,
+    '',
+    0,
+    0,
   );
 
   // Policy 2 rules (ERP Database Access) — 3 rules (mix intra/extra)
   insertRule.run(
-    uuid(), POLICY_ERP,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }] }),
+    uuid(),
+    POLICY_ERP,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '3306' }]),
-    'allow', 'intra', 1, 0,
-    '', 0, 1
+    'allow',
+    'intra',
+    1,
+    0,
+    '',
+    0,
+    1,
   );
   insertRule.run(
-    uuid(), POLICY_ERP,
-    JSON.stringify({ filters: [{ field: 'ip_list', operator: 'is', value: { type: 'entity_list', value: [{ id: IPL_CORPORATE, label: 'Corporate Network (10.0.0.0/8)' }] } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    uuid(),
+    POLICY_ERP,
+    JSON.stringify({
+      filters: [
+        {
+          field: 'ip_list',
+          operator: 'is',
+          value: {
+            type: 'entity_list',
+            value: [{ id: IPL_CORPORATE, label: 'Corporate Network (10.0.0.0/8)' }],
+          },
+        },
+      ],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'extra', 1, 1,
-    '', 0, 0
+    'allow',
+    'extra',
+    1,
+    1,
+    '',
+    0,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_ERP,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    uuid(),
+    POLICY_ERP,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '8080' }]),
-    'allow', 'intra', 1, 2,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    2,
+    '',
+    0,
+    0,
   );
 
   // Policy 3 rules (K8s Frontend Services) — 2 rules
   insertRule.run(
-    uuid(), POLICY_K8S,
-    JSON.stringify({ filters: [
-      { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
-      { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'web-frontend' } },
-      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'web' } },
-      { field: 'k8s_pod_tier', operator: 'is', value: { type: 'enum', value: 'frontend' } }
-    ] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    uuid(),
+    POLICY_K8S,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'web-frontend' } },
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'web' } },
+        { field: 'k8s_pod_tier', operator: 'is', value: { type: 'enum', value: 'frontend' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'intra', 1, 0,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    0,
+    '',
+    0,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_K8S,
-    JSON.stringify({ filters: [
-      { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
-      { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
-      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'payment-processor' } }
-    ] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }] }),
+    uuid(),
+    POLICY_K8S,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
+        {
+          field: 'k8s_pod_app',
+          operator: 'is',
+          value: { type: 'enum', value: 'payment-processor' },
+        },
+      ],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'db' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '5432' }]),
-    'allow', 'intra', 1, 1,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    1,
+    '',
+    0,
+    0,
   );
 
   // Policy 4 rules (Global Deny Logging) — 1 rule
   insertRule.run(
-    uuid(), POLICY_DENY,
+    uuid(),
+    POLICY_DENY,
     JSON.stringify({ filters: [] }),
     JSON.stringify({ filters: [] }),
     JSON.stringify([{ protocol: 'TCP', port: '514' }]),
-    'deny', 'intra', 1, 0,
-    '', 0, 0
+    'deny',
+    'intra',
+    1,
+    0,
+    '',
+    0,
+    0,
   );
 
   // Policy 5 rules (Payment Gateway) — 3 rules
   insertRule.run(
-    uuid(), POLICY_PAYMENT,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    uuid(),
+    POLICY_PAYMENT,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'web' } }],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'intra', 1, 0,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    0,
+    '',
+    0,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_PAYMENT,
-    JSON.stringify({ filters: [
-      { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
-      { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
-      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'checkout' } }
-    ] }),
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
+    uuid(),
+    POLICY_PAYMENT,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'checkout' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '443' }]),
-    'allow', 'extra', 1, 1,
-    '', 0, 0
+    'allow',
+    'extra',
+    1,
+    1,
+    '',
+    0,
+    0,
   );
   insertRule.run(
-    uuid(), POLICY_PAYMENT,
-    JSON.stringify({ filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }] }),
-    JSON.stringify({ filters: [{ field: 'ip_list', operator: 'is', value: { type: 'entity_list', value: [{ id: IPL_PAYMENT, label: 'Payment Processor Network (192.168.1.0/24)' }] } }] }),
+    uuid(),
+    POLICY_PAYMENT,
+    JSON.stringify({
+      filters: [{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'api' } }],
+    }),
+    JSON.stringify({
+      filters: [
+        {
+          field: 'ip_list',
+          operator: 'is',
+          value: {
+            type: 'entity_list',
+            value: [{ id: IPL_PAYMENT, label: 'Payment Processor Network (192.168.1.0/24)' }],
+          },
+        },
+      ],
+    }),
     JSON.stringify([{ protocol: 'TCP', port: '8443' }]),
-    'allow', 'intra', 1, 2,
-    '', 0, 0
+    'allow',
+    'intra',
+    1,
+    2,
+    '',
+    0,
+    0,
   );
 
   // ── Provisioned Rules snapshot for HRM (provisioned policy) ───────────────
@@ -619,12 +1125,27 @@ const seed = db.transaction(() => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   for (const r of hrmRules as any[]) {
-    insertProvisionedRule.run(uuid(), r.policy_id, r.id, r.source, r.destination, r.services, r.action, r.scope_type, r.enabled, r.position, r.notes, r.logging, r.stateless);
+    insertProvisionedRule.run(
+      uuid(),
+      r.policy_id,
+      r.id,
+      r.source,
+      r.destination,
+      r.services,
+      r.action,
+      r.scope_type,
+      r.enabled,
+      r.position,
+      r.notes,
+      r.logging,
+      r.stateless,
+    );
   }
 
   // ── Tenant Settings ────────────────────────────────────────────────────────
   db.prepare('INSERT INTO tenant_settings (key, value) VALUES (?, ?)').run(
-    'display_scopes_in_policies', 'true'
+    'display_scopes_in_policies',
+    'true',
   );
 
   // ── V2 Policies (scope-centric) ──────────────────────────────────────────
@@ -638,27 +1159,54 @@ const seed = db.transaction(() => {
     V2_POLICY_PAYMENTS,
     'Payments Frontend Access',
     'Controls ingress/egress for the payments frontend scope',
-    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_PAYMENTS]),
+    'k8s',
+    JSON.stringify([CLUSTER_USEAST]),
+    JSON.stringify([NS_PAYMENTS]),
     JSON.stringify([{ key: 'app', value: 'frontend' }]),
-    1, 'draft', 'standard', null, USER_ALEX, now, now
+    1,
+    'draft',
+    'standard',
+    null,
+    USER_ALEX,
+    now,
+    now,
   );
 
   insertV2Policy.run(
     V2_POLICY_MONITORING,
     'Monitoring Stack',
     'Monitoring scope for API role workloads',
-    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_MONITORING]),
+    'k8s',
+    JSON.stringify([CLUSTER_USEAST]),
+    JSON.stringify([NS_MONITORING]),
     JSON.stringify([{ key: 'role', value: 'api' }]),
-    1, 'draft', 'standard', null, USER_ALEX, now, now
+    1,
+    'draft',
+    'standard',
+    null,
+    USER_ALEX,
+    now,
+    now,
   );
 
   insertV2Policy.run(
     V2_POLICY_BACKEND,
     'Backend Services Deny',
     'Deny non-production access to backend services',
-    'k8s', JSON.stringify([CLUSTER_USEAST]), JSON.stringify([NS_BACKEND]),
-    JSON.stringify([{ key: 'tier', value: 'web' }, { key: 'env', value: 'production' }]),
-    1, 'provisioned', 'standard', null, USER_MORGAN, now, now
+    'k8s',
+    JSON.stringify([CLUSTER_USEAST]),
+    JSON.stringify([NS_BACKEND]),
+    JSON.stringify([
+      { key: 'tier', value: 'web' },
+      { key: 'env', value: 'production' },
+    ]),
+    1,
+    'provisioned',
+    'standard',
+    null,
+    USER_MORGAN,
+    now,
+    now,
   );
 
   // ── V2 Rules ─────────────────────────────────────────────────────────────
@@ -670,82 +1218,155 @@ const seed = db.transaction(() => {
 
   // Policy 1: Payments Frontend Access — 2 ingress, 2 egress
   insertV2Rule.run(
-    uuid(), V2_POLICY_PAYMENTS, 'ingress',
+    uuid(),
+    V2_POLICY_PAYMENTS,
+    'ingress',
     JSON.stringify([
       { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'api' } },
       { field: 'k8s_pod_tier', operator: 'is', value: { type: 'enum', value: 'web' } },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
-    'allow', 1, 'provisioned', 0, ''
+    'allow',
+    1,
+    'provisioned',
+    0,
+    '',
   );
   insertV2Rule.run(
-    uuid(), V2_POLICY_PAYMENTS, 'ingress',
+    uuid(),
+    V2_POLICY_PAYMENTS,
+    'ingress',
     JSON.stringify([
-      { field: 'ip_list', operator: 'is', value: { type: 'entity_list', value: [{ id: IPL_VPN, label: 'VPN Gateway (172.16.0.0/12)' }] } },
+      {
+        field: 'ip_list',
+        operator: 'is',
+        value: {
+          type: 'entity_list',
+          value: [{ id: IPL_VPN, label: 'VPN Gateway (172.16.0.0/12)' }],
+        },
+      },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '8080' }]),
-    'allow', 1, 'draft', 1, ''
+    'allow',
+    1,
+    'draft',
+    1,
+    '',
   );
   insertV2Rule.run(
-    uuid(), V2_POLICY_PAYMENTS, 'egress',
+    uuid(),
+    V2_POLICY_PAYMENTS,
+    'egress',
     JSON.stringify([
       { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'backend' } },
       { field: 'k8s_pod_role', operator: 'is', value: { type: 'enum', value: 'api' } },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '3000' }]),
-    'allow', 1, 'provisioned', 0, ''
+    'allow',
+    1,
+    'provisioned',
+    0,
+    '',
   );
   insertV2Rule.run(
-    uuid(), V2_POLICY_PAYMENTS, 'egress',
+    uuid(),
+    V2_POLICY_PAYMENTS,
+    'egress',
     JSON.stringify([
       { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: '*.amazonaws.com' } },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
-    'allow', 1, 'draft', 1, ''
+    'allow',
+    1,
+    'draft',
+    1,
+    '',
   );
 
   // Policy 2: Monitoring Stack — 1 ingress, 2 egress
   insertV2Rule.run(
-    uuid(), V2_POLICY_MONITORING, 'ingress',
+    uuid(),
+    V2_POLICY_MONITORING,
+    'ingress',
     JSON.stringify([
-      { field: 'label_role', operator: 'is_any_of', value: { type: 'enum_list', value: ['web', 'api', 'worker'] } },
+      {
+        field: 'label_role',
+        operator: 'is_any_of',
+        value: { type: 'enum_list', value: ['web', 'api', 'worker'] },
+      },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '9090' }]),
-    'allow', 1, 'provisioned', 0, ''
+    'allow',
+    1,
+    'provisioned',
+    0,
+    '',
   );
   insertV2Rule.run(
-    uuid(), V2_POLICY_MONITORING, 'egress',
+    uuid(),
+    V2_POLICY_MONITORING,
+    'egress',
     JSON.stringify([
-      { field: 'k8s_pod_app', operator: 'is_any_of', value: { type: 'enum_list', value: ['frontend', 'backend'] } },
+      {
+        field: 'k8s_pod_app',
+        operator: 'is_any_of',
+        value: { type: 'enum_list', value: ['frontend', 'backend'] },
+      },
     ]),
     JSON.stringify([{ type: 'named', name: 'All Services' }]),
-    'allow', 1, 'draft', 0, ''
+    'allow',
+    1,
+    'draft',
+    0,
+    '',
   );
   insertV2Rule.run(
-    uuid(), V2_POLICY_MONITORING, 'egress',
+    uuid(),
+    V2_POLICY_MONITORING,
+    'egress',
     JSON.stringify([
       { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: 'api.github.com' } },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
-    'allow', 1, 'draft', 1, ''
+    'allow',
+    1,
+    'draft',
+    1,
+    '',
   );
 
   // Policy 3: Backend Services Deny — 1 ingress, 1 egress
   insertV2Rule.run(
-    uuid(), V2_POLICY_BACKEND, 'ingress',
+    uuid(),
+    V2_POLICY_BACKEND,
+    'ingress',
     JSON.stringify([
-      { field: 'k8s_pod_env', operator: 'is_none_of', value: { type: 'enum_list', value: ['production'] } },
+      {
+        field: 'k8s_pod_env',
+        operator: 'is_none_of',
+        value: { type: 'enum_list', value: ['production'] },
+      },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '5432' }]),
-    'deny', 1, 'provisioned', 0, ''
+    'deny',
+    1,
+    'provisioned',
+    0,
+    '',
   );
   insertV2Rule.run(
-    uuid(), V2_POLICY_BACKEND, 'egress',
+    uuid(),
+    V2_POLICY_BACKEND,
+    'egress',
     JSON.stringify([
       { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: 'api.stripe.com' } },
     ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '443' }]),
-    'allow', 1, 'provisioned', 0, ''
+    'allow',
+    1,
+    'provisioned',
+    0,
+    '',
   );
 
   // ── V2 Templates ─────────────────────────────────────────────────────────
@@ -754,9 +1375,33 @@ const seed = db.transaction(() => {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertV2Template.run(V2_TPL_DNS, 'DNS Egress Baseline', 'Allows DNS egress to kube-dns in kube-system', 'illumio_suggested', USER_ALEX, now, now);
-  insertV2Template.run(V2_TPL_MONITORING, 'Monitoring Ingress Access', 'Allows Prometheus and Grafana scraping', 'illumio_suggested', USER_ALEX, now, now);
-  insertV2Template.run(V2_TPL_PROD_DENY, 'Production Deny External', 'Denies egress to external domains', 'user_created', USER_MORGAN, now, now);
+  insertV2Template.run(
+    V2_TPL_DNS,
+    'DNS Egress Baseline',
+    'Allows DNS egress to kube-dns in kube-system',
+    'illumio_suggested',
+    USER_ALEX,
+    now,
+    now,
+  );
+  insertV2Template.run(
+    V2_TPL_MONITORING,
+    'Monitoring Ingress Access',
+    'Allows Prometheus and Grafana scraping',
+    'illumio_suggested',
+    USER_ALEX,
+    now,
+    now,
+  );
+  insertV2Template.run(
+    V2_TPL_PROD_DENY,
+    'Production Deny External',
+    'Denies egress to external domains',
+    'user_created',
+    USER_MORGAN,
+    now,
+    now,
+  );
 
   const insertV2TemplateRule = db.prepare(`
     INSERT INTO v2_template_rules (id, template_id, direction, entity, services, action, enabled, position, notes)
@@ -764,29 +1409,61 @@ const seed = db.transaction(() => {
   `);
 
   // DNS Egress Baseline — 1 egress rule
-  insertV2TemplateRule.run(uuid(), V2_TPL_DNS, 'egress',
-    JSON.stringify([{ field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'kube-dns' } }]),
+  insertV2TemplateRule.run(
+    uuid(),
+    V2_TPL_DNS,
+    'egress',
+    JSON.stringify([
+      { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'kube-dns' } },
+    ]),
     JSON.stringify([{ type: 'port', protocol: 'UDP', port: '53' }]),
-    'allow', 1, 0, ''
+    'allow',
+    1,
+    0,
+    '',
   );
 
   // Monitoring Ingress Access — 2 ingress rules
-  insertV2TemplateRule.run(uuid(), V2_TPL_MONITORING, 'ingress',
-    JSON.stringify([{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'prometheus' } }]),
+  insertV2TemplateRule.run(
+    uuid(),
+    V2_TPL_MONITORING,
+    'ingress',
+    JSON.stringify([
+      { field: 'label_role', operator: 'is', value: { type: 'enum', value: 'prometheus' } },
+    ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '9090' }]),
-    'allow', 1, 0, ''
+    'allow',
+    1,
+    0,
+    '',
   );
-  insertV2TemplateRule.run(uuid(), V2_TPL_MONITORING, 'ingress',
-    JSON.stringify([{ field: 'label_role', operator: 'is', value: { type: 'enum', value: 'grafana' } }]),
+  insertV2TemplateRule.run(
+    uuid(),
+    V2_TPL_MONITORING,
+    'ingress',
+    JSON.stringify([
+      { field: 'label_role', operator: 'is', value: { type: 'enum', value: 'grafana' } },
+    ]),
     JSON.stringify([{ type: 'port', protocol: 'TCP', port: '3000' }]),
-    'allow', 1, 1, ''
+    'allow',
+    1,
+    1,
+    '',
   );
 
   // Production Deny External — 1 egress rule
-  insertV2TemplateRule.run(uuid(), V2_TPL_PROD_DENY, 'egress',
-    JSON.stringify([{ field: 'fqdn', operator: 'matches', value: { type: 'enum', value: '*.external.com' } }]),
+  insertV2TemplateRule.run(
+    uuid(),
+    V2_TPL_PROD_DENY,
+    'egress',
+    JSON.stringify([
+      { field: 'fqdn', operator: 'matches', value: { type: 'enum', value: '*.external.com' } },
+    ]),
     JSON.stringify([{ type: 'named', name: 'All Services' }]),
-    'deny', 1, 0, ''
+    'deny',
+    1,
+    0,
+    '',
   );
 
   // Guardrail Policy: DNS Access — All Production Clusters
@@ -794,9 +1471,17 @@ const seed = db.transaction(() => {
     V2_POLICY_DNS_GUARDRAIL,
     'DNS Access — All Production Clusters',
     'Guardrail: DNS egress across production clusters',
-    'k8s', JSON.stringify([CLUSTER_USEAST, CLUSTER_EUWEST]), JSON.stringify([]),
+    'k8s',
+    JSON.stringify([CLUSTER_USEAST, CLUSTER_EUWEST]),
     JSON.stringify([]),
-    1, 'draft', 'guardrail', V2_TPL_DNS, USER_ALEX, now, now
+    JSON.stringify([]),
+    1,
+    'draft',
+    'guardrail',
+    V2_TPL_DNS,
+    USER_ALEX,
+    now,
+    now,
   );
 });
 
@@ -807,23 +1492,80 @@ seed();
 const db2 = getDb();
 console.log('Seed complete. Table counts:');
 console.log('  users:', (db2.prepare('SELECT count(*) as c FROM users').get() as { c: number }).c);
-console.log('  labels:', (db2.prepare('SELECT count(*) as c FROM labels').get() as { c: number }).c);
-console.log('  k8s_clusters:', (db2.prepare('SELECT count(*) as c FROM k8s_clusters').get() as { c: number }).c);
-console.log('  k8s_namespaces:', (db2.prepare('SELECT count(*) as c FROM k8s_namespaces').get() as { c: number }).c);
-console.log('  workloads:', (db2.prepare('SELECT count(*) as c FROM workloads').get() as { c: number }).c);
-console.log('  policies:', (db2.prepare('SELECT count(*) as c FROM policies').get() as { c: number }).c);
+console.log(
+  '  labels:',
+  (db2.prepare('SELECT count(*) as c FROM labels').get() as { c: number }).c,
+);
+console.log(
+  '  k8s_clusters:',
+  (db2.prepare('SELECT count(*) as c FROM k8s_clusters').get() as { c: number }).c,
+);
+console.log(
+  '  k8s_namespaces:',
+  (db2.prepare('SELECT count(*) as c FROM k8s_namespaces').get() as { c: number }).c,
+);
+console.log(
+  '  workloads:',
+  (db2.prepare('SELECT count(*) as c FROM workloads').get() as { c: number }).c,
+);
+console.log(
+  '  policies:',
+  (db2.prepare('SELECT count(*) as c FROM policies').get() as { c: number }).c,
+);
 console.log('  rules:', (db2.prepare('SELECT count(*) as c FROM rules').get() as { c: number }).c);
-console.log('  provisioned_rules:', (db2.prepare('SELECT count(*) as c FROM provisioned_rules').get() as { c: number }).c);
-console.log('  tenant_settings:', (db2.prepare('SELECT count(*) as c FROM tenant_settings').get() as { c: number }).c);
-console.log('  label_groups:', (db2.prepare('SELECT count(*) as c FROM label_groups').get() as { c: number }).c);
-console.log('  ip_lists:', (db2.prepare('SELECT count(*) as c FROM ip_lists').get() as { c: number }).c);
-console.log('  user_groups:', (db2.prepare('SELECT count(*) as c FROM user_groups').get() as { c: number }).c);
-console.log('  virtual_services:', (db2.prepare('SELECT count(*) as c FROM virtual_services').get() as { c: number }).c);
-console.log('  services:', (db2.prepare('SELECT count(*) as c FROM services').get() as { c: number }).c);
-console.log('  cloud_accounts:', (db2.prepare('SELECT count(*) as c FROM cloud_accounts').get() as { c: number }).c);
-console.log('  cloud_vpcs:', (db2.prepare('SELECT count(*) as c FROM cloud_vpcs').get() as { c: number }).c);
-console.log('  cloud_subnets:', (db2.prepare('SELECT count(*) as c FROM cloud_subnets').get() as { c: number }).c);
-console.log('  v2_policies:', (db2.prepare('SELECT count(*) as c FROM v2_policies').get() as { c: number }).c);
-console.log('  v2_rules:', (db2.prepare('SELECT count(*) as c FROM v2_rules').get() as { c: number }).c);
-console.log('  v2_templates:', (db2.prepare('SELECT count(*) as c FROM v2_templates').get() as { c: number }).c);
-console.log('  v2_template_rules:', (db2.prepare('SELECT count(*) as c FROM v2_template_rules').get() as { c: number }).c);
+console.log(
+  '  provisioned_rules:',
+  (db2.prepare('SELECT count(*) as c FROM provisioned_rules').get() as { c: number }).c,
+);
+console.log(
+  '  tenant_settings:',
+  (db2.prepare('SELECT count(*) as c FROM tenant_settings').get() as { c: number }).c,
+);
+console.log(
+  '  label_groups:',
+  (db2.prepare('SELECT count(*) as c FROM label_groups').get() as { c: number }).c,
+);
+console.log(
+  '  ip_lists:',
+  (db2.prepare('SELECT count(*) as c FROM ip_lists').get() as { c: number }).c,
+);
+console.log(
+  '  user_groups:',
+  (db2.prepare('SELECT count(*) as c FROM user_groups').get() as { c: number }).c,
+);
+console.log(
+  '  virtual_services:',
+  (db2.prepare('SELECT count(*) as c FROM virtual_services').get() as { c: number }).c,
+);
+console.log(
+  '  services:',
+  (db2.prepare('SELECT count(*) as c FROM services').get() as { c: number }).c,
+);
+console.log(
+  '  cloud_accounts:',
+  (db2.prepare('SELECT count(*) as c FROM cloud_accounts').get() as { c: number }).c,
+);
+console.log(
+  '  cloud_vpcs:',
+  (db2.prepare('SELECT count(*) as c FROM cloud_vpcs').get() as { c: number }).c,
+);
+console.log(
+  '  cloud_subnets:',
+  (db2.prepare('SELECT count(*) as c FROM cloud_subnets').get() as { c: number }).c,
+);
+console.log(
+  '  v2_policies:',
+  (db2.prepare('SELECT count(*) as c FROM v2_policies').get() as { c: number }).c,
+);
+console.log(
+  '  v2_rules:',
+  (db2.prepare('SELECT count(*) as c FROM v2_rules').get() as { c: number }).c,
+);
+console.log(
+  '  v2_templates:',
+  (db2.prepare('SELECT count(*) as c FROM v2_templates').get() as { c: number }).c,
+);
+console.log(
+  '  v2_template_rules:',
+  (db2.prepare('SELECT count(*) as c FROM v2_template_rules').get() as { c: number }).c,
+);

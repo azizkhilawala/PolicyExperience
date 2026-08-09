@@ -28,11 +28,14 @@ interface RuleEditorProps {
   onRulesChanged?: () => void;
 }
 
-export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, onRulesChanged }: RuleEditorProps) {
-  const { data: rules, loading, error, refetch } = useApi(
-    () => fetchRules(policyId),
-    [policyId]
-  );
+export function RuleEditor({
+  policyId,
+  scopeLabels,
+  isLocked,
+  provisionStatus,
+  onRulesChanged,
+}: RuleEditorProps) {
+  const { data: rules, loading, error, refetch } = useApi(() => fetchRules(policyId), [policyId]);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   const handleAddRule = useCallback(async () => {
@@ -54,7 +57,17 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
 
   const handleUpdate = useCallback(
     async (ruleId: string, data: Partial<Rule>) => {
-      const { source, destination, services, action, scope_type, enabled, notes, logging, stateless } = data;
+      const {
+        source,
+        destination,
+        services,
+        action,
+        scope_type,
+        enabled,
+        notes,
+        logging,
+        stateless,
+      } = data;
       try {
         setMutationError(null);
         await updateRule(ruleId, {
@@ -75,7 +88,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
         throw e;
       }
     },
-    [refetch, onRulesChanged]
+    [refetch, onRulesChanged],
   );
 
   const handleDelete = useCallback(
@@ -89,7 +102,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
         setMutationError(e instanceof Error ? e.message : 'Failed to delete rule');
       }
     },
-    [refetch, onRulesChanged]
+    [refetch, onRulesChanged],
   );
 
   const handleDuplicate = useCallback(
@@ -103,7 +116,7 @@ export function RuleEditor({ policyId, scopeLabels, isLocked, provisionStatus, o
         setMutationError(e instanceof Error ? e.message : 'Failed to duplicate rule');
       }
     },
-    [refetch, onRulesChanged]
+    [refetch, onRulesChanged],
   );
 
   if (loading) {

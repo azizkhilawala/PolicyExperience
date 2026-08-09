@@ -64,9 +64,7 @@ describe('RuleTable', () => {
     await user.click(within(filterGroup).getByText('Allow'));
 
     const denyTokens = screen.queryAllByText('Deny');
-    const denyOutsideFilter = denyTokens.filter(
-      (el) => !filterGroup.contains(el),
-    );
+    const denyOutsideFilter = denyTokens.filter((el) => !filterGroup.contains(el));
     expect(denyOutsideFilter.length).toBe(0);
   });
 

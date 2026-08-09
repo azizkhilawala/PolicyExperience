@@ -32,10 +32,7 @@ describe('ScopeSearch', () => {
 
     render(
       <Wrapper>
-        <ScopeSearch
-          labels={[{ key: 'env', value: 'production' }]}
-          onChange={() => {}}
-        />
+        <ScopeSearch labels={[{ key: 'env', value: 'production' }]} onChange={() => {}} />
       </Wrapper>,
     );
 

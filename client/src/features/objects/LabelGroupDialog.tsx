@@ -42,19 +42,28 @@ export function LabelGroupDialog({ isOpen, onClose, onSaved, labelGroup }: Label
     .filter((l: Label) => !selectedIds.includes(l.id))
     .map((l: Label) => ({ value: l.id, label: `${l.key}=${l.value}` }));
 
-  const handleAddLabel = useCallback((labelId: string) => {
-    if (labelId && !selectedIds.includes(labelId)) {
-      setSelectedIds((prev) => [...prev, labelId]);
-    }
-  }, [selectedIds]);
+  const handleAddLabel = useCallback(
+    (labelId: string) => {
+      if (labelId && !selectedIds.includes(labelId)) {
+        setSelectedIds((prev) => [...prev, labelId]);
+      }
+    },
+    [selectedIds],
+  );
 
   const handleRemoveLabel = useCallback((labelId: string) => {
     setSelectedIds((prev) => prev.filter((id) => id !== labelId));
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!name.trim()) { setError('Name is required'); return; }
-    if (selectedIds.length === 0) { setError('At least one label is required'); return; }
+    if (!name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    if (selectedIds.length === 0) {
+      setError('At least one label is required');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -77,10 +86,24 @@ export function LabelGroupDialog({ isOpen, onClose, onSaved, labelGroup }: Label
   };
 
   return (
-    <Dialog isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width={480}>
-      <DialogHeader title={isEdit ? 'Edit Label Group' : 'Create Label Group'} onOpenChange={(open) => { if (!open) onClose(); }} />
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      purpose="form"
+      width={480}
+    >
+      <DialogHeader
+        title={isEdit ? 'Edit Label Group' : 'Create Label Group'}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      />
       <VStack gap={3} padding={4}>
-        {error && <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />}
+        {error && (
+          <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />
+        )}
         <FormLayout>
           <TextInput label="Name" value={name} onChange={setName} isRequired />
           <Selector
@@ -107,7 +130,13 @@ export function LabelGroupDialog({ isOpen, onClose, onSaved, labelGroup }: Label
       </VStack>
       <HStack padding={4} hAlign="end" gap={2}>
         <Button label="Cancel" variant="secondary" onClick={onClose} isDisabled={submitting} />
-        <Button label={isEdit ? 'Save' : 'Create'} variant="primary" onClick={handleSubmit} isLoading={submitting} isDisabled={!name.trim() || selectedIds.length === 0} />
+        <Button
+          label={isEdit ? 'Save' : 'Create'}
+          variant="primary"
+          onClick={handleSubmit}
+          isLoading={submitting}
+          isDisabled={!name.trim() || selectedIds.length === 0}
+        />
       </HStack>
     </Dialog>
   );

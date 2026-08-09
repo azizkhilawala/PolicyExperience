@@ -28,16 +28,8 @@ export function AdvancedOptions({
         placeholder="Optional rule note…"
         isOptional
       />
-      <Switch
-        label="Enable logging"
-        value={logging}
-        onChange={onLoggingChange}
-      />
-      <Switch
-        label="Stateless connection"
-        value={stateless}
-        onChange={onStatelessChange}
-      />
+      <Switch label="Enable logging" value={logging} onChange={onLoggingChange} />
+      <Switch label="Stateless connection" value={stateless} onChange={onStatelessChange} />
     </FormLayout>
   );
 }

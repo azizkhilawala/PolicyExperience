@@ -37,15 +37,19 @@ export function IpListDialog({ isOpen, onClose, onSaved, ipList }: IpListDialogP
   }, [isOpen, ipList]);
 
   const handleSubmit = useCallback(async () => {
-    if (!name.trim()) { setError('Name is required'); return; }
-    if (!cidr.trim()) { setError('CIDR is required'); return; }
+    if (!name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    if (!cidr.trim()) {
+      setError('CIDR is required');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const data = { name: name.trim(), cidr: cidr.trim(), description: description.trim() };
-      const result = isEdit
-        ? await updateIpList(ipList!.id, data)
-        : await createIpList(data);
+      const result = isEdit ? await updateIpList(ipList!.id, data) : await createIpList(data);
       onSaved(result);
       onClose();
     } catch (e) {
@@ -56,19 +60,51 @@ export function IpListDialog({ isOpen, onClose, onSaved, ipList }: IpListDialogP
   }, [name, cidr, description, isEdit, ipList, onSaved, onClose]);
 
   return (
-    <Dialog isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width={480}>
-      <DialogHeader title={isEdit ? 'Edit IP List' : 'Create IP List'} onOpenChange={(open) => { if (!open) onClose(); }} />
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      purpose="form"
+      width={480}
+    >
+      <DialogHeader
+        title={isEdit ? 'Edit IP List' : 'Create IP List'}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      />
       <VStack gap={3} padding={4}>
-        {error && <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />}
+        {error && (
+          <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />
+        )}
         <FormLayout>
           <TextInput label="Name" value={name} onChange={setName} isRequired />
-          <TextInput label="CIDR" value={cidr} onChange={setCidr} isRequired placeholder="10.0.0.0/8" />
-          <TextArea label="Description" value={description} onChange={setDescription} isOptional rows={2} />
+          <TextInput
+            label="CIDR"
+            value={cidr}
+            onChange={setCidr}
+            isRequired
+            placeholder="10.0.0.0/8"
+          />
+          <TextArea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+            isOptional
+            rows={2}
+          />
         </FormLayout>
       </VStack>
       <HStack padding={4} hAlign="end" gap={2}>
         <Button label="Cancel" variant="secondary" onClick={onClose} isDisabled={submitting} />
-        <Button label={isEdit ? 'Save' : 'Create'} variant="primary" onClick={handleSubmit} isLoading={submitting} isDisabled={!name.trim() || !cidr.trim()} />
+        <Button
+          label={isEdit ? 'Save' : 'Create'}
+          variant="primary"
+          onClick={handleSubmit}
+          isLoading={submitting}
+          isDisabled={!name.trim() || !cidr.trim()}
+        />
       </HStack>
     </Dialog>
   );

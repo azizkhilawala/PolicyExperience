@@ -45,7 +45,8 @@ router.get('/cloud/accounts', (req, res) => {
 // GET /api/cloud/vpcs?provider=aws|azure&account_id=X
 router.get('/cloud/vpcs', (req, res) => {
   const db = getDb();
-  let sql = 'SELECT id, provider, name, vpc_id, cloud_account_id, region, resource_group FROM cloud_vpcs WHERE 1=1';
+  let sql =
+    'SELECT id, provider, name, vpc_id, cloud_account_id, region, resource_group FROM cloud_vpcs WHERE 1=1';
   const params: string[] = [];
   if (req.query.provider) {
     sql += ' AND provider = ?';
@@ -62,7 +63,8 @@ router.get('/cloud/vpcs', (req, res) => {
 // GET /api/cloud/subnets?provider=aws|azure&vpc_id=X
 router.get('/cloud/subnets', (req, res) => {
   const db = getDb();
-  let sql = 'SELECT id, provider, name, subnet_id, cloud_vpc_id, region FROM cloud_subnets WHERE 1=1';
+  let sql =
+    'SELECT id, provider, name, subnet_id, cloud_vpc_id, region FROM cloud_subnets WHERE 1=1';
   const params: string[] = [];
   if (req.query.provider) {
     sql += ' AND provider = ?';

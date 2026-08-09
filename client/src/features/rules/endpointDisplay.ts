@@ -1,6 +1,17 @@
 import type { EndpointFilter } from '../../api/policies.js';
 
-export type TokenColor = 'default' | 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'cyan' | 'blue' | 'purple' | 'pink' | 'gray';
+export type TokenColor =
+  | 'default'
+  | 'red'
+  | 'orange'
+  | 'yellow'
+  | 'green'
+  | 'teal'
+  | 'cyan'
+  | 'blue'
+  | 'purple'
+  | 'pink'
+  | 'gray';
 
 export const FIELD_COLOR_MAP: Array<[string, TokenColor]> = [
   ['label_group', 'purple'],
@@ -83,7 +94,9 @@ export function getDisplayValue(filter: EndpointFilter): string {
   if (val.type === 'enum') return `${label}${op === '=' ? '=' : ` ${op} `}${val.value as string}`;
   if (val.type === 'enum_list') return `${label} ${op} [${(val.value as string[]).join(', ')}]`;
   if (val.type === 'entity_list') {
-    const names = (val.value as Array<{ id: string; label: string }>).map((e) => e.label).join(', ');
+    const names = (val.value as Array<{ id: string; label: string }>)
+      .map((e) => e.label)
+      .join(', ');
     return isNegatedOperator(filter.operator) ? `${label}: is not ${names}` : names;
   }
   if (val.type === 'string') return `${label} ${op} ${val.value as string}`;

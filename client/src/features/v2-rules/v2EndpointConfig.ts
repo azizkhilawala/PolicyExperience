@@ -24,19 +24,20 @@ export function useV2EntityResources(): V2EntityResources {
   const [ipLists, setIpLists] = useState<IpList[]>([]);
 
   useEffect(() => {
-    fetchLabelGroups().then(setLabelGroups).catch(() => {});
-    fetchIpLists().then(setIpLists).catch(() => {});
+    fetchLabelGroups()
+      .then(setLabelGroups)
+      .catch(() => {});
+    fetchIpLists()
+      .then(setIpLists)
+      .catch(() => {});
   }, []);
 
-  return useMemo(
-    () => ({ labels, labelGroups, ipLists }),
-    [labels, labelGroups, ipLists]
-  );
+  return useMemo(() => ({ labels, labelGroups, ipLists }), [labels, labelGroups, ipLists]);
 }
 
 function makeEntitySource<T extends { id: string; name: string }>(
   items: T[],
-  toLabel: (item: T) => string
+  toLabel: (item: T) => string,
 ): SearchSource {
   return {
     search: (q: string) => {
@@ -51,7 +52,7 @@ function makeEntitySource<T extends { id: string; name: string }>(
 
 export function buildV2EntityConfig(
   resources: V2EntityResources,
-  direction: 'ingress' | 'egress'
+  direction: 'ingress' | 'egress',
 ): PowerSearchConfig {
   const { labels, labelGroups, ipLists } = resources;
 
@@ -173,30 +174,34 @@ export function buildV2EntityConfig(
         {
           key: 'is',
           label: 'is',
-          value: podEnumValues.length > 0
-            ? { type: 'enum' as const, values: podEnumValues }
-            : { type: 'string' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum' as const, values: podEnumValues }
+              : { type: 'string' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_not',
           label: 'is not',
-          value: podEnumValues.length > 0
-            ? { type: 'enum' as const, values: podEnumValues }
-            : { type: 'string' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum' as const, values: podEnumValues }
+              : { type: 'string' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_any_of',
           label: 'is any of',
-          value: podEnumValues.length > 0
-            ? { type: 'enum_list' as const, values: podEnumValues }
-            : { type: 'string_list' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum_list' as const, values: podEnumValues }
+              : { type: 'string_list' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_none_of',
           label: 'is none of',
-          value: podEnumValues.length > 0
-            ? { type: 'enum_list' as const, values: podEnumValues }
-            : { type: 'string_list' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum_list' as const, values: podEnumValues }
+              : { type: 'string_list' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'exists',
@@ -296,15 +301,12 @@ export function buildV2EntityConfig(
             value: { type: 'string' },
           } satisfies PowerSearchOperator,
         ],
-      }
+      },
     );
   }
 
   // ─── Network group ────────────────────────────────────────────────────────
-  const ipListSource: SearchSource = makeEntitySource(
-    ipLists,
-    (ip) => `${ip.name} (${ip.cidr})`
-  );
+  const ipListSource: SearchSource = makeEntitySource(ipLists, (ip) => `${ip.name} (${ip.cidr})`);
   fields.push({
     key: 'ip_list',
     label: 'IP List',

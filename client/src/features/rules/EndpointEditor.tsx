@@ -42,7 +42,13 @@ function toEndpointFilter(f: PowerSearchFilter): EndpointFilter {
   };
 }
 
-export function EndpointEditor({ value, onChange, ghostLabels, isDisabled, side }: EndpointEditorProps) {
+export function EndpointEditor({
+  value,
+  onChange,
+  ghostLabels,
+  isDisabled,
+  side,
+}: EndpointEditorProps) {
   const [ipListDialogOpen, setIpListDialogOpen] = useState(false);
   const [labelGroupDialogOpen, setLabelGroupDialogOpen] = useState(false);
 
@@ -51,18 +57,18 @@ export function EndpointEditor({ value, onChange, ghostLabels, isDisabled, side 
 
   const psFilters: ReadonlyArray<PowerSearchFilter> = useMemo(
     () => value.filters.map(toPSFilter),
-    [value.filters]
+    [value.filters],
   );
 
   const handleChange = useCallback(
     (
       newFilters: ReadonlyArray<PowerSearchFilter>,
       _changeType: PowerSearchChangeType,
-      _index: number
+      _index: number,
     ) => {
       onChange({ filters: newFilters.map(toEndpointFilter) });
     },
-    [onChange]
+    [onChange],
   );
 
   return (
@@ -93,11 +99,17 @@ export function EndpointEditor({ value, onChange, ghostLabels, isDisabled, side 
         onClose={() => setIpListDialogOpen(false)}
         onSaved={(newIpList: ObjIpList) => {
           onChange({
-            filters: [...value.filters, {
-              field: 'ip_list',
-              operator: 'is',
-              value: { type: 'entity_list', value: [{ id: newIpList.id, label: `${newIpList.name} (${newIpList.cidr})` }] },
-            }],
+            filters: [
+              ...value.filters,
+              {
+                field: 'ip_list',
+                operator: 'is',
+                value: {
+                  type: 'entity_list',
+                  value: [{ id: newIpList.id, label: `${newIpList.name} (${newIpList.cidr})` }],
+                },
+              },
+            ],
           });
         }}
       />
@@ -106,11 +118,14 @@ export function EndpointEditor({ value, onChange, ghostLabels, isDisabled, side 
         onClose={() => setLabelGroupDialogOpen(false)}
         onSaved={(newLG: ObjLabelGroup) => {
           onChange({
-            filters: [...value.filters, {
-              field: 'label_group',
-              operator: 'is',
-              value: { type: 'entity_list', value: [{ id: newLG.id, label: newLG.name }] },
-            }],
+            filters: [
+              ...value.filters,
+              {
+                field: 'label_group',
+                operator: 'is',
+                value: { type: 'entity_list', value: [{ id: newLG.id, label: newLG.name }] },
+              },
+            ],
           });
         }}
       />

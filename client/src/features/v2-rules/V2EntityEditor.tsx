@@ -5,7 +5,6 @@ import type {
   PowerSearchChangeType,
   FilterValue,
 } from '@astryxdesign/core/PowerSearch';
-import { Button } from '@astryxdesign/core/Button';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
@@ -37,16 +36,17 @@ export function V2EntityEditor({ value, onChange, direction, isDisabled }: V2Ent
   const [ipListDialogOpen, setIpListDialogOpen] = useState(false);
   const [labelGroupDialogOpen, setLabelGroupDialogOpen] = useState(false);
 
-  const psFilters: ReadonlyArray<PowerSearchFilter> = useMemo(
-    () => value.map(toPSFilter),
-    [value]
-  );
+  const psFilters: ReadonlyArray<PowerSearchFilter> = useMemo(() => value.map(toPSFilter), [value]);
 
   const handleChange = useCallback(
-    (newFilters: ReadonlyArray<PowerSearchFilter>, _changeType: PowerSearchChangeType, _index: number) => {
+    (
+      newFilters: ReadonlyArray<PowerSearchFilter>,
+      _changeType: PowerSearchChangeType,
+      _index: number,
+    ) => {
       onChange(newFilters.map(toEndpointFilter));
     },
-    [onChange]
+    [onChange],
   );
 
   return (
@@ -75,22 +75,28 @@ export function V2EntityEditor({ value, onChange, direction, isDisabled }: V2Ent
         isOpen={ipListDialogOpen}
         onClose={() => setIpListDialogOpen(false)}
         onSaved={(newIpList: ObjIpList) => {
-          onChange([...value, {
-            field: 'ip_list',
-            operator: 'is',
-            value: { type: 'entity_list', value: [{ id: newIpList.id, label: newIpList.name }] },
-          }]);
+          onChange([
+            ...value,
+            {
+              field: 'ip_list',
+              operator: 'is',
+              value: { type: 'entity_list', value: [{ id: newIpList.id, label: newIpList.name }] },
+            },
+          ]);
         }}
       />
       <LabelGroupDialog
         isOpen={labelGroupDialogOpen}
         onClose={() => setLabelGroupDialogOpen(false)}
         onSaved={(newLG: ObjLabelGroup) => {
-          onChange([...value, {
-            field: 'label_group',
-            operator: 'is',
-            value: { type: 'entity_list', value: [{ id: newLG.id, label: newLG.name }] },
-          }]);
+          onChange([
+            ...value,
+            {
+              field: 'label_group',
+              operator: 'is',
+              value: { type: 'entity_list', value: [{ id: newLG.id, label: newLG.name }] },
+            },
+          ]);
         }}
       />
     </VStack>

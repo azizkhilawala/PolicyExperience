@@ -79,21 +79,74 @@ export function fetchNamespaces(clusterIdOrIds?: string | string[]) {
   return apiFetch<K8sNamespace[]>(`/api/k8s/namespaces${query}`);
 }
 
-export interface IpList { id: string; name: string; cidr: string; description: string; }
-export interface UserGroup { id: string; name: string; member_ids: string[]; }
-export interface VirtualService { id: string; name: string; port: number; protocol: string; }
-export interface LabelGroup { id: string; name: string; label_ids: string[]; }
-export interface CloudAccount { id: string; provider: string; name: string; account_id: string; region?: string; }
-export interface CloudVpc { id: string; provider: string; name: string; vpc_id: string; cloud_account_id: string; region?: string; resource_group?: string; }
-export interface CloudSubnet { id: string; provider: string; name: string; subnet_id: string; cloud_vpc_id: string; region?: string; }
+export interface IpList {
+  id: string;
+  name: string;
+  cidr: string;
+  description: string;
+}
+export interface UserGroup {
+  id: string;
+  name: string;
+  member_ids: string[];
+}
+export interface VirtualService {
+  id: string;
+  name: string;
+  port: number;
+  protocol: string;
+}
+export interface LabelGroup {
+  id: string;
+  name: string;
+  label_ids: string[];
+}
+export interface CloudAccount {
+  id: string;
+  provider: string;
+  name: string;
+  account_id: string;
+  region?: string;
+}
+export interface CloudVpc {
+  id: string;
+  provider: string;
+  name: string;
+  vpc_id: string;
+  cloud_account_id: string;
+  region?: string;
+  resource_group?: string;
+}
+export interface CloudSubnet {
+  id: string;
+  provider: string;
+  name: string;
+  subnet_id: string;
+  cloud_vpc_id: string;
+  region?: string;
+}
 
-export interface Workload { id: string; name: string; hostname: string; }
+export interface Workload {
+  id: string;
+  name: string;
+  hostname: string;
+}
 
-export function fetchWorkloads() { return apiFetch<Workload[]>('/api/workloads'); }
-export function fetchIpLists() { return apiFetch<IpList[]>('/api/ip-lists'); }
-export function fetchUserGroups() { return apiFetch<UserGroup[]>('/api/user-groups'); }
-export function fetchVirtualServices() { return apiFetch<VirtualService[]>('/api/virtual-services'); }
-export function fetchLabelGroups() { return apiFetch<LabelGroup[]>('/api/label-groups'); }
+export function fetchWorkloads() {
+  return apiFetch<Workload[]>('/api/workloads');
+}
+export function fetchIpLists() {
+  return apiFetch<IpList[]>('/api/ip-lists');
+}
+export function fetchUserGroups() {
+  return apiFetch<UserGroup[]>('/api/user-groups');
+}
+export function fetchVirtualServices() {
+  return apiFetch<VirtualService[]>('/api/virtual-services');
+}
+export function fetchLabelGroups() {
+  return apiFetch<LabelGroup[]>('/api/label-groups');
+}
 export function fetchCloudAccounts(provider?: string) {
   const q = provider ? `?provider=${provider}` : '';
   return apiFetch<CloudAccount[]>(`/api/cloud/accounts${q}`);
@@ -158,7 +211,7 @@ export function createRule(
     services?: RuleService[];
     action?: 'allow' | 'deny';
     scope_type?: 'intra' | 'extra';
-  }
+  },
 ) {
   return apiFetch<Rule>(`/api/policies/${policyId}/rules`, {
     method: 'POST',
@@ -178,7 +231,7 @@ export function updateRule(
     notes: string;
     logging: boolean;
     stateless: boolean;
-  }>
+  }>,
 ) {
   return apiFetch<Rule>(`/api/rules/${ruleId}`, {
     method: 'PATCH',

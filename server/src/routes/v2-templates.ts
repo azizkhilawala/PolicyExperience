@@ -18,12 +18,16 @@ function parseTemplateRule(row: any) {
 // GET /templates — list all with rule count and linked policy count
 router.get('/templates', (_req, res) => {
   const db = getDb();
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT t.*,
       (SELECT COUNT(*) FROM v2_template_rules WHERE template_id = t.id) as rule_count,
       (SELECT COUNT(*) FROM v2_policies WHERE template_id = t.id) as linked_policy_count
     FROM v2_templates t ORDER BY t.name
-  `).all();
+  `,
+    )
+    .all();
   res.json(rows);
 });
 
@@ -32,9 +36,17 @@ router.get('/templates/:id', (req, res) => {
   const db = getDb();
   const template = db.prepare('SELECT * FROM v2_templates WHERE id = ?').get(req.params.id);
   if (!template) return res.status(404).json({ error: 'Template not found' });
-  const rules = db.prepare('SELECT * FROM v2_template_rules WHERE template_id = ? ORDER BY direction, position').all(req.params.id);
-  const linkedPolicies = db.prepare('SELECT id, name FROM v2_policies WHERE template_id = ?').all(req.params.id);
-  res.json({ ...parseTemplate(template), rules: rules.map(parseTemplateRule), linked_policies: linkedPolicies });
+  const rules = db
+    .prepare('SELECT * FROM v2_template_rules WHERE template_id = ? ORDER BY direction, position')
+    .all(req.params.id);
+  const linkedPolicies = db
+    .prepare('SELECT id, name FROM v2_policies WHERE template_id = ?')
+    .all(req.params.id);
+  res.json({
+    ...parseTemplate(template),
+    rules: rules.map(parseTemplateRule),
+    linked_policies: linkedPolicies,
+  });
 });
 
 // POST /templates — create template
@@ -47,7 +59,7 @@ router.post('/templates', (req, res) => {
   const id = uuidv4();
   db.prepare(
     `INSERT INTO v2_templates (id, name, description, source, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(id, name, description ?? '', source ?? 'user_created', user.id, now, now);
   const created = db.prepare('SELECT * FROM v2_templates WHERE id = ?').get(id);
   res.status(201).json(parseTemplate(created));
@@ -61,7 +73,7 @@ router.patch('/templates/:id', (req, res) => {
   const { name, description } = req.body;
   const now = new Date().toISOString();
   db.prepare(
-    `UPDATE v2_templates SET name = COALESCE(?, name), description = COALESCE(?, description), updated_at = ? WHERE id = ?`
+    `UPDATE v2_templates SET name = COALESCE(?, name), description = COALESCE(?, description), updated_at = ? WHERE id = ?`,
   ).run(name ?? null, description ?? null, now, req.params.id);
   const updated = db.prepare('SELECT * FROM v2_templates WHERE id = ?').get(req.params.id);
   res.json(parseTemplate(updated));
@@ -72,8 +84,13 @@ router.delete('/templates/:id', (req, res) => {
   const db = getDb();
   const existing = db.prepare('SELECT * FROM v2_templates WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Template not found' });
-  const linked = db.prepare('SELECT COUNT(*) as c FROM v2_policies WHERE template_id = ?').get(req.params.id) as any;
-  if (linked.c > 0) return res.status(409).json({ error: `Cannot delete template — ${linked.c} policies reference it. Remove or reassign those policies first.` });
+  const linked = db
+    .prepare('SELECT COUNT(*) as c FROM v2_policies WHERE template_id = ?')
+    .get(req.params.id) as any;
+  if (linked.c > 0)
+    return res.status(409).json({
+      error: `Cannot delete template — ${linked.c} policies reference it. Remove or reassign those policies first.`,
+    });
   db.prepare('DELETE FROM v2_templates WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });
@@ -99,14 +116,27 @@ router.post('/templates/:id/rules', (req, res) => {
   const template = db.prepare('SELECT id FROM v2_templates WHERE id = ?').get(templateId);
   if (!template) return res.status(404).json({ error: 'Template not found' });
   const { direction, entity, services, action } = req.body;
-  if (!direction || !['ingress', 'egress'].includes(direction)) return res.status(400).json({ error: 'direction must be ingress or egress' });
-  const maxRow = db.prepare('SELECT MAX(position) as maxPos FROM v2_template_rules WHERE template_id = ? AND direction = ?').get(templateId, direction) as any;
+  if (!direction || !['ingress', 'egress'].includes(direction))
+    return res.status(400).json({ error: 'direction must be ingress or egress' });
+  const maxRow = db
+    .prepare(
+      'SELECT MAX(position) as maxPos FROM v2_template_rules WHERE template_id = ? AND direction = ?',
+    )
+    .get(templateId, direction) as any;
   const position = (maxRow?.maxPos ?? -1) + 1;
   const id = uuidv4();
   db.prepare(
     `INSERT INTO v2_template_rules (id, template_id, direction, entity, services, action, enabled, position, notes)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?, '')`
-  ).run(id, templateId, direction, JSON.stringify(entity ?? []), JSON.stringify(services ?? []), action ?? 'allow', position);
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, '')`,
+  ).run(
+    id,
+    templateId,
+    direction,
+    JSON.stringify(entity ?? []),
+    JSON.stringify(services ?? []),
+    action ?? 'allow',
+    position,
+  );
   const created = db.prepare('SELECT * FROM v2_template_rules WHERE id = ?').get(id);
   res.status(201).json(parseTemplateRule(created));
 });
@@ -124,14 +154,14 @@ router.patch('/template-rules/:id', (req, res) => {
       action = COALESCE(?, action),
       enabled = COALESCE(?, enabled),
       notes = COALESCE(?, notes)
-     WHERE id = ?`
+     WHERE id = ?`,
   ).run(
     entity !== undefined ? JSON.stringify(entity) : null,
     services !== undefined ? JSON.stringify(services) : null,
     action ?? null,
     enabled !== undefined ? (enabled ? 1 : 0) : null,
     notes ?? null,
-    req.params.id
+    req.params.id,
   );
   const updated = db.prepare('SELECT * FROM v2_template_rules WHERE id = ?').get(req.params.id);
   res.json(parseTemplateRule(updated));

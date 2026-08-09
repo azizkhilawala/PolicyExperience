@@ -32,51 +32,59 @@ export function ServiceEditor({ value, onChange, isDisabled }: ServiceEditorProp
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
 
   useEffect(() => {
-    fetchServices().then(setServices).catch(() => {});
+    fetchServices()
+      .then(setServices)
+      .catch(() => {});
   }, []);
 
-  const serviceConfig = useMemo<PowerSearchConfig>(() => ({
-    name: 'ServiceSearch',
-    fields: [
-      {
-        key: 'saved_service',
-        label: 'Saved Service',
-        group: 'Named',
-        defaultOperator: 'is',
-        operators: [
-          {
-            key: 'is',
-            label: 'is',
-            value: { type: 'enum' as const, values: services.map((s) => ({ value: s.name, label: s.name })) },
-          },
-        ],
-      },
-      {
-        key: 'protocol',
-        label: 'Protocol',
-        defaultOperator: 'is',
-        operators: [
-          {
-            key: 'is',
-            label: 'is',
-            value: { type: 'enum' as const, values: PROTOCOL_VALUES },
-          },
-        ],
-      },
-      {
-        key: 'port',
-        label: 'Port',
-        defaultOperator: 'is',
-        operators: [
-          {
-            key: 'is',
-            label: 'is',
-            value: { type: 'string' as const },
-          },
-        ],
-      },
-    ],
-  }), [services]);
+  const serviceConfig = useMemo<PowerSearchConfig>(
+    () => ({
+      name: 'ServiceSearch',
+      fields: [
+        {
+          key: 'saved_service',
+          label: 'Saved Service',
+          group: 'Named',
+          defaultOperator: 'is',
+          operators: [
+            {
+              key: 'is',
+              label: 'is',
+              value: {
+                type: 'enum' as const,
+                values: services.map((s) => ({ value: s.name, label: s.name })),
+              },
+            },
+          ],
+        },
+        {
+          key: 'protocol',
+          label: 'Protocol',
+          defaultOperator: 'is',
+          operators: [
+            {
+              key: 'is',
+              label: 'is',
+              value: { type: 'enum' as const, values: PROTOCOL_VALUES },
+            },
+          ],
+        },
+        {
+          key: 'port',
+          label: 'Port',
+          defaultOperator: 'is',
+          operators: [
+            {
+              key: 'is',
+              label: 'is',
+              value: { type: 'string' as const },
+            },
+          ],
+        },
+      ],
+    }),
+    [services],
+  );
 
   const filters: ReadonlyArray<PowerSearchFilter> = useMemo(
     () =>
@@ -84,14 +92,14 @@ export function ServiceEditor({ value, onChange, isDisabled }: ServiceEditorProp
         { field: 'protocol', operator: 'is', value: { type: 'enum' as const, value: s.protocol } },
         { field: 'port', operator: 'is', value: { type: 'string' as const, value: s.port } },
       ]),
-    [value]
+    [value],
   );
 
   const handleChange = useCallback(
     (
       newFilters: ReadonlyArray<PowerSearchFilter>,
       _changeType: PowerSearchChangeType,
-      _index: number
+      _index: number,
     ) => {
       const svcList: RuleService[] = [];
       let currentProtocol = 'TCP';
@@ -115,7 +123,7 @@ export function ServiceEditor({ value, onChange, isDisabled }: ServiceEditorProp
       }
       onChange(svcList);
     },
-    [onChange, services]
+    [onChange, services],
   );
 
   return (

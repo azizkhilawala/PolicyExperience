@@ -61,13 +61,9 @@ describe('CreatePolicyDialog', () => {
       updated_at: '2025-01-01T00:00:00Z',
     };
 
-    server.use(
-      http.post('/api/policies', () => HttpResponse.json(createdPolicy)),
-    );
+    server.use(http.post('/api/policies', () => HttpResponse.json(createdPolicy)));
 
-    renderWithProviders(
-      <CreatePolicyDialog {...defaultProps} onCreated={onCreated} />,
-    );
+    renderWithProviders(<CreatePolicyDialog {...defaultProps} onCreated={onCreated} />);
 
     await waitFor(() => {
       expect(screen.getByLabelText(/Policy Name/i)).toBeInTheDocument();
@@ -108,9 +104,7 @@ describe('CreatePolicyDialog', () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
 
-    renderWithProviders(
-      <CreatePolicyDialog {...defaultProps} onClose={onClose} />,
-    );
+    renderWithProviders(<CreatePolicyDialog {...defaultProps} onClose={onClose} />);
 
     await waitFor(() => {
       expect(screen.getByText('Cancel')).toBeInTheDocument();

@@ -40,7 +40,7 @@ export interface EditDraft {
 export function getGhostLabels(
   scopeLabels: PolicyLabel[],
   scopeType: 'intra' | 'extra',
-  field: 'source' | 'destination'
+  field: 'source' | 'destination',
 ): PolicyLabel[] {
   if (scopeLabels.length === 0) return [];
   if (scopeType === 'intra') return scopeLabels;
@@ -53,7 +53,9 @@ function renderEndpointTokens(endpoint: RuleEndpoint): React.ReactNode {
     return (
       <HStack gap={0.5} vAlign="center">
         <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
-        <Text type="supporting" color="secondary">All workloads</Text>
+        <Text type="supporting" color="secondary">
+          All workloads
+        </Text>
       </HStack>
     );
   }
@@ -140,10 +142,13 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
       key: 'position',
       header: '#',
       width: pixel(48),
-      renderCell: (row: RuleTableRow) => dimIfDisabled(
-        row,
-        <Text type="supporting" weight="medium">{row.position}</Text>
-      ),
+      renderCell: (row: RuleTableRow) =>
+        dimIfDisabled(
+          row,
+          <Text type="supporting" weight="medium">
+            {row.position}
+          </Text>,
+        ),
     },
     {
       key: 'status',
@@ -155,9 +160,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             variant={row.enabled ? 'success' : 'neutral'}
             label={row.enabled ? 'Enabled' : 'Disabled'}
           />
-          <Text type="supporting">
-            {row.enabled ? 'Enabled' : 'Disabled'}
-          </Text>
+          <Text type="supporting">{row.enabled ? 'Enabled' : 'Disabled'}</Text>
         </HStack>
       ),
     },
@@ -190,7 +193,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
             color={row.scope_type === 'intra' ? 'blue' : 'purple'}
             size="sm"
             icon={<ProductIcon name="scope" color="inherit" />}
-          />
+          />,
         );
       },
     });
@@ -221,7 +224,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           <VStack gap={0.5}>
             {renderEndpointTokens(row.source)}
             {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
-          </VStack>
+          </VStack>,
         );
       },
     },
@@ -229,10 +232,11 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
       key: 'arrow',
       header: 'Direction',
       width: pixel(32),
-      renderCell: (row: RuleTableRow) => dimIfDisabled(
-        row,
-        <ProductIcon name="arrowRight" size="sm" color="secondary" label="to" />
-      ),
+      renderCell: (row: RuleTableRow) =>
+        dimIfDisabled(
+          row,
+          <ProductIcon name="arrowRight" size="sm" color="secondary" label="to" />,
+        ),
     },
     {
       key: 'destination',
@@ -258,7 +262,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           <VStack gap={0.5}>
             {renderEndpointTokens(row.destination)}
             {ghosts.length > 0 && <GhostTokens labels={ghosts} />}
-          </VStack>
+          </VStack>,
         );
       },
     },
@@ -288,7 +292,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
                 icon={<ProductIcon name="service" color="inherit" />}
               />
             ))}
-          </HStack>
+          </HStack>,
         );
       },
     },

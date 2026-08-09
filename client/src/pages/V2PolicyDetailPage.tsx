@@ -66,20 +66,18 @@ export default function V2PolicyDetailPage() {
   if (error || !policy) {
     return (
       <VStack gap={3} padding={4}>
-        <Banner
-          status="error"
-          title={error ?? 'Policy not found'}
-          container="section"
-        />
+        <Banner status="error" title={error ?? 'Policy not found'} container="section" />
       </VStack>
     );
   }
 
-  const clusterNames = (policy.scope_cluster_ids ?? [])
-    .map((id) => clusters.find((c) => c.id === id)?.name ?? id);
+  const clusterNames = (policy.scope_cluster_ids ?? []).map(
+    (id) => clusters.find((c) => c.id === id)?.name ?? id,
+  );
 
-  const namespaceNames = (policy.scope_namespace_ids ?? [])
-    .map((id) => namespaces.find((n) => n.id === id)?.name ?? id);
+  const namespaceNames = (policy.scope_namespace_ids ?? []).map(
+    (id) => namespaces.find((n) => n.id === id)?.name ?? id,
+  );
 
   const ingressRules = (policy.rules ?? []).filter((r) => r.direction === 'ingress');
   const egressRules = (policy.rules ?? []).filter((r) => r.direction === 'egress');
@@ -150,9 +148,7 @@ export default function V2PolicyDetailPage() {
             variant="primary"
             icon={<ProductIcon name="provision" color="inherit" />}
             isDisabled={policy.provision_status === 'provisioned'}
-            tooltip={
-              policy.provision_status === 'provisioned' ? 'Already provisioned' : undefined
-            }
+            tooltip={policy.provision_status === 'provisioned' ? 'Already provisioned' : undefined}
             onClick={handleProvision}
           />
           <MoreMenu
@@ -182,7 +178,11 @@ export default function V2PolicyDetailPage() {
 
       {/* Zone 2: Scope Display */}
       <HStack gap={1} vAlign="center">
-        <ProductIcon name={policy.scope_type === 'k8s' ? 'cluster' : 'scope'} size="md" color="secondary" />
+        <ProductIcon
+          name={policy.scope_type === 'k8s' ? 'cluster' : 'scope'}
+          size="md"
+          color="secondary"
+        />
         <Heading level={2}>
           {policy.policy_type === 'guardrail' ? 'Enforcement Points' : 'Scope (Who am I)'}
         </Heading>
@@ -239,7 +239,9 @@ export default function V2PolicyDetailPage() {
       ) : (
         <MetadataList columns="multi">
           <MetadataListItem label="Scope Type">
-            <Text>{policy.scope_type === 'all_workloads' ? 'All Workloads' : policy.scope_type}</Text>
+            <Text>
+              {policy.scope_type === 'all_workloads' ? 'All Workloads' : policy.scope_type}
+            </Text>
           </MetadataListItem>
           {policy.scope_labels && policy.scope_labels.length > 0 && (
             <MetadataListItem label="Labels">

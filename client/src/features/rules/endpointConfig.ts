@@ -64,16 +64,36 @@ export function useEndpointResources(): EndpointResources {
   const [cloudSubnets, setCloudSubnets] = useState<CloudSubnet[]>([]);
 
   useEffect(() => {
-    fetchLabelGroups().then(setLabelGroups).catch(() => {});
-    fetchIpLists().then(setIpLists).catch(() => {});
-    fetchWorkloads().then(setWorkloads).catch(() => {});
-    fetchUserGroups().then(setUserGroups).catch(() => {});
-    fetchVirtualServices().then(setVirtualServices).catch(() => {});
-    fetchClusters().then(setClusters).catch(() => {});
-    fetchNamespaces().then(setNamespaces).catch(() => {});
-    fetchCloudAccounts().then(setCloudAccounts).catch(() => {});
-    fetchCloudVpcs().then(setCloudVpcs).catch(() => {});
-    fetchCloudSubnets().then(setCloudSubnets).catch(() => {});
+    fetchLabelGroups()
+      .then(setLabelGroups)
+      .catch(() => {});
+    fetchIpLists()
+      .then(setIpLists)
+      .catch(() => {});
+    fetchWorkloads()
+      .then(setWorkloads)
+      .catch(() => {});
+    fetchUserGroups()
+      .then(setUserGroups)
+      .catch(() => {});
+    fetchVirtualServices()
+      .then(setVirtualServices)
+      .catch(() => {});
+    fetchClusters()
+      .then(setClusters)
+      .catch(() => {});
+    fetchNamespaces()
+      .then(setNamespaces)
+      .catch(() => {});
+    fetchCloudAccounts()
+      .then(setCloudAccounts)
+      .catch(() => {});
+    fetchCloudVpcs()
+      .then(setCloudVpcs)
+      .catch(() => {});
+    fetchCloudSubnets()
+      .then(setCloudSubnets)
+      .catch(() => {});
   }, []);
 
   return useMemo(
@@ -90,13 +110,25 @@ export function useEndpointResources(): EndpointResources {
       cloudVpcs,
       cloudSubnets,
     }),
-    [labels, labelGroups, ipLists, workloads, userGroups, virtualServices, clusters, namespaces, cloudAccounts, cloudVpcs, cloudSubnets]
+    [
+      labels,
+      labelGroups,
+      ipLists,
+      workloads,
+      userGroups,
+      virtualServices,
+      clusters,
+      namespaces,
+      cloudAccounts,
+      cloudVpcs,
+      cloudSubnets,
+    ],
   );
 }
 
 function makeEntitySource<T extends { id: string; name: string }>(
   items: T[],
-  toLabel: (item: T) => string
+  toLabel: (item: T) => string,
 ): SearchSource {
   return {
     search: (q: string) => {
@@ -111,9 +143,20 @@ function makeEntitySource<T extends { id: string; name: string }>(
 
 export function buildEndpointConfig(
   resources: EndpointResources,
-  side: 'source' | 'destination'
+  side: 'source' | 'destination',
 ): PowerSearchConfig {
-  const { labels, labelGroups, ipLists, userGroups, virtualServices, clusters, namespaces, cloudAccounts, cloudVpcs, cloudSubnets } = resources;
+  const {
+    labels,
+    labelGroups,
+    ipLists,
+    userGroups,
+    virtualServices,
+    clusters,
+    namespaces,
+    cloudAccounts,
+    cloudVpcs,
+    cloudSubnets,
+  } = resources;
 
   const fields: PowerSearchField[] = [];
 
@@ -204,10 +247,7 @@ export function buildEndpointConfig(
   });
 
   // ─── Network group ────────────────────────────────────────────────────────
-  const ipListSource: SearchSource = makeEntitySource(
-    ipLists,
-    (ip) => `${ip.name} (${ip.cidr})`
-  );
+  const ipListSource: SearchSource = makeEntitySource(ipLists, (ip) => `${ip.name} (${ip.cidr})`);
   fields.push({
     key: 'ip_list',
     label: 'IP List',
@@ -463,30 +503,34 @@ export function buildEndpointConfig(
         {
           key: 'is',
           label: 'is',
-          value: podEnumValues.length > 0
-            ? { type: 'enum' as const, values: podEnumValues }
-            : { type: 'string' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum' as const, values: podEnumValues }
+              : { type: 'string' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_not',
           label: 'is not',
-          value: podEnumValues.length > 0
-            ? { type: 'enum' as const, values: podEnumValues }
-            : { type: 'string' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum' as const, values: podEnumValues }
+              : { type: 'string' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_any_of',
           label: 'is any of',
-          value: podEnumValues.length > 0
-            ? { type: 'enum_list' as const, values: podEnumValues }
-            : { type: 'string_list' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum_list' as const, values: podEnumValues }
+              : { type: 'string_list' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'is_none_of',
           label: 'is none of',
-          value: podEnumValues.length > 0
-            ? { type: 'enum_list' as const, values: podEnumValues }
-            : { type: 'string_list' as const },
+          value:
+            podEnumValues.length > 0
+              ? { type: 'enum_list' as const, values: podEnumValues }
+              : { type: 'string_list' as const },
         } satisfies PowerSearchOperator,
         {
           key: 'exists',
@@ -586,7 +630,7 @@ export function buildEndpointConfig(
             value: { type: 'string' },
           } satisfies PowerSearchOperator,
         ],
-      }
+      },
     );
   }
 
@@ -595,9 +639,15 @@ export function buildEndpointConfig(
   const awsVpcs = cloudVpcs.filter((v) => v.provider === 'aws');
   const awsSubnets = cloudSubnets.filter((s) => s.provider === 'aws');
 
-  const awsAccountSource: SearchSource = makeEntitySource(awsAccounts, (a) => `${a.name} (${a.account_id})`);
+  const awsAccountSource: SearchSource = makeEntitySource(
+    awsAccounts,
+    (a) => `${a.name} (${a.account_id})`,
+  );
   const awsVpcSource: SearchSource = makeEntitySource(awsVpcs, (v) => `${v.name} (${v.vpc_id})`);
-  const awsSubnetSource: SearchSource = makeEntitySource(awsSubnets, (s) => `${s.name} (${s.subnet_id})`);
+  const awsSubnetSource: SearchSource = makeEntitySource(
+    awsSubnets,
+    (s) => `${s.name} (${s.subnet_id})`,
+  );
 
   fields.push(
     {
@@ -653,7 +703,7 @@ export function buildEndpointConfig(
           value: { type: 'entity_list', searchSource: awsSubnetSource },
         } satisfies PowerSearchOperator,
       ],
-    }
+    },
   );
 
   // ─── Cloud - Azure group ──────────────────────────────────────────────────
@@ -661,9 +711,18 @@ export function buildEndpointConfig(
   const azureVpcs = cloudVpcs.filter((v) => v.provider === 'azure');
   const azureSubnets = cloudSubnets.filter((s) => s.provider === 'azure');
 
-  const azureAccountSource: SearchSource = makeEntitySource(azureAccounts, (a) => `${a.name} (${a.account_id})`);
-  const azureVpcSource: SearchSource = makeEntitySource(azureVpcs, (v) => `${v.name} (${v.vpc_id})`);
-  const azureSubnetSource: SearchSource = makeEntitySource(azureSubnets, (s) => `${s.name} (${s.subnet_id})`);
+  const azureAccountSource: SearchSource = makeEntitySource(
+    azureAccounts,
+    (a) => `${a.name} (${a.account_id})`,
+  );
+  const azureVpcSource: SearchSource = makeEntitySource(
+    azureVpcs,
+    (v) => `${v.name} (${v.vpc_id})`,
+  );
+  const azureSubnetSource: SearchSource = makeEntitySource(
+    azureSubnets,
+    (s) => `${s.name} (${s.subnet_id})`,
+  );
 
   fields.push(
     {
@@ -719,7 +778,7 @@ export function buildEndpointConfig(
           value: { type: 'entity_list', searchSource: azureSubnetSource },
         } satisfies PowerSearchOperator,
       ],
-    }
+    },
   );
 
   return {

@@ -65,9 +65,14 @@ export default function SettingsPage() {
           <Heading level={2}>User Management</Heading>
           {user ? (
             <Text>
-              Signed in as <Text as="span" weight="medium">{user.name}</Text>
-              {' '}—{' '}
-              <Text as="span" color="secondary">{user.role === 'global_admin' ? 'Global Admin' : 'Author'}</Text>
+              Signed in as{' '}
+              <Text as="span" weight="medium">
+                {user.name}
+              </Text>{' '}
+              —{' '}
+              <Text as="span" color="secondary">
+                {user.role === 'global_admin' ? 'Global Admin' : 'Author'}
+              </Text>
             </Text>
           ) : null}
           <Selector

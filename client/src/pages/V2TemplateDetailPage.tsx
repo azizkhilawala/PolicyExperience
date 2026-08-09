@@ -119,9 +119,7 @@ export default function V2TemplateDetailPage() {
         </HStack>
       </HStack>
 
-      {template.description ? (
-        <Text color="secondary">{template.description}</Text>
-      ) : null}
+      {template.description ? <Text color="secondary">{template.description}</Text> : null}
 
       <Divider />
 

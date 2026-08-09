@@ -16,7 +16,13 @@ import { Banner } from '@astryxdesign/core/Banner';
 
 import { useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.js';
-import { fetchPolicies, deletePolicy, lockPolicy, unlockPolicy, type Policy } from '../api/policies.js';
+import {
+  fetchPolicies,
+  deletePolicy,
+  lockPolicy,
+  unlockPolicy,
+  type Policy,
+} from '../api/policies.js';
 import { LabelTokens } from '../components/LabelTokens.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
@@ -71,25 +77,19 @@ export default function PolicyListPage() {
       key: 'scope',
       header: 'Scope',
       width: proportional(2),
-      renderCell: (row: PolicyTableRow) => (
-        <LabelTokens labels={row.scope} />
-      ),
+      renderCell: (row: PolicyTableRow) => <LabelTokens labels={row.scope} />,
     },
     {
       key: 'enabled',
       header: 'Status',
       width: pixel(140),
-      renderCell: (row: PolicyTableRow) => (
-        <StatusIndicator enabled={!!row.enabled} />
-      ),
+      renderCell: (row: PolicyTableRow) => <StatusIndicator enabled={!!row.enabled} />,
     },
     {
       key: 'provision_status',
       header: 'Provision Status',
       width: pixel(130),
-      renderCell: (row: PolicyTableRow) => (
-        <ProvisionBadge status={row.provision_status} />
-      ),
+      renderCell: (row: PolicyTableRow) => <ProvisionBadge status={row.provision_status} />,
     },
     {
       key: 'actions',
@@ -159,11 +159,7 @@ export default function PolicyListPage() {
       </TabList>
 
       {actionError ? (
-        <Banner
-          status="error"
-          title={actionError}
-          onDismiss={() => setActionError(null)}
-        />
+        <Banner status="error" title={actionError} onDismiss={() => setActionError(null)} />
       ) : null}
 
       {loading ? (
@@ -192,13 +188,7 @@ export default function PolicyListPage() {
           }
         />
       ) : (
-        <Table
-          data={filteredPolicies}
-          columns={columns}
-          idKey="id"
-          density="compact"
-          hasHover
-        />
+        <Table data={filteredPolicies} columns={columns} idKey="id" density="compact" hasHover />
       )}
       <CreatePolicyDialog
         isOpen={dialogOpen}

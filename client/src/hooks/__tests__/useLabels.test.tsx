@@ -16,18 +16,14 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe('useLabels', () => {
   it('returns empty array initially', () => {
-    server.use(
-      http.get('/api/labels', () => new Promise(() => {})),
-    );
+    server.use(http.get('/api/labels', () => new Promise(() => {})));
 
     const { result } = renderHook(() => useLabels(), { wrapper });
     expect(result.current).toEqual([]);
   });
 
   it('fetches and returns labels', async () => {
-    server.use(
-      http.get('/api/labels', () => HttpResponse.json(mockLabels)),
-    );
+    server.use(http.get('/api/labels', () => HttpResponse.json(mockLabels)));
 
     const { result } = renderHook(() => useLabels(), { wrapper });
 
@@ -38,9 +34,7 @@ describe('useLabels', () => {
 
   it('returns empty array when API fails', async () => {
     server.use(
-      http.get('/api/labels', () =>
-        HttpResponse.json({ error: 'fail' }, { status: 500 }),
-      ),
+      http.get('/api/labels', () => HttpResponse.json({ error: 'fail' }, { status: 500 })),
     );
 
     const { result } = renderHook(() => useLabels(), { wrapper });

@@ -61,7 +61,9 @@ export default function V2TemplateCreatePage() {
         setName(t.name);
         setDescription(t.description ?? '');
         const rules = t.rules ?? [];
-        setIngressDraftRules(rules.filter((r) => r.direction === 'ingress').map(templateRuleToDraft));
+        setIngressDraftRules(
+          rules.filter((r) => r.direction === 'ingress').map(templateRuleToDraft),
+        );
         setEgressDraftRules(rules.filter((r) => r.direction === 'egress').map(templateRuleToDraft));
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : 'Failed to load template'))
@@ -108,7 +110,13 @@ export default function V2TemplateCreatePage() {
         navigate(`/policy-v2/templates/${template.id}`);
       }
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : isEdit ? 'Failed to save template' : 'Failed to create template');
+      setFormError(
+        e instanceof Error
+          ? e.message
+          : isEdit
+            ? 'Failed to save template'
+            : 'Failed to create template',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -159,7 +167,11 @@ export default function V2TemplateCreatePage() {
           isRequired
           placeholder="Enter template name"
           width="100%"
-          status={formError && !name.trim() ? { type: 'error', message: 'Template name is required' } : undefined}
+          status={
+            formError && !name.trim()
+              ? { type: 'error', message: 'Template name is required' }
+              : undefined
+          }
         />
         <TextArea
           label="Description"

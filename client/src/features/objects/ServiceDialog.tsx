@@ -49,8 +49,14 @@ export function ServiceDialog({ isOpen, onClose, onSaved, service }: ServiceDial
   }, [isOpen, service]);
 
   const handleSubmit = useCallback(async () => {
-    if (!name.trim()) { setError('Name is required'); return; }
-    if (!port.trim() || isNaN(Number(port))) { setError('Port is required and must be a number'); return; }
+    if (!name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    if (!port.trim() || isNaN(Number(port))) {
+      setError('Port is required and must be a number');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -61,9 +67,7 @@ export function ServiceDialog({ isOpen, onClose, onSaved, service }: ServiceDial
         to_port: toPort.trim() ? Number(toPort) : null,
         description: description.trim(),
       };
-      const result = isEdit
-        ? await updateService(service!.id, data)
-        : await createService(data);
+      const result = isEdit ? await updateService(service!.id, data) : await createService(data);
       onSaved(result);
       onClose();
     } catch (e) {
@@ -74,21 +78,52 @@ export function ServiceDialog({ isOpen, onClose, onSaved, service }: ServiceDial
   }, [name, port, toPort, protocol, description, isEdit, service, onSaved, onClose]);
 
   return (
-    <Dialog isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); }} purpose="form" width={480}>
-      <DialogHeader title={isEdit ? 'Edit Service' : 'Create Service'} onOpenChange={(open) => { if (!open) onClose(); }} />
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      purpose="form"
+      width={480}
+    >
+      <DialogHeader
+        title={isEdit ? 'Edit Service' : 'Create Service'}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      />
       <VStack gap={3} padding={4}>
-        {error && <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />}
+        {error && (
+          <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />
+        )}
         <FormLayout>
           <TextInput label="Name" value={name} onChange={setName} isRequired />
           <TextInput label="Port" value={port} onChange={setPort} isRequired />
           <TextInput label="Port Range End (optional)" value={toPort} onChange={setToPort} />
-          <Selector label="Protocol" options={PROTOCOL_OPTIONS} value={protocol} onChange={setProtocol} />
-          <TextArea label="Description" value={description} onChange={setDescription} isOptional rows={2} />
+          <Selector
+            label="Protocol"
+            options={PROTOCOL_OPTIONS}
+            value={protocol}
+            onChange={setProtocol}
+          />
+          <TextArea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+            isOptional
+            rows={2}
+          />
         </FormLayout>
       </VStack>
       <HStack padding={4} hAlign="end" gap={2}>
         <Button label="Cancel" variant="secondary" onClick={onClose} isDisabled={submitting} />
-        <Button label={isEdit ? 'Save' : 'Create'} variant="primary" onClick={handleSubmit} isLoading={submitting} isDisabled={!name.trim() || !port.trim()} />
+        <Button
+          label={isEdit ? 'Save' : 'Create'}
+          variant="primary"
+          onClick={handleSubmit}
+          isLoading={submitting}
+          isDisabled={!name.trim() || !port.trim()}
+        />
       </HStack>
     </Dialog>
   );

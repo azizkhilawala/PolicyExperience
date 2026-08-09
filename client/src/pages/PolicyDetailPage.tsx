@@ -51,18 +51,12 @@ export default function PolicyDetailPage() {
   if (error || !policy) {
     return (
       <VStack gap={3} padding={4}>
-        <Banner
-          status="error"
-          title={error ?? 'Policy not found'}
-          container="section"
-        />
+        <Banner status="error" title={error ?? 'Policy not found'} container="section" />
       </VStack>
     );
   }
 
-  const lockedByUser = policy.locked_by
-    ? users.find((u) => u.id === policy.locked_by)
-    : null;
+  const lockedByUser = policy.locked_by ? users.find((u) => u.id === policy.locked_by) : null;
   const lockedByName = lockedByUser?.name ?? policy.locked_by ?? 'Unknown';
   const isAdmin = user?.role === 'global_admin';
   const typeLabel = policy.type === 'organizational' ? 'Organizational' : 'Application';
@@ -123,8 +117,11 @@ export default function PolicyDetailPage() {
             variant="primary"
             isDisabled={!!policy.is_locked || policy.provision_status === 'provisioned'}
             tooltip={
-              policy.is_locked ? 'Unlock policy before provisioning' :
-              policy.provision_status === 'provisioned' ? 'Already provisioned' : undefined
+              policy.is_locked
+                ? 'Unlock policy before provisioning'
+                : policy.provision_status === 'provisioned'
+                  ? 'Already provisioned'
+                  : undefined
             }
             onClick={() => setProvisionOpen(true)}
           />

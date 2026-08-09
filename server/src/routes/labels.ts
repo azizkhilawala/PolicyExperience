@@ -7,8 +7,14 @@ router.get('/', (req, res) => {
   const db = getDb();
   let sql = 'SELECT * FROM labels WHERE 1=1';
   const params: string[] = [];
-  if (req.query.key) { sql += ' AND key = ?'; params.push(req.query.key as string); }
-  if (req.query.type) { sql += ' AND type = ?'; params.push(req.query.type as string); }
+  if (req.query.key) {
+    sql += ' AND key = ?';
+    params.push(req.query.key as string);
+  }
+  if (req.query.type) {
+    sql += ' AND type = ?';
+    params.push(req.query.type as string);
+  }
   sql += ' ORDER BY key, value';
   res.json(db.prepare(sql).all(...params));
 });

@@ -64,13 +64,16 @@ export function createService(data: {
   });
 }
 
-export function updateService(id: string, data: Partial<{
-  name: string;
-  port: number;
-  protocol: string;
-  to_port: number | null;
-  description: string;
-}>) {
+export function updateService(
+  id: string,
+  data: Partial<{
+    name: string;
+    port: number;
+    protocol: string;
+    to_port: number | null;
+    description: string;
+  }>,
+) {
   return apiFetch<Service>(`/api/objects/services/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -91,22 +94,21 @@ export function fetchObjIpListById(id: string) {
   return apiFetch<ObjIpList>(`/api/objects/ip-lists/${id}`);
 }
 
-export function createIpList(data: {
-  name: string;
-  cidr: string;
-  description?: string;
-}) {
+export function createIpList(data: { name: string; cidr: string; description?: string }) {
   return apiFetch<ObjIpList>('/api/objects/ip-lists', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export function updateIpList(id: string, data: Partial<{
-  name: string;
-  cidr: string;
-  description: string;
-}>) {
+export function updateIpList(
+  id: string,
+  data: Partial<{
+    name: string;
+    cidr: string;
+    description: string;
+  }>,
+) {
   return apiFetch<ObjIpList>(`/api/objects/ip-lists/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -127,20 +129,20 @@ export function fetchObjLabelGroupById(id: string) {
   return apiFetch<ObjLabelGroup>(`/api/objects/label-groups/${id}`);
 }
 
-export function createLabelGroup(data: {
-  name: string;
-  label_ids: string[];
-}) {
+export function createLabelGroup(data: { name: string; label_ids: string[] }) {
   return apiFetch<ObjLabelGroup>('/api/objects/label-groups', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export function updateLabelGroup(id: string, data: Partial<{
-  name: string;
-  label_ids: string[];
-}>) {
+export function updateLabelGroup(
+  id: string,
+  data: Partial<{
+    name: string;
+    label_ids: string[];
+  }>,
+) {
   return apiFetch<ObjLabelGroup>(`/api/objects/label-groups/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -161,22 +163,21 @@ export function fetchObjVirtualServiceById(id: string) {
   return apiFetch<ObjVirtualService>(`/api/objects/virtual-services/${id}`);
 }
 
-export function createVirtualService(data: {
-  name: string;
-  port: number;
-  protocol: string;
-}) {
+export function createVirtualService(data: { name: string; port: number; protocol: string }) {
   return apiFetch<ObjVirtualService>('/api/objects/virtual-services', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export function updateVirtualService(id: string, data: Partial<{
-  name: string;
-  port: number;
-  protocol: string;
-}>) {
+export function updateVirtualService(
+  id: string,
+  data: Partial<{
+    name: string;
+    port: number;
+    protocol: string;
+  }>,
+) {
   return apiFetch<ObjVirtualService>(`/api/objects/virtual-services/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),

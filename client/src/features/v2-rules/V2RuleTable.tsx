@@ -63,7 +63,9 @@ function renderEntityTokens(filters: EndpointFilter[]) {
     return (
       <HStack gap={0.5} vAlign="center">
         <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
-        <Text type="supporting" color="secondary">All workloads</Text>
+        <Text type="supporting" color="secondary">
+          All workloads
+        </Text>
       </HStack>
     );
   }
@@ -90,7 +92,9 @@ function renderServiceTokens(services: V2RuleService[]) {
     return (
       <HStack gap={0.5} vAlign="center">
         <ProductIcon name="service" size="sm" color="tertiary" />
-        <Text type="supporting" color="secondary">All Services</Text>
+        <Text type="supporting" color="secondary">
+          All Services
+        </Text>
       </HStack>
     );
   }
@@ -179,8 +183,13 @@ export function V2RuleTable({
     if (draftMode) {
       const updatedRules = (draftRules ?? []).map((r) =>
         r.tempId === editingId
-          ? { ...r, entity: editDraft.entity, services: editDraft.services, action: editDraft.action }
-          : r
+          ? {
+              ...r,
+              entity: editDraft.entity,
+              services: editDraft.services,
+              action: editDraft.action,
+            }
+          : r,
       );
       onDraftRulesChange?.(updatedRules);
       setEditingId(null);
@@ -247,14 +256,14 @@ export function V2RuleTable({
         setMutationError(e instanceof Error ? e.message : 'Failed to delete rule');
       }
     },
-    [onRulesChanged, draftMode, draftRules, onDraftRulesChange]
+    [onRulesChanged, draftMode, draftRules, onDraftRulesChange],
   );
 
   const handleToggleEnabled = useCallback(
     async (ruleId: string, currentEnabled: number) => {
       if (draftMode) {
         const updatedRules = (draftRules ?? []).map((r) =>
-          r.tempId === ruleId ? { ...r, enabled: currentEnabled ? 0 : 1 } : r
+          r.tempId === ruleId ? { ...r, enabled: currentEnabled ? 0 : 1 } : r,
         );
         onDraftRulesChange?.(updatedRules);
         return;
@@ -266,7 +275,7 @@ export function V2RuleTable({
         setMutationError(e instanceof Error ? e.message : 'Failed to update rule');
       }
     },
-    [onRulesChanged, draftMode, draftRules, onDraftRulesChange]
+    [onRulesChanged, draftMode, draftRules, onDraftRulesChange],
   );
 
   const columns: TableColumn<V2RuleRow>[] = useMemo(
@@ -276,7 +285,9 @@ export function V2RuleTable({
         header: '#',
         width: pixel(50),
         renderCell: (row: V2RuleRow) => (
-          <Text type="supporting" weight="medium">{(row.position as number) + 1}</Text>
+          <Text type="supporting" weight="medium">
+            {(row.position as number) + 1}
+          </Text>
         ),
       },
       {
@@ -289,7 +300,7 @@ export function V2RuleTable({
             return (
               <V2EntityEditor
                 value={editDraft.entity}
-                onChange={(v) => setEditDraft((prev) => prev ? { ...prev, entity: v } : prev)}
+                onChange={(v) => setEditDraft((prev) => (prev ? { ...prev, entity: v } : prev))}
                 direction={direction}
               />
             );
@@ -307,7 +318,7 @@ export function V2RuleTable({
             return (
               <V2ServiceEditor
                 value={editDraft.services}
-                onChange={(v) => setEditDraft((prev) => prev ? { ...prev, services: v } : prev)}
+                onChange={(v) => setEditDraft((prev) => (prev ? { ...prev, services: v } : prev))}
               />
             );
           }
@@ -327,9 +338,11 @@ export function V2RuleTable({
                 isLabelHidden
                 options={actionOptions}
                 value={editDraft.action}
-                onChange={(v: string) => setEditDraft((prev) =>
-                  prev ? { ...prev, action: v as 'allow' | 'deny' | 'override_deny' } : prev
-                )}
+                onChange={(v: string) =>
+                  setEditDraft((prev) =>
+                    prev ? { ...prev, action: v as 'allow' | 'deny' | 'override_deny' } : prev,
+                  )
+                }
               />
             );
           }
@@ -346,9 +359,7 @@ export function V2RuleTable({
               variant={(row.enabled as number) ? 'success' : 'neutral'}
               label={(row.enabled as number) ? 'Enabled' : 'Disabled'}
             />
-            <Text type="supporting">
-              {(row.enabled as number) ? 'Enabled' : 'Disabled'}
-            </Text>
+            <Text type="supporting">{(row.enabled as number) ? 'Enabled' : 'Disabled'}</Text>
           </HStack>
         ),
       },
@@ -364,7 +375,12 @@ export function V2RuleTable({
               label={status === 'provisioned' ? 'Provisioned' : 'Draft'}
               color={status === 'provisioned' ? 'green' : 'gray'}
               size="sm"
-              icon={<ProductIcon name={status === 'provisioned' ? 'provision' : 'diff'} color="inherit" />}
+              icon={
+                <ProductIcon
+                  name={status === 'provisioned' ? 'provision' : 'diff'}
+                  color="inherit"
+                />
+              }
             />
           );
         },
@@ -387,12 +403,7 @@ export function V2RuleTable({
                   onClick={handleSaveEdit}
                   isDisabled={isSaving}
                 />
-                <Button
-                  label="Cancel"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancelEdit}
-                />
+                <Button label="Cancel" variant="ghost" size="sm" onClick={handleCancelEdit} />
               </HStack>
             );
           }
@@ -406,8 +417,7 @@ export function V2RuleTable({
                 },
                 {
                   label: (row.enabled as number) ? 'Disable' : 'Enable',
-                  onClick: () =>
-                    handleToggleEnabled(row.id as string, row.enabled as number),
+                  onClick: () => handleToggleEnabled(row.id as string, row.enabled as number),
                 },
                 { type: 'divider' as const },
                 {
@@ -431,12 +441,12 @@ export function V2RuleTable({
       handleCancelEdit,
       handleDelete,
       handleToggleEnabled,
-    ]
+    ],
   );
 
   const tableData: V2RuleRow[] = useMemo(() => {
     const source = draftMode
-      ? (draftRules ?? []).map((r, i) => ({ ...r, id: r.tempId, position: i } as V2RuleRow))
+      ? (draftRules ?? []).map((r, i) => ({ ...r, id: r.tempId, position: i }) as V2RuleRow)
       : rules.map((r) => r as V2RuleRow);
     if (filterAction === 'all') return source;
     return source.filter((r) => (r as any).action === filterAction);

@@ -29,20 +29,14 @@ const defaultProps = {
 
 describe('RuleEditor', () => {
   it('shows loading spinner initially', () => {
-    server.use(
-      http.get('/api/policies/pol-1/rules', () =>
-        new Promise(() => {}),
-      ),
-    );
+    server.use(http.get('/api/policies/pol-1/rules', () => new Promise(() => {})));
 
     renderWithProviders(<RuleEditor {...defaultProps} />);
     expect(screen.getByText('Loading rules…')).toBeInTheDocument();
   });
 
   it('shows empty state when no rules exist', async () => {
-    server.use(
-      http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])),
-    );
+    server.use(http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])));
 
     renderWithProviders(<RuleEditor {...defaultProps} />);
 
@@ -52,9 +46,7 @@ describe('RuleEditor', () => {
   });
 
   it('shows Add Rule button', async () => {
-    server.use(
-      http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])),
-    );
+    server.use(http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])));
 
     renderWithProviders(<RuleEditor {...defaultProps} />);
 
@@ -64,9 +56,7 @@ describe('RuleEditor', () => {
   });
 
   it('disables Add Rule when policy is locked', async () => {
-    server.use(
-      http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])),
-    );
+    server.use(http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])));
 
     renderWithProviders(<RuleEditor {...defaultProps} isLocked={true} />);
 
@@ -91,11 +81,7 @@ describe('RuleEditor', () => {
   });
 
   it('renders rules when data is returned', async () => {
-    server.use(
-      http.get('/api/policies/pol-1/rules', () =>
-        HttpResponse.json([mockRule]),
-      ),
-    );
+    server.use(http.get('/api/policies/pol-1/rules', () => HttpResponse.json([mockRule])));
 
     renderWithProviders(<RuleEditor {...defaultProps} />);
 
@@ -106,18 +92,12 @@ describe('RuleEditor', () => {
   });
 
   it('shows pending provision warning', async () => {
-    server.use(
-      http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])),
-    );
+    server.use(http.get('/api/policies/pol-1/rules', () => HttpResponse.json([])));
 
-    renderWithProviders(
-      <RuleEditor {...defaultProps} provisionStatus="pending" />,
-    );
+    renderWithProviders(<RuleEditor {...defaultProps} provisionStatus="pending" />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('This policy has un-provisioned changes.'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('This policy has un-provisioned changes.')).toBeInTheDocument();
     });
   });
 });

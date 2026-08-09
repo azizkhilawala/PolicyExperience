@@ -63,25 +63,31 @@ export function fetchV2TemplateRules(templateId: string, direction?: 'ingress' |
   return apiFetch<V2TemplateRule[]>(`/api/v2/templates/${templateId}/rules${q}`);
 }
 
-export function createV2TemplateRule(templateId: string, data: {
-  direction: 'ingress' | 'egress';
-  entity?: EndpointFilter[];
-  services?: V2RuleService[];
-  action?: 'allow' | 'deny' | 'override_deny';
-}) {
+export function createV2TemplateRule(
+  templateId: string,
+  data: {
+    direction: 'ingress' | 'egress';
+    entity?: EndpointFilter[];
+    services?: V2RuleService[];
+    action?: 'allow' | 'deny' | 'override_deny';
+  },
+) {
   return apiFetch<V2TemplateRule>(`/api/v2/templates/${templateId}/rules`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export function updateV2TemplateRule(ruleId: string, data: Partial<{
-  entity: EndpointFilter[];
-  services: V2RuleService[];
-  action: 'allow' | 'deny' | 'override_deny';
-  enabled: boolean;
-  notes: string;
-}>) {
+export function updateV2TemplateRule(
+  ruleId: string,
+  data: Partial<{
+    entity: EndpointFilter[];
+    services: V2RuleService[];
+    action: 'allow' | 'deny' | 'override_deny';
+    enabled: boolean;
+    notes: string;
+  }>,
+) {
   return apiFetch<V2TemplateRule>(`/api/v2/template-rules/${ruleId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),

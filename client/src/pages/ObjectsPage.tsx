@@ -11,10 +11,14 @@ import { Spinner } from '@astryxdesign/core/Spinner';
 
 import type { Service, ObjIpList, ObjLabelGroup, ObjVirtualService } from '../api/objects.js';
 import {
-  fetchServices, deleteService,
-  fetchObjIpLists, deleteIpList,
-  fetchObjLabelGroups, deleteLabelGroup,
-  fetchObjVirtualServices, deleteVirtualService,
+  fetchServices,
+  deleteService,
+  fetchObjIpLists,
+  deleteIpList,
+  fetchObjLabelGroups,
+  deleteLabelGroup,
+  fetchObjVirtualServices,
+  deleteVirtualService,
 } from '../api/objects.js';
 import { useLabels } from '../hooks/useLabels.js';
 import { ServiceDialog } from '../features/objects/ServiceDialog.js';
@@ -43,12 +47,18 @@ export default function ObjectsPage() {
 
   const loadServices = useCallback(async () => {
     setServicesLoading(true);
-    try { setServices(await fetchServices()); }
-    catch { /* empty */ }
-    finally { setServicesLoading(false); }
+    try {
+      setServices(await fetchServices());
+    } catch {
+      /* empty */
+    } finally {
+      setServicesLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadServices(); }, [loadServices]);
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
 
   // ─── IP Lists state ───────────────────────────────────────────────────────
   const [ipLists, setIpLists] = useState<ObjIpList[]>([]);
@@ -59,12 +69,18 @@ export default function ObjectsPage() {
 
   const loadIpLists = useCallback(async () => {
     setIpListsLoading(true);
-    try { setIpLists(await fetchObjIpLists()); }
-    catch { /* empty */ }
-    finally { setIpListsLoading(false); }
+    try {
+      setIpLists(await fetchObjIpLists());
+    } catch {
+      /* empty */
+    } finally {
+      setIpListsLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadIpLists(); }, [loadIpLists]);
+  useEffect(() => {
+    loadIpLists();
+  }, [loadIpLists]);
 
   // ─── Label Groups state ───────────────────────────────────────────────────
   const [labelGroups, setLabelGroups] = useState<ObjLabelGroup[]>([]);
@@ -75,12 +91,18 @@ export default function ObjectsPage() {
 
   const loadLabelGroups = useCallback(async () => {
     setLabelGroupsLoading(true);
-    try { setLabelGroups(await fetchObjLabelGroups()); }
-    catch { /* empty */ }
-    finally { setLabelGroupsLoading(false); }
+    try {
+      setLabelGroups(await fetchObjLabelGroups());
+    } catch {
+      /* empty */
+    } finally {
+      setLabelGroupsLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadLabelGroups(); }, [loadLabelGroups]);
+  useEffect(() => {
+    loadLabelGroups();
+  }, [loadLabelGroups]);
 
   // ─── Virtual Services state ───────────────────────────────────────────────
   const [virtualServices, setVirtualServices] = useState<ObjVirtualService[]>([]);
@@ -91,39 +113,80 @@ export default function ObjectsPage() {
 
   const loadVirtualServices = useCallback(async () => {
     setVsLoading(true);
-    try { setVirtualServices(await fetchObjVirtualServices()); }
-    catch { /* empty */ }
-    finally { setVsLoading(false); }
+    try {
+      setVirtualServices(await fetchObjVirtualServices());
+    } catch {
+      /* empty */
+    } finally {
+      setVsLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadVirtualServices(); }, [loadVirtualServices]);
-
-  // ─── Delete handlers ─────────────────────────────────────────────────────
-  const handleDeleteService = useCallback(async (id: string) => {
-    try { await deleteService(id); setServiceDeleteError(null); loadServices(); }
-    catch (e) { setServiceDeleteError(e instanceof Error ? e.message : 'Delete failed'); }
-  }, [loadServices]);
-
-  const handleDeleteIpList = useCallback(async (id: string) => {
-    try { await deleteIpList(id); setIpListDeleteError(null); loadIpLists(); }
-    catch (e) { setIpListDeleteError(e instanceof Error ? e.message : 'Delete failed'); }
-  }, [loadIpLists]);
-
-  const handleDeleteLabelGroup = useCallback(async (id: string) => {
-    try { await deleteLabelGroup(id); setLabelGroupDeleteError(null); loadLabelGroups(); }
-    catch (e) { setLabelGroupDeleteError(e instanceof Error ? e.message : 'Delete failed'); }
-  }, [loadLabelGroups]);
-
-  const handleDeleteVs = useCallback(async (id: string) => {
-    try { await deleteVirtualService(id); setVsDeleteError(null); loadVirtualServices(); }
-    catch (e) { setVsDeleteError(e instanceof Error ? e.message : 'Delete failed'); }
+  useEffect(() => {
+    loadVirtualServices();
   }, [loadVirtualServices]);
 
+  // ─── Delete handlers ─────────────────────────────────────────────────────
+  const handleDeleteService = useCallback(
+    async (id: string) => {
+      try {
+        await deleteService(id);
+        setServiceDeleteError(null);
+        loadServices();
+      } catch (e) {
+        setServiceDeleteError(e instanceof Error ? e.message : 'Delete failed');
+      }
+    },
+    [loadServices],
+  );
+
+  const handleDeleteIpList = useCallback(
+    async (id: string) => {
+      try {
+        await deleteIpList(id);
+        setIpListDeleteError(null);
+        loadIpLists();
+      } catch (e) {
+        setIpListDeleteError(e instanceof Error ? e.message : 'Delete failed');
+      }
+    },
+    [loadIpLists],
+  );
+
+  const handleDeleteLabelGroup = useCallback(
+    async (id: string) => {
+      try {
+        await deleteLabelGroup(id);
+        setLabelGroupDeleteError(null);
+        loadLabelGroups();
+      } catch (e) {
+        setLabelGroupDeleteError(e instanceof Error ? e.message : 'Delete failed');
+      }
+    },
+    [loadLabelGroups],
+  );
+
+  const handleDeleteVs = useCallback(
+    async (id: string) => {
+      try {
+        await deleteVirtualService(id);
+        setVsDeleteError(null);
+        loadVirtualServices();
+      } catch (e) {
+        setVsDeleteError(e instanceof Error ? e.message : 'Delete failed');
+      }
+    },
+    [loadVirtualServices],
+  );
+
   // ─── Label name resolver ─────────────────────────────────────────────────
-  const resolveLabelName = useCallback((id: string): string => {
-    const label = labels.find((l) => l.id === id);
-    return label ? `${label.key}=${label.value}` : id;
-  }, [labels]);
+  const resolveLabelName = useCallback(
+    (id: string): string => {
+      const label = labels.find((l) => l.id === id);
+      return label ? `${label.key}=${label.value}` : id;
+    },
+    [labels],
+  );
 
   // ─── Column definitions ───────────────────────────────────────────────────
   const serviceColumns = [
@@ -141,10 +204,18 @@ export default function ObjectsPage() {
       header: 'Actions',
       width: pixel(60),
       renderCell: (row: ServiceRow) => (
-        <MoreMenu items={[
-          { label: 'Edit', onClick: () => { setEditingService(row as Service); setServiceDialogOpen(true); } },
-          { label: 'Delete', onClick: () => handleDeleteService(row.id as string) },
-        ]} />
+        <MoreMenu
+          items={[
+            {
+              label: 'Edit',
+              onClick: () => {
+                setEditingService(row as Service);
+                setServiceDialogOpen(true);
+              },
+            },
+            { label: 'Delete', onClick: () => handleDeleteService(row.id as string) },
+          ]}
+        />
       ),
     },
   ];
@@ -158,10 +229,18 @@ export default function ObjectsPage() {
       header: 'Actions',
       width: pixel(60),
       renderCell: (row: IpListRow) => (
-        <MoreMenu items={[
-          { label: 'Edit', onClick: () => { setEditingIpList(row as ObjIpList); setIpListDialogOpen(true); } },
-          { label: 'Delete', onClick: () => handleDeleteIpList(row.id as string) },
-        ]} />
+        <MoreMenu
+          items={[
+            {
+              label: 'Edit',
+              onClick: () => {
+                setEditingIpList(row as ObjIpList);
+                setIpListDialogOpen(true);
+              },
+            },
+            { label: 'Delete', onClick: () => handleDeleteIpList(row.id as string) },
+          ]}
+        />
       ),
     },
   ];
@@ -184,10 +263,18 @@ export default function ObjectsPage() {
       header: 'Actions',
       width: pixel(60),
       renderCell: (row: LabelGroupRow) => (
-        <MoreMenu items={[
-          { label: 'Edit', onClick: () => { setEditingLabelGroup(row as ObjLabelGroup); setLabelGroupDialogOpen(true); } },
-          { label: 'Delete', onClick: () => handleDeleteLabelGroup(row.id as string) },
-        ]} />
+        <MoreMenu
+          items={[
+            {
+              label: 'Edit',
+              onClick: () => {
+                setEditingLabelGroup(row as ObjLabelGroup);
+                setLabelGroupDialogOpen(true);
+              },
+            },
+            { label: 'Delete', onClick: () => handleDeleteLabelGroup(row.id as string) },
+          ]}
+        />
       ),
     },
   ];
@@ -201,10 +288,18 @@ export default function ObjectsPage() {
       header: 'Actions',
       width: pixel(60),
       renderCell: (row: VirtualServiceRow) => (
-        <MoreMenu items={[
-          { label: 'Edit', onClick: () => { setEditingVs(row as ObjVirtualService); setVsDialogOpen(true); } },
-          { label: 'Delete', onClick: () => handleDeleteVs(row.id as string) },
-        ]} />
+        <MoreMenu
+          items={[
+            {
+              label: 'Edit',
+              onClick: () => {
+                setEditingVs(row as ObjVirtualService);
+                setVsDialogOpen(true);
+              },
+            },
+            { label: 'Delete', onClick: () => handleDeleteVs(row.id as string) },
+          ]}
+        />
       ),
     },
   ];
@@ -227,7 +322,10 @@ export default function ObjectsPage() {
             <Button
               label="+ Create Service"
               variant="primary"
-              onClick={() => { setEditingService(undefined); setServiceDialogOpen(true); }}
+              onClick={() => {
+                setEditingService(undefined);
+                setServiceDialogOpen(true);
+              }}
             />
           </HStack>
           {serviceDeleteError && (
@@ -263,7 +361,10 @@ export default function ObjectsPage() {
             <Button
               label="+ Create IP List"
               variant="primary"
-              onClick={() => { setEditingIpList(undefined); setIpListDialogOpen(true); }}
+              onClick={() => {
+                setEditingIpList(undefined);
+                setIpListDialogOpen(true);
+              }}
             />
           </HStack>
           {ipListDeleteError && (
@@ -277,11 +378,7 @@ export default function ObjectsPage() {
           {ipListsLoading ? (
             <Spinner label="Loading IP lists…" size="lg" />
           ) : (
-            <Table<IpListRow>
-              columns={ipListColumns}
-              data={ipLists as IpListRow[]}
-              idKey="id"
-            />
+            <Table<IpListRow> columns={ipListColumns} data={ipLists as IpListRow[]} idKey="id" />
           )}
           <IpListDialog
             isOpen={ipListDialogOpen}
@@ -299,7 +396,10 @@ export default function ObjectsPage() {
             <Button
               label="+ Create Label Group"
               variant="primary"
-              onClick={() => { setEditingLabelGroup(undefined); setLabelGroupDialogOpen(true); }}
+              onClick={() => {
+                setEditingLabelGroup(undefined);
+                setLabelGroupDialogOpen(true);
+              }}
             />
           </HStack>
           {labelGroupDeleteError && (
@@ -335,7 +435,10 @@ export default function ObjectsPage() {
             <Button
               label="+ Create Virtual Service"
               variant="primary"
-              onClick={() => { setEditingVs(undefined); setVsDialogOpen(true); }}
+              onClick={() => {
+                setEditingVs(undefined);
+                setVsDialogOpen(true);
+              }}
             />
           </HStack>
           {vsDeleteError && (

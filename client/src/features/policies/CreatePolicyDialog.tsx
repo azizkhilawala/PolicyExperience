@@ -80,23 +80,22 @@ export function CreatePolicyDialog({ isOpen, onClose, onCreated }: CreatePolicyD
   return (
     <Dialog
       isOpen={isOpen}
-      onOpenChange={(open) => { if (!open) handleClose(); }}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
       purpose="form"
       width={600}
     >
       <DialogHeader
         title="Create Policy"
-        onOpenChange={(open) => { if (!open) handleClose(); }}
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
       />
 
       <VStack gap={3} padding={4}>
         {error && (
-          <Banner
-            status="error"
-            title={error}
-            isDismissable
-            onDismiss={() => setError(null)}
-          />
+          <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />
         )}
 
         {!scopesEnabled && (
@@ -124,11 +123,7 @@ export function CreatePolicyDialog({ isOpen, onClose, onCreated }: CreatePolicyD
 
         {scopesEnabled && (
           <VStack gap={2}>
-            <RadioList
-              label="Scope"
-              value={scopeChoice}
-              onChange={setScopeChoice}
-            >
+            <RadioList label="Scope" value={scopeChoice} onChange={setScopeChoice}>
               <RadioListItem
                 label="Selected scope"
                 value="selected"
@@ -161,12 +156,7 @@ export function CreatePolicyDialog({ isOpen, onClose, onCreated }: CreatePolicyD
       </VStack>
 
       <HStack padding={4} hAlign="end" gap={2}>
-        <Button
-          label="Cancel"
-          variant="secondary"
-          onClick={handleClose}
-          isDisabled={submitting}
-        />
+        <Button label="Cancel" variant="secondary" onClick={handleClose} isDisabled={submitting} />
         <Button
           label="Create Draft"
           variant="primary"

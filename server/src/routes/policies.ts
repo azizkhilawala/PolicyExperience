@@ -39,9 +39,18 @@ router.get('/', (req, res) => {
   const db = getDb();
   let sql = 'SELECT * FROM policies WHERE 1=1';
   const params: string[] = [];
-  if (req.query.type) { sql += ' AND type = ?'; params.push(req.query.type as string); }
-  if (req.query.status) { sql += ' AND provision_status = ?'; params.push(req.query.status as string); }
-  if (req.query.enabled !== undefined) { sql += ' AND enabled = ?'; params.push(req.query.enabled as string); }
+  if (req.query.type) {
+    sql += ' AND type = ?';
+    params.push(req.query.type as string);
+  }
+  if (req.query.status) {
+    sql += ' AND provision_status = ?';
+    params.push(req.query.status as string);
+  }
+  if (req.query.enabled !== undefined) {
+    sql += ' AND enabled = ?';
+    params.push(req.query.enabled as string);
+  }
   sql += ' ORDER BY name';
   const rows = db.prepare(sql).all(...params);
   res.json(rows.map(parsePolicy));
@@ -56,7 +65,7 @@ router.post('/', (req, res) => {
   const id = uuidv4();
   db.prepare(
     `INSERT INTO policies (id, name, description, scope, type, provision_status, enabled, is_locked, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, 'draft', 1, 0, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, 'draft', 1, 0, ?, ?, ?)`,
   ).run(id, name, description ?? '', JSON.stringify(scope ?? []), type, user.id, now, now);
   const created = db.prepare('SELECT * FROM policies WHERE id = ?').get(id);
   res.status(201).json(parsePolicy(created));
@@ -67,7 +76,9 @@ router.get('/:id', (req, res) => {
   const db = getDb();
   const policy = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   if (!policy) return res.status(404).json({ error: 'Policy not found' });
-  const rules = db.prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position').all(req.params.id);
+  const rules = db
+    .prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position')
+    .all(req.params.id);
   res.json(parsePolicyWithRules(policy, rules));
 });
 
@@ -79,7 +90,8 @@ router.patch('/:id', (req, res) => {
 
   const { name, description, scope, type, enabled } = req.body;
   const now = new Date().toISOString();
-  const newStatus = existing.provision_status === 'provisioned' ? 'pending' : existing.provision_status;
+  const newStatus =
+    existing.provision_status === 'provisioned' ? 'pending' : existing.provision_status;
 
   db.prepare(
     `UPDATE policies SET
@@ -90,7 +102,7 @@ router.patch('/:id', (req, res) => {
       enabled = COALESCE(?, enabled),
       provision_status = ?,
       updated_at = ?
-     WHERE id = ?`
+     WHERE id = ?`,
   ).run(
     name ?? null,
     description ?? null,
@@ -99,7 +111,7 @@ router.patch('/:id', (req, res) => {
     enabled !== undefined ? (enabled ? 1 : 0) : null,
     newStatus,
     now,
-    req.params.id
+    req.params.id,
   );
 
   const updated = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
@@ -122,7 +134,11 @@ router.post('/:id/lock', (req, res) => {
   const existing = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
   const now = new Date().toISOString();
-  db.prepare('UPDATE policies SET is_locked = 1, locked_by = ?, locked_at = ? WHERE id = ?').run(user.id, now, req.params.id);
+  db.prepare('UPDATE policies SET is_locked = 1, locked_by = ?, locked_at = ? WHERE id = ?').run(
+    user.id,
+    now,
+    req.params.id,
+  );
   const updated = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   res.json(parsePolicy(updated));
 });
@@ -136,7 +152,9 @@ router.post('/:id/unlock', (req, res) => {
   }
   const existing = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
-  db.prepare('UPDATE policies SET is_locked = 0, locked_by = NULL, locked_at = NULL WHERE id = ?').run(req.params.id);
+  db.prepare(
+    'UPDATE policies SET is_locked = 0, locked_by = NULL, locked_at = NULL WHERE id = ?',
+  ).run(req.params.id);
   const updated = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   res.json(parsePolicy(updated));
 });
@@ -147,8 +165,12 @@ router.post('/:id/provision/preview', (req, res) => {
   const existing = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
 
-  const currentRules = db.prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position').all(req.params.id) as any[];
-  const snapshotRules = db.prepare('SELECT * FROM provisioned_rules WHERE policy_id = ? ORDER BY position').all(req.params.id) as any[];
+  const currentRules = db
+    .prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position')
+    .all(req.params.id) as any[];
+  const snapshotRules = db
+    .prepare('SELECT * FROM provisioned_rules WHERE policy_id = ? ORDER BY position')
+    .all(req.params.id) as any[];
 
   const snapshotMap = new Map(snapshotRules.map((r: any) => [r.rule_id, r]));
   const currentIds = new Set(currentRules.map((r: any) => r.id));
@@ -163,10 +185,16 @@ router.post('/:id/provision/preview', (req, res) => {
       added.push(parseRuleRow(rule));
     } else {
       // Compare serialized forms (source, destination, services are already JSON strings in DB)
-      const changed = rule.source !== prev.source || rule.destination !== prev.destination ||
-        rule.services !== prev.services || rule.action !== prev.action ||
-        rule.scope_type !== prev.scope_type || rule.enabled !== prev.enabled ||
-        rule.notes !== prev.notes || rule.logging !== prev.logging || rule.stateless !== prev.stateless;
+      const changed =
+        rule.source !== prev.source ||
+        rule.destination !== prev.destination ||
+        rule.services !== prev.services ||
+        rule.action !== prev.action ||
+        rule.scope_type !== prev.scope_type ||
+        rule.enabled !== prev.enabled ||
+        rule.notes !== prev.notes ||
+        rule.logging !== prev.logging ||
+        rule.stateless !== prev.stateless;
       if (changed) {
         modified.push({ before: parseRuleRow(prev), after: parseRuleRow(rule) });
       }
@@ -194,8 +222,12 @@ router.post('/:id/provision/commit', (req, res) => {
   const historyId = uuidv4();
 
   // Get preview diff before committing
-  const currentRules = db.prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position').all(req.params.id) as any[];
-  const snapshotRules = db.prepare('SELECT * FROM provisioned_rules WHERE policy_id = ? ORDER BY position').all(req.params.id) as any[];
+  const currentRules = db
+    .prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position')
+    .all(req.params.id) as any[];
+  const snapshotRules = db
+    .prepare('SELECT * FROM provisioned_rules WHERE policy_id = ? ORDER BY position')
+    .all(req.params.id) as any[];
   const snapshotMap = new Map(snapshotRules.map((r: any) => [r.rule_id, r]));
   const currentIds = new Set(currentRules.map((r: any) => r.id));
 
@@ -204,8 +236,11 @@ router.post('/:id/provision/commit', (req, res) => {
     const prev = snapshotMap.get(rule.id);
     if (!prev) diff.added.push(rule.id);
     else {
-      const changed = rule.source !== prev.source || rule.destination !== prev.destination ||
-        rule.services !== prev.services || rule.action !== prev.action;
+      const changed =
+        rule.source !== prev.source ||
+        rule.destination !== prev.destination ||
+        rule.services !== prev.services ||
+        rule.action !== prev.action;
       if (changed) diff.modified.push(rule.id);
     }
   }
@@ -214,10 +249,12 @@ router.post('/:id/provision/commit', (req, res) => {
   }
 
   db.transaction(() => {
-    db.prepare("UPDATE policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?").run(now, req.params.id);
-    db.prepare('INSERT INTO provision_history (id, policy_id, provisioned_by, provisioned_at, diff) VALUES (?, ?, ?, ?, ?)').run(
-      historyId, req.params.id, user.id, now, JSON.stringify(diff)
-    );
+    db.prepare(
+      "UPDATE policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?",
+    ).run(now, req.params.id);
+    db.prepare(
+      'INSERT INTO provision_history (id, policy_id, provisioned_by, provisioned_at, diff) VALUES (?, ?, ?, ?, ?)',
+    ).run(historyId, req.params.id, user.id, now, JSON.stringify(diff));
     // Snapshot: delete old, insert current
     db.prepare('DELETE FROM provisioned_rules WHERE policy_id = ?').run(req.params.id);
     const insertSnap = db.prepare(`
@@ -225,7 +262,21 @@ router.post('/:id/provision/commit', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const r of currentRules) {
-      insertSnap.run(uuidv4(), req.params.id, r.id, r.source, r.destination, r.services, r.action, r.scope_type, r.enabled, r.position, r.notes, r.logging, r.stateless);
+      insertSnap.run(
+        uuidv4(),
+        req.params.id,
+        r.id,
+        r.source,
+        r.destination,
+        r.services,
+        r.action,
+        r.scope_type,
+        r.enabled,
+        r.position,
+        r.notes,
+        r.logging,
+        r.stateless,
+      );
     }
   })();
 

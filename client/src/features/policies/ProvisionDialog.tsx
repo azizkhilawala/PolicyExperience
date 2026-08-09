@@ -72,7 +72,12 @@ function RuleSummary({ rule }: { rule: ProvisionDiffRule }) {
   );
 }
 
-export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned }: ProvisionDialogProps) {
+export function ProvisionDialog({
+  isOpen,
+  onOpenChange,
+  policyId,
+  onProvisioned,
+}: ProvisionDialogProps) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -125,9 +130,7 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
     }
   }, [policyId, onProvisioned, toast]);
 
-  const totalChanges = diff
-    ? diff.added.length + diff.modified.length + diff.removed.length
-    : 0;
+  const totalChanges = diff ? diff.added.length + diff.modified.length + diff.removed.length : 0;
 
   return (
     <Dialog isOpen={isOpen} onOpenChange={handleClose} purpose="form" width={640}>
@@ -135,12 +138,7 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
 
       <VStack gap={3} padding={4}>
         {error && (
-          <Banner
-            status="error"
-            title={error}
-            isDismissable
-            onDismiss={() => setError(null)}
-          />
+          <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />
         )}
 
         {loading && (
@@ -150,7 +148,10 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
         )}
 
         {!loading && diff && totalChanges === 0 && (
-          <Banner status="info" title="No changes to provision. The policy is already up to date." />
+          <Banner
+            status="info"
+            title="No changes to provision. The policy is already up to date."
+          />
         )}
 
         {!loading && diff && totalChanges > 0 && (
@@ -169,12 +170,20 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
                 </HStack>
                 <VStack gap={1}>
                   {diff.added.map((rule) => (
-                    <HStack key={rule.id} gap={2} vAlign="center" padding={2} style={{
-                      background: 'var(--color-surface-positive)',
-                      borderRadius: 'var(--radius-sm)',
-                    }}>
+                    <HStack
+                      key={rule.id}
+                      gap={2}
+                      vAlign="center"
+                      padding={2}
+                      style={{
+                        background: 'var(--color-surface-positive)',
+                        borderRadius: 'var(--radius-sm)',
+                      }}
+                    >
                       <ProductIcon name="add" size="sm" color="success" label="Added rule" />
-                      <Text type="supporting" style={{ minWidth: 24 }}>#{rule.position}</Text>
+                      <Text type="supporting" style={{ minWidth: 24 }}>
+                        #{rule.position}
+                      </Text>
                       <RuleSummary rule={rule} />
                     </HStack>
                   ))}
@@ -196,20 +205,39 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
                 </HStack>
                 <VStack gap={1}>
                   {diff.modified.map(({ before, after }) => (
-                    <VStack key={after.id} gap={0} padding={2} style={{
-                      background: 'var(--color-surface-warning)',
-                      borderRadius: 'var(--radius-sm)',
-                    }}>
+                    <VStack
+                      key={after.id}
+                      gap={0}
+                      padding={2}
+                      style={{
+                        background: 'var(--color-surface-warning)',
+                        borderRadius: 'var(--radius-sm)',
+                      }}
+                    >
                       <HStack gap={2} vAlign="center">
-                        <ProductIcon name="modified" size="sm" color="warning" label="Modified rule" />
-                        <Text type="supporting" style={{ minWidth: 24 }}>#{before.position}</Text>
+                        <ProductIcon
+                          name="modified"
+                          size="sm"
+                          color="warning"
+                          label="Modified rule"
+                        />
+                        <Text type="supporting" style={{ minWidth: 24 }}>
+                          #{before.position}
+                        </Text>
                         <VStack gap={0} style={{ opacity: 0.6, textDecoration: 'line-through' }}>
                           <RuleSummary rule={before} />
                         </VStack>
                       </HStack>
                       <HStack gap={2} vAlign="center">
-                        <ProductIcon name="provision" size="sm" color="success" label="Updated rule" />
-                        <Text type="supporting" style={{ minWidth: 24 }}>#{after.position}</Text>
+                        <ProductIcon
+                          name="provision"
+                          size="sm"
+                          color="success"
+                          label="Updated rule"
+                        />
+                        <Text type="supporting" style={{ minWidth: 24 }}>
+                          #{after.position}
+                        </Text>
                         <RuleSummary rule={after} />
                       </HStack>
                     </VStack>
@@ -218,9 +246,7 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
               </VStack>
             )}
 
-            {diff.modified.length > 0 && diff.removed.length > 0 && (
-              <Divider />
-            )}
+            {diff.modified.length > 0 && diff.removed.length > 0 && <Divider />}
 
             {diff.removed.length > 0 && (
               <VStack gap={2}>
@@ -232,14 +258,28 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
                 </HStack>
                 <VStack gap={1}>
                   {diff.removed.map((rule) => (
-                    <HStack key={rule.id} gap={2} vAlign="center" padding={2} style={{
-                      background: 'var(--color-surface-negative)',
-                      borderRadius: 'var(--radius-sm)',
-                      opacity: 0.8,
-                    }}>
+                    <HStack
+                      key={rule.id}
+                      gap={2}
+                      vAlign="center"
+                      padding={2}
+                      style={{
+                        background: 'var(--color-surface-negative)',
+                        borderRadius: 'var(--radius-sm)',
+                        opacity: 0.8,
+                      }}
+                    >
                       <ProductIcon name="removed" size="sm" color="error" label="Removed rule" />
-                      <Text type="supporting" style={{ minWidth: 24, textDecoration: 'line-through' }}>#{rule.position}</Text>
-                      <VStack gap={0} style={{ textDecoration: 'line-through', color: 'var(--color-negative)' }}>
+                      <Text
+                        type="supporting"
+                        style={{ minWidth: 24, textDecoration: 'line-through' }}
+                      >
+                        #{rule.position}
+                      </Text>
+                      <VStack
+                        gap={0}
+                        style={{ textDecoration: 'line-through', color: 'var(--color-negative)' }}
+                      >
                         <RuleSummary rule={rule} />
                       </VStack>
                     </HStack>
@@ -252,12 +292,7 @@ export function ProvisionDialog({ isOpen, onOpenChange, policyId, onProvisioned 
       </VStack>
 
       <HStack padding={4} hAlign="end" gap={2}>
-        <Button
-          label="Cancel"
-          variant="ghost"
-          onClick={handleClose}
-          isDisabled={committing}
-        />
+        <Button label="Cancel" variant="ghost" onClick={handleClose} isDisabled={committing} />
         <Button
           label="Provision"
           variant="primary"

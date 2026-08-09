@@ -86,22 +86,10 @@ interface ProductIconProps {
   label?: string;
 }
 
-export function ProductIcon({
-  name,
-  color = 'secondary',
-  size = 'sm',
-  label,
-}: ProductIconProps) {
+export function ProductIcon({ name, color = 'secondary', size = 'sm', label }: ProductIconProps) {
   const IconComponent = icons[name] as unknown as AstryxIconComponent;
 
-  return (
-    <Icon
-      icon={IconComponent}
-      color={color}
-      size={size}
-      label={label}
-    />
-  );
+  return <Icon icon={IconComponent} color={color} size={size} label={label} />;
 }
 
 export function ProductIllustration({

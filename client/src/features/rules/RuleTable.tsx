@@ -5,7 +5,7 @@ import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { useToast } from '@astryxdesign/core/Toast';
 
-import type { Rule, PolicyLabel, RuleEndpoint, RuleService } from '../../api/policies.js';
+import type { Rule, PolicyLabel } from '../../api/policies.js';
 import { getColumns, type RuleTableRow, type EditDraft } from './RuleTableColumns.js';
 import { AdvancedOptionsDialog } from './AdvancedOptionsDialog.js';
 
@@ -58,7 +58,7 @@ export function RuleTable({
     (field: keyof EditDraft, value: EditDraft[keyof EditDraft]) => {
       setEditDraft((prev) => (prev ? { ...prev, [field]: value } : prev));
     },
-    []
+    [],
   );
 
   const handleSaveEdit = useCallback(async () => {
@@ -77,13 +77,16 @@ export function RuleTable({
     (ruleId: string, currentEnabled: number) => {
       onUpdate(ruleId, { enabled: currentEnabled ? 0 : 1 } as Partial<Rule>);
     },
-    [onUpdate]
+    [onUpdate],
   );
 
-  const handleOpenAdvanced = useCallback((ruleId: string) => {
-    const rule = rules.find((r) => r.id === ruleId);
-    if (rule) setAdvancedRule(rule);
-  }, [rules]);
+  const handleOpenAdvanced = useCallback(
+    (ruleId: string) => {
+      const rule = rules.find((r) => r.id === ruleId);
+      if (rule) setAdvancedRule(rule);
+    },
+    [rules],
+  );
 
   const handleSaveAdvanced = useCallback(
     async (ruleId: string, data: { notes: string; logging: boolean; stateless: boolean }) => {
@@ -92,9 +95,14 @@ export function RuleTable({
         logging: data.logging ? 1 : 0,
         stateless: data.stateless ? 1 : 0,
       });
-      toast({ body: 'Advanced options saved', type: 'info', isAutoHide: true, uniqueID: 'adv-save' });
+      toast({
+        body: 'Advanced options saved',
+        type: 'info',
+        isAutoHide: true,
+        uniqueID: 'adv-save',
+      });
     },
-    [onUpdate, toast]
+    [onUpdate, toast],
   );
 
   const columns = useMemo(
@@ -128,7 +136,7 @@ export function RuleTable({
       handleOpenAdvanced,
       isLocked,
       provisionStatus,
-    ]
+    ],
   );
 
   return (
@@ -158,7 +166,9 @@ export function RuleTable({
       {advancedRule && (
         <AdvancedOptionsDialog
           isOpen={advancedRule !== null}
-          onOpenChange={(open) => { if (!open) setAdvancedRule(null); }}
+          onOpenChange={(open) => {
+            if (!open) setAdvancedRule(null);
+          }}
           rule={advancedRule}
           onSave={handleSaveAdvanced}
         />

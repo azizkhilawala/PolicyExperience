@@ -34,12 +34,18 @@ router.get('/policies/:id', (req, res) => {
   if (!policy) return res.status(404).json({ error: 'Policy not found' });
   const parsed = parseV2Policy(policy) as any;
   if (parsed.policy_type === 'guardrail' && parsed.template_id) {
-    const template = db.prepare('SELECT name FROM v2_templates WHERE id = ?').get(parsed.template_id) as { name: string } | undefined;
+    const template = db
+      .prepare('SELECT name FROM v2_templates WHERE id = ?')
+      .get(parsed.template_id) as { name: string } | undefined;
     parsed.template_name = template?.name ?? null;
-    const templateRules = db.prepare('SELECT * FROM v2_template_rules WHERE template_id = ? ORDER BY direction, position').all(parsed.template_id);
+    const templateRules = db
+      .prepare('SELECT * FROM v2_template_rules WHERE template_id = ? ORDER BY direction, position')
+      .all(parsed.template_id);
     parsed.rules = templateRules.map(parseV2Rule);
   } else {
-    const rules = db.prepare('SELECT * FROM v2_rules WHERE policy_id = ? ORDER BY direction, position').all(req.params.id);
+    const rules = db
+      .prepare('SELECT * FROM v2_rules WHERE policy_id = ? ORDER BY direction, position')
+      .all(req.params.id);
     parsed.rules = rules.map(parseV2Rule);
   }
   res.json(parsed);
@@ -48,15 +54,38 @@ router.get('/policies/:id', (req, res) => {
 // POST /policies — create v2 policy
 router.post('/policies', (req, res) => {
   const db = getDb();
-  const { name, description, scope_type, scope_cluster_ids, scope_namespace_ids, scope_labels, policy_type, template_id } = req.body;
-  if (!name || !scope_type) return res.status(400).json({ error: 'name and scope_type are required' });
+  const {
+    name,
+    description,
+    scope_type,
+    scope_cluster_ids,
+    scope_namespace_ids,
+    scope_labels,
+    policy_type,
+    template_id,
+  } = req.body;
+  if (!name || !scope_type)
+    return res.status(400).json({ error: 'name and scope_type are required' });
   const user = (req as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
   db.prepare(
     `INSERT INTO v2_policies (id, name, description, scope_type, scope_cluster_ids, scope_namespace_ids, scope_labels, enabled, provision_status, policy_type, template_id, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'draft', ?, ?, ?, ?, ?)`
-  ).run(id, name, description ?? '', scope_type, JSON.stringify(scope_cluster_ids ?? []), JSON.stringify(scope_namespace_ids ?? []), JSON.stringify(scope_labels ?? []), policy_type ?? 'standard', template_id ?? null, user.id, now, now);
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'draft', ?, ?, ?, ?, ?)`,
+  ).run(
+    id,
+    name,
+    description ?? '',
+    scope_type,
+    JSON.stringify(scope_cluster_ids ?? []),
+    JSON.stringify(scope_namespace_ids ?? []),
+    JSON.stringify(scope_labels ?? []),
+    policy_type ?? 'standard',
+    template_id ?? null,
+    user.id,
+    now,
+    now,
+  );
   const created = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(id);
   res.status(201).json(parseV2Policy(created));
 });
@@ -74,8 +103,14 @@ router.patch('/policies/:id', (req, res) => {
       description = COALESCE(?, description),
       enabled = COALESCE(?, enabled),
       updated_at = ?
-     WHERE id = ?`
-  ).run(name ?? null, description ?? null, enabled !== undefined ? (enabled ? 1 : 0) : null, now, req.params.id);
+     WHERE id = ?`,
+  ).run(
+    name ?? null,
+    description ?? null,
+    enabled !== undefined ? (enabled ? 1 : 0) : null,
+    now,
+    req.params.id,
+  );
   const updated = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
   res.json(parseV2Policy(updated));
 });
@@ -96,8 +131,12 @@ router.post('/policies/:id/provision', (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
   const now = new Date().toISOString();
   db.transaction(() => {
-    db.prepare("UPDATE v2_policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?").run(now, req.params.id);
-    db.prepare("UPDATE v2_rules SET provision_status = 'provisioned' WHERE policy_id = ? AND provision_status = 'draft'").run(req.params.id);
+    db.prepare(
+      "UPDATE v2_policies SET provision_status = 'provisioned', updated_at = ? WHERE id = ?",
+    ).run(now, req.params.id);
+    db.prepare(
+      "UPDATE v2_rules SET provision_status = 'provisioned' WHERE policy_id = ? AND provision_status = 'draft'",
+    ).run(req.params.id);
   })();
   const updated = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
   res.json(parseV2Policy(updated));
@@ -108,7 +147,8 @@ router.post('/policies/:id/convert-to-template', (req, res) => {
   const db = getDb();
   const policy = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id) as any;
   if (!policy) return res.status(404).json({ error: 'Policy not found' });
-  if (policy.policy_type !== 'standard') return res.status(400).json({ error: 'Only standard policies can be converted' });
+  if (policy.policy_type !== 'standard')
+    return res.status(400).json({ error: 'Only standard policies can be converted' });
   const { template_name, template_description, convert_policy } = req.body;
   if (!template_name) return res.status(400).json({ error: 'template_name is required' });
   const user = (req as unknown as AuthenticatedRequest).user;
@@ -117,18 +157,30 @@ router.post('/policies/:id/convert-to-template', (req, res) => {
   db.transaction(() => {
     db.prepare(
       `INSERT INTO v2_templates (id, name, description, source, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, 'user_created', ?, ?, ?)`
+       VALUES (?, ?, ?, 'user_created', ?, ?, ?)`,
     ).run(templateId, template_name, template_description ?? '', user.id, now, now);
     const rules = db.prepare('SELECT * FROM v2_rules WHERE policy_id = ?').all(req.params.id);
     const insertTplRule = db.prepare(
       `INSERT INTO v2_template_rules (id, template_id, direction, entity, services, action, enabled, position, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     for (const r of rules as any[]) {
-      insertTplRule.run(uuidv4(), templateId, r.direction, r.entity, r.services, r.action, r.enabled, r.position, r.notes);
+      insertTplRule.run(
+        uuidv4(),
+        templateId,
+        r.direction,
+        r.entity,
+        r.services,
+        r.action,
+        r.enabled,
+        r.position,
+        r.notes,
+      );
     }
     if (convert_policy) {
-      db.prepare("UPDATE v2_policies SET policy_type = 'guardrail', template_id = ?, updated_at = ? WHERE id = ?").run(templateId, now, req.params.id);
+      db.prepare(
+        "UPDATE v2_policies SET policy_type = 'guardrail', template_id = ?, updated_at = ? WHERE id = ?",
+      ).run(templateId, now, req.params.id);
       db.prepare('DELETE FROM v2_rules WHERE policy_id = ?').run(req.params.id);
     }
   })();
@@ -157,14 +209,25 @@ router.post('/policies/:id/rules', (req, res) => {
   const policyId = req.params.id;
   const policy = db.prepare('SELECT id FROM v2_policies WHERE id = ?').get(policyId);
   if (!policy) return res.status(404).json({ error: 'Policy not found' });
-  if (!direction || !['ingress', 'egress'].includes(direction)) return res.status(400).json({ error: 'direction must be ingress or egress' });
-  const maxRow = db.prepare('SELECT MAX(position) as maxPos FROM v2_rules WHERE policy_id = ? AND direction = ?').get(policyId, direction) as any;
+  if (!direction || !['ingress', 'egress'].includes(direction))
+    return res.status(400).json({ error: 'direction must be ingress or egress' });
+  const maxRow = db
+    .prepare('SELECT MAX(position) as maxPos FROM v2_rules WHERE policy_id = ? AND direction = ?')
+    .get(policyId, direction) as any;
   const position = (maxRow?.maxPos ?? -1) + 1;
   const id = uuidv4();
   db.prepare(
     `INSERT INTO v2_rules (id, policy_id, direction, entity, services, action, enabled, provision_status, position, notes)
-     VALUES (?, ?, ?, ?, ?, ?, 1, 'draft', ?, '')`
-  ).run(id, policyId, direction, JSON.stringify(entity ?? []), JSON.stringify(services ?? []), action ?? 'allow', position);
+     VALUES (?, ?, ?, ?, ?, ?, 1, 'draft', ?, '')`,
+  ).run(
+    id,
+    policyId,
+    direction,
+    JSON.stringify(entity ?? []),
+    JSON.stringify(services ?? []),
+    action ?? 'allow',
+    position,
+  );
   const created = db.prepare('SELECT * FROM v2_rules WHERE id = ?').get(id);
   res.status(201).json(parseV2Rule(created));
 });
@@ -182,14 +245,14 @@ router.patch('/rules/:id', (req, res) => {
       action = COALESCE(?, action),
       enabled = COALESCE(?, enabled),
       notes = COALESCE(?, notes)
-     WHERE id = ?`
+     WHERE id = ?`,
   ).run(
     entity !== undefined ? JSON.stringify(entity) : null,
     services !== undefined ? JSON.stringify(services) : null,
     action ?? null,
     enabled !== undefined ? (enabled ? 1 : 0) : null,
     notes ?? null,
-    req.params.id
+    req.params.id,
   );
   const updated = db.prepare('SELECT * FROM v2_rules WHERE id = ?').get(req.params.id);
   res.json(parseV2Rule(updated));

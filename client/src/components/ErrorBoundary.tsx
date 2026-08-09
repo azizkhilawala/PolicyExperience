@@ -38,12 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
           title="Something went wrong"
           description={this.state.error?.message ?? 'An unexpected error occurred.'}
           endContent={
-            <Button
-              label="Reload page"
-              variant="secondary"
-              size="sm"
-              onClick={this.handleReload}
-            />
+            <Button label="Reload page" variant="secondary" size="sm" onClick={this.handleReload} />
           }
         />
       );

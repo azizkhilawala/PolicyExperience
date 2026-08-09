@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getFilterColor, fieldLabel, isNegatedOperator, getDisplayValue } from './endpointDisplay.js';
+import {
+  getFilterColor,
+  fieldLabel,
+  isNegatedOperator,
+  getDisplayValue,
+} from './endpointDisplay.js';
 
 describe('getFilterColor', () => {
   it('returns purple for label_group', () => {

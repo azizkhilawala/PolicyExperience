@@ -22,9 +22,12 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
         setIsRefetching(false);
         hasFetched.current = true;
       });
+    // eslint-disable-next-line react-hooks/use-memo, react-hooks/exhaustive-deps
   }, deps);
 
-  useEffect(() => { refetch(); }, [refetch]);
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   return { data, loading, isRefetching, error, refetch };
 }

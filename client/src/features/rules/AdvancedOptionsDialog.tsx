@@ -11,7 +11,10 @@ interface AdvancedOptionsDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   rule: Rule;
-  onSave: (ruleId: string, data: { notes: string; logging: boolean; stateless: boolean }) => Promise<void>;
+  onSave: (
+    ruleId: string,
+    data: { notes: string; logging: boolean; stateless: boolean },
+  ) => Promise<void>;
 }
 
 export function AdvancedOptionsDialog({
@@ -65,12 +68,7 @@ export function AdvancedOptionsDialog({
             onClick={() => onOpenChange(false)}
             isDisabled={saving}
           />
-          <Button
-            label="Save"
-            variant="primary"
-            onClick={handleSave}
-            isDisabled={saving}
-          />
+          <Button label="Save" variant="primary" onClick={handleSave} isDisabled={saving} />
         </HStack>
       </VStack>
     </Dialog>

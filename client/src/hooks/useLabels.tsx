@@ -7,14 +7,12 @@ export function LabelsProvider({ children }: { children: ReactNode }) {
   const [labels, setLabels] = useState<Label[]>([]);
 
   useEffect(() => {
-    fetchLabels().then(setLabels).catch(() => {});
+    fetchLabels()
+      .then(setLabels)
+      .catch(() => {});
   }, []);
 
-  return (
-    <LabelsContext value={labels}>
-      {children}
-    </LabelsContext>
-  );
+  return <LabelsContext value={labels}>{children}</LabelsContext>;
 }
 
 export function useLabels(): Label[] {

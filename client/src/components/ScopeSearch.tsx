@@ -54,14 +54,14 @@ export function ScopeSearch({ labels, onChange, isDisabled }: ScopeSearchProps) 
         operator: 'is',
         value: { type: 'enum' as const, value: l.value },
       })),
-    [labels]
+    [labels],
   );
 
   const handleChange = useCallback(
     (
       newFilters: ReadonlyArray<PowerSearchFilter>,
       _changeType: PowerSearchChangeType,
-      _index: number
+      _index: number,
     ) => {
       const newLabels: PolicyLabel[] = newFilters
         .filter((f) => f.value.type === 'enum')
@@ -71,7 +71,7 @@ export function ScopeSearch({ labels, onChange, isDisabled }: ScopeSearchProps) 
         }));
       onChange(newLabels);
     },
-    [onChange]
+    [onChange],
   );
 
   return (

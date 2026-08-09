@@ -27,9 +27,7 @@ describe('useAuth', () => {
 
   it('sets error when auth API fails', async () => {
     server.use(
-      http.get('/api/auth/me', () =>
-        HttpResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-      ),
+      http.get('/api/auth/me', () => HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })),
     );
 
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -51,11 +49,7 @@ describe('useAuth', () => {
   it('switchUser updates the current user', async () => {
     const switchedUser = { ...mockUser, id: 'user-2', name: 'Author User' };
 
-    server.use(
-      http.post('/api/auth/switch-user', () =>
-        HttpResponse.json(switchedUser),
-      ),
-    );
+    server.use(http.post('/api/auth/switch-user', () => HttpResponse.json(switchedUser)));
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 

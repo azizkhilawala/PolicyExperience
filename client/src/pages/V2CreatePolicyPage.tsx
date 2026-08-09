@@ -111,9 +111,9 @@ export default function V2CreatePolicyPage() {
       const allLabels = new Map<string, string>();
       for (const nsId of selectedNamespaceIds) {
         try {
-          const workloads = await apiFetch<Array<{ labels: Array<{ key: string; value: string }> }>>(
-            `/api/workloads?namespace_id=${nsId}`
-          );
+          const workloads = await apiFetch<
+            Array<{ labels: Array<{ key: string; value: string }> }>
+          >(`/api/workloads?namespace_id=${nsId}`);
           for (const wl of workloads) {
             for (const lbl of wl.labels ?? []) {
               const kv = `${lbl.key}=${lbl.value}`;
@@ -124,9 +124,7 @@ export default function V2CreatePolicyPage() {
           // ignore per-namespace errors
         }
       }
-      setLabelOptions(
-        Array.from(allLabels.values()).map((kv) => ({ value: kv, label: kv }))
-      );
+      setLabelOptions(Array.from(allLabels.values()).map((kv) => ({ value: kv, label: kv })));
     };
 
     fetchLabels();
@@ -207,12 +205,7 @@ export default function V2CreatePolicyPage() {
       <Heading level={1}>Create Policy</Heading>
 
       {error ? (
-        <Banner
-          status="error"
-          title={error}
-          isDismissable
-          onDismiss={() => setError(null)}
-        />
+        <Banner status="error" title={error} isDismissable onDismiss={() => setError(null)} />
       ) : null}
 
       {/* Zone 1: Policy Info */}
@@ -233,7 +226,11 @@ export default function V2CreatePolicyPage() {
           isRequired
           placeholder="Enter policy name"
           width="100%"
-          status={error && !name.trim() ? { type: 'error', message: 'Policy name is required' } : undefined}
+          status={
+            error && !name.trim()
+              ? { type: 'error', message: 'Policy name is required' }
+              : undefined
+          }
         />
         <TextArea
           label="Description"
@@ -347,11 +344,13 @@ export default function V2CreatePolicyPage() {
                 <V2RuleTable
                   policyId=""
                   direction="ingress"
-                  rules={templatePreviewRules.filter((r) => r.direction === 'ingress').map((r) => ({
-                    ...r,
-                    policy_id: '',
-                    provision_status: 'draft' as const,
-                  }))}
+                  rules={templatePreviewRules
+                    .filter((r) => r.direction === 'ingress')
+                    .map((r) => ({
+                      ...r,
+                      policy_id: '',
+                      provision_status: 'draft' as const,
+                    }))}
                   onRulesChanged={() => {}}
                   readOnly
                 />
@@ -367,11 +366,13 @@ export default function V2CreatePolicyPage() {
                 <V2RuleTable
                   policyId=""
                   direction="egress"
-                  rules={templatePreviewRules.filter((r) => r.direction === 'egress').map((r) => ({
-                    ...r,
-                    policy_id: '',
-                    provision_status: 'draft' as const,
-                  }))}
+                  rules={templatePreviewRules
+                    .filter((r) => r.direction === 'egress')
+                    .map((r) => ({
+                      ...r,
+                      policy_id: '',
+                      provision_status: 'draft' as const,
+                    }))}
                   onRulesChanged={() => {}}
                   readOnly
                 />

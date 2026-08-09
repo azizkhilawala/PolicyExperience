@@ -1,5 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { TenantSettings, fetchSettings, updateSetting as apiUpdateSetting } from '../api/settings.js';
+import {
+  TenantSettings,
+  fetchSettings,
+  updateSetting as apiUpdateSetting,
+} from '../api/settings.js';
 
 interface SettingsContextValue {
   settings: TenantSettings;

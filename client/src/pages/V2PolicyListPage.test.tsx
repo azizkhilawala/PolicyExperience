@@ -20,9 +20,7 @@ describe('V2PolicyListPage', () => {
   });
 
   it('shows a policy row when API returns data', async () => {
-    server.use(
-      http.get('/api/v2/policies', () => HttpResponse.json([mockV2Policy])),
-    );
+    server.use(http.get('/api/v2/policies', () => HttpResponse.json([mockV2Policy])));
 
     renderWithProviders(<V2PolicyListPage />);
 
@@ -32,9 +30,7 @@ describe('V2PolicyListPage', () => {
   });
 
   it('shows empty state when no policies exist', async () => {
-    server.use(
-      http.get('/api/v2/policies', () => HttpResponse.json([])),
-    );
+    server.use(http.get('/api/v2/policies', () => HttpResponse.json([])));
 
     renderWithProviders(<V2PolicyListPage />);
 
@@ -58,9 +54,7 @@ describe('V2PolicyListPage', () => {
   it('shows template data on Templates tab', async () => {
     const user = userEvent.setup();
 
-    server.use(
-      http.get('/api/v2/templates', () => HttpResponse.json([mockV2Template])),
-    );
+    server.use(http.get('/api/v2/templates', () => HttpResponse.json([mockV2Template])));
 
     renderWithProviders(<V2PolicyListPage />);
 
@@ -74,9 +68,7 @@ describe('V2PolicyListPage', () => {
   it('shows empty templates state when no templates exist', async () => {
     const user = userEvent.setup();
 
-    server.use(
-      http.get('/api/v2/templates', () => HttpResponse.json([])),
-    );
+    server.use(http.get('/api/v2/templates', () => HttpResponse.json([])));
 
     renderWithProviders(<V2PolicyListPage />);
 

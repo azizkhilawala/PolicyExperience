@@ -16,17 +16,24 @@ function parseRule(row: any) {
 
 // Mark parent policy as 'pending' if it was 'provisioned'
 function markPolicyPendingIfProvisioned(db: any, policyId: string) {
-  const policy = db.prepare('SELECT provision_status FROM policies WHERE id = ?').get(policyId) as any;
+  const policy = db
+    .prepare('SELECT provision_status FROM policies WHERE id = ?')
+    .get(policyId) as any;
   if (policy && policy.provision_status === 'provisioned') {
     const now = new Date().toISOString();
-    db.prepare("UPDATE policies SET provision_status = 'pending', updated_at = ? WHERE id = ?").run(now, policyId);
+    db.prepare("UPDATE policies SET provision_status = 'pending', updated_at = ? WHERE id = ?").run(
+      now,
+      policyId,
+    );
   }
 }
 
 // GET /:policyId/rules
 router.get('/:policyId/rules', (req, res) => {
   const db = getDb();
-  const rows = db.prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position').all(req.params.policyId);
+  const rows = db
+    .prepare('SELECT * FROM rules WHERE policy_id = ? ORDER BY position')
+    .all(req.params.policyId);
   res.json(rows.map(parseRule));
 });
 
@@ -36,13 +43,15 @@ router.post('/:policyId/rules', (req, res) => {
   const { source, destination, services, action, scope_type } = req.body;
   const { policyId } = req.params;
 
-  const maxRow = db.prepare('SELECT MAX(position) as maxPos FROM rules WHERE policy_id = ?').get(policyId) as any;
+  const maxRow = db
+    .prepare('SELECT MAX(position) as maxPos FROM rules WHERE policy_id = ?')
+    .get(policyId) as any;
   const position = (maxRow?.maxPos ?? -1) + 1;
 
   const id = uuidv4();
   db.prepare(
     `INSERT INTO rules (id, policy_id, source, destination, services, action, scope_type, enabled, position, notes, logging, stateless)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, '', 0, 0)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, '', 0, 0)`,
   ).run(
     id,
     policyId,
@@ -51,7 +60,7 @@ router.post('/:policyId/rules', (req, res) => {
     JSON.stringify(services ?? []),
     action ?? 'allow',
     scope_type ?? 'intra',
-    position
+    position,
   );
 
   markPolicyPendingIfProvisioned(db, policyId);
@@ -66,7 +75,18 @@ router.patch('/:id', (req, res) => {
   const existing = db.prepare('SELECT * FROM rules WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Rule not found' });
 
-  const { source, destination, services, action, scope_type, enabled, position, notes, logging, stateless } = req.body;
+  const {
+    source,
+    destination,
+    services,
+    action,
+    scope_type,
+    enabled,
+    position,
+    notes,
+    logging,
+    stateless,
+  } = req.body;
 
   db.prepare(
     `UPDATE rules SET
@@ -80,7 +100,7 @@ router.patch('/:id', (req, res) => {
       notes = COALESCE(?, notes),
       logging = COALESCE(?, logging),
       stateless = COALESCE(?, stateless)
-     WHERE id = ?`
+     WHERE id = ?`,
   ).run(
     source !== undefined ? JSON.stringify(source) : null,
     destination !== undefined ? JSON.stringify(destination) : null,
@@ -92,7 +112,7 @@ router.patch('/:id', (req, res) => {
     notes ?? null,
     logging !== undefined ? (logging ? 1 : 0) : null,
     stateless !== undefined ? (stateless ? 1 : 0) : null,
-    req.params.id
+    req.params.id,
   );
 
   markPolicyPendingIfProvisioned(db, existing.policy_id);
@@ -118,13 +138,15 @@ router.post('/:id/duplicate', (req, res) => {
   const existing = db.prepare('SELECT * FROM rules WHERE id = ?').get(req.params.id) as any;
   if (!existing) return res.status(404).json({ error: 'Rule not found' });
 
-  const maxRow = db.prepare('SELECT MAX(position) as maxPos FROM rules WHERE policy_id = ?').get(existing.policy_id) as any;
+  const maxRow = db
+    .prepare('SELECT MAX(position) as maxPos FROM rules WHERE policy_id = ?')
+    .get(existing.policy_id) as any;
   const position = (maxRow?.maxPos ?? -1) + 1;
   const newId = uuidv4();
 
   db.prepare(
     `INSERT INTO rules (id, policy_id, source, destination, services, action, scope_type, enabled, position, notes, logging, stateless)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     newId,
     existing.policy_id,
@@ -137,7 +159,7 @@ router.post('/:id/duplicate', (req, res) => {
     position,
     existing.notes,
     existing.logging,
-    existing.stateless
+    existing.stateless,
   );
 
   const created = db.prepare('SELECT * FROM rules WHERE id = ?').get(newId);

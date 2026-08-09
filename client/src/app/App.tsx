@@ -57,13 +57,7 @@ function AppLayout() {
               hasChevron={false}
               button={{
                 label: user?.name ?? 'User menu',
-                icon: (
-                  <Avatar
-                    name={user?.name ?? 'U'}
-                    size="sm"
-                    tooltip={false}
-                  />
-                ),
+                icon: <Avatar name={user?.name ?? 'U'} size="sm" tooltip={false} />,
                 isIconOnly: true,
                 variant: 'ghost',
               }}

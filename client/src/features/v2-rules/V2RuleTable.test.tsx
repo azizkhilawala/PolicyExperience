@@ -11,9 +11,7 @@ const mockV2Rule: V2Rule = {
   id: 'v2rule-1',
   policy_id: 'v2pol-1',
   direction: 'ingress',
-  entity: [
-    { field: 'label_app', operator: 'is', value: { type: 'enum', value: 'web' } },
-  ],
+  entity: [{ field: 'label_app', operator: 'is', value: { type: 'enum', value: 'web' } }],
   services: [{ type: 'port', protocol: 'TCP', port: '443' }],
   action: 'allow',
   enabled: 1,
@@ -47,9 +45,7 @@ describe('V2RuleTable', () => {
   });
 
   it('shows egress empty state for egress direction', () => {
-    renderWithProviders(
-      <V2RuleTable {...defaultProps} direction="egress" rules={[]} />,
-    );
+    renderWithProviders(<V2RuleTable {...defaultProps} direction="egress" rules={[]} />);
     expect(screen.getByText('No egress rules')).toBeInTheDocument();
   });
 
@@ -59,24 +55,18 @@ describe('V2RuleTable', () => {
   });
 
   it('hides Add Rule and action filter in readOnly mode', () => {
-    renderWithProviders(
-      <V2RuleTable {...defaultProps} readOnly />,
-    );
+    renderWithProviders(<V2RuleTable {...defaultProps} readOnly />);
     expect(screen.queryByText('Add Rule')).not.toBeInTheDocument();
   });
 
   it('shows Add Rule in empty state when not readOnly', () => {
-    renderWithProviders(
-      <V2RuleTable {...defaultProps} rules={[]} />,
-    );
+    renderWithProviders(<V2RuleTable {...defaultProps} rules={[]} />);
     const addButtons = screen.getAllByText('Add Rule');
     expect(addButtons.length).toBeGreaterThanOrEqual(1);
   });
 
   it('hides Add Rule in empty state when readOnly', () => {
-    renderWithProviders(
-      <V2RuleTable {...defaultProps} rules={[]} readOnly />,
-    );
+    renderWithProviders(<V2RuleTable {...defaultProps} rules={[]} readOnly />);
     expect(screen.queryByText('Add Rule')).not.toBeInTheDocument();
   });
 
@@ -91,11 +81,7 @@ describe('V2RuleTable', () => {
       services: [],
     };
 
-    server.use(
-      http.post('/api/v2/policies/v2pol-1/rules', () =>
-        HttpResponse.json(newRule),
-      ),
-    );
+    server.use(http.post('/api/v2/policies/v2pol-1/rules', () => HttpResponse.json(newRule)));
 
     renderWithProviders(
       <V2RuleTable {...defaultProps} rules={[]} onRulesChanged={onRulesChanged} />,
@@ -111,9 +97,7 @@ describe('V2RuleTable', () => {
 
   it('shows enabled/disabled status for rules', () => {
     const disabledRule = { ...mockV2Rule, id: 'v2rule-2', enabled: 0, position: 1 };
-    renderWithProviders(
-      <V2RuleTable {...defaultProps} rules={[mockV2Rule, disabledRule]} />,
-    );
+    renderWithProviders(<V2RuleTable {...defaultProps} rules={[mockV2Rule, disabledRule]} />);
     expect(screen.getByText('Enabled')).toBeInTheDocument();
     expect(screen.getByText('Disabled')).toBeInTheDocument();
   });

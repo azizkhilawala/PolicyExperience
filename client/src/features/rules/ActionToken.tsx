@@ -5,7 +5,18 @@ interface ActionTokenProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-type TokenColor = 'default' | 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'cyan' | 'blue' | 'purple' | 'pink' | 'gray';
+type TokenColor =
+  | 'default'
+  | 'red'
+  | 'orange'
+  | 'yellow'
+  | 'green'
+  | 'teal'
+  | 'cyan'
+  | 'blue'
+  | 'purple'
+  | 'pink'
+  | 'gray';
 
 interface ActionConfig {
   label: string;
@@ -19,7 +30,12 @@ const ACTION_CONFIG: Record<string, ActionConfig> = {
   override_deny: {
     label: 'Override Deny',
     color: 'red',
-    wrapperStyle: { background: 'var(--color-red-900)', color: 'var(--color-white)', borderRadius: 'var(--radius-sm)', display: 'inline-flex' },
+    wrapperStyle: {
+      background: 'var(--color-red-900)',
+      color: 'var(--color-white)',
+      borderRadius: 'var(--radius-sm)',
+      display: 'inline-flex',
+    },
   },
 };
 
@@ -28,19 +44,9 @@ export function ActionToken({ action, size = 'sm' }: ActionTokenProps) {
   if (config.wrapperStyle) {
     return (
       <span style={config.wrapperStyle}>
-        <Token
-          label={config.label}
-          color={config.color}
-          size={size}
-        />
+        <Token label={config.label} color={config.color} size={size} />
       </span>
     );
   }
-  return (
-    <Token
-      label={config.label}
-      color={config.color}
-      size={size}
-    />
-  );
+  return <Token label={config.label} color={config.color} size={size} />;
 }

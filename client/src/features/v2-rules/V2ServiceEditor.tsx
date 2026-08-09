@@ -38,11 +38,15 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
   const [port, setPort] = useState<string>('');
 
   useEffect(() => {
-    fetchVirtualServices().then(setVirtualServices).catch(() => {});
+    fetchVirtualServices()
+      .then(setVirtualServices)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    fetchServices().then(setServices).catch(() => {});
+    fetchServices()
+      .then(setServices)
+      .catch(() => {});
   }, []);
 
   const selectorOptions = [
@@ -88,7 +92,7 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
         onChange([...value, { type: 'named', name: vs.name }]);
       }
     },
-    [value, onChange, virtualServices, services]
+    [value, onChange, virtualServices, services],
   );
 
   const handleAddCustom = useCallback(() => {
@@ -108,7 +112,7 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
     (index: number) => {
       onChange(value.filter((_, i) => i !== index));
     },
-    [value, onChange]
+    [value, onChange],
   );
 
   return (
@@ -165,7 +169,9 @@ export function V2ServiceEditor({ value, onChange, isDisabled }: V2ServiceEditor
         onClose={() => setServiceDialogOpen(false)}
         onSaved={(newService) => {
           onChange([...value, { type: 'named', name: newService.name }]);
-          fetchServices().then(setServices).catch(() => {});
+          fetchServices()
+            .then(setServices)
+            .catch(() => {});
         }}
       />
     </VStack>
