@@ -1,4 +1,5 @@
 import { Token } from '@astryxdesign/core/Token';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 
 interface ActionTokenProps {
   action: 'allow' | 'deny' | 'override_deny';
@@ -24,6 +25,12 @@ interface ActionConfig {
   wrapperStyle?: React.CSSProperties;
 }
 
+const ACTION_TOOLTIP: Record<string, string> = {
+  allow: 'Allow\nPermits matching traffic',
+  deny: 'Deny\nBlocks matching traffic',
+  override_deny: 'Override Deny\nBlocks traffic, overrides allow rules',
+};
+
 const ACTION_CONFIG: Record<string, ActionConfig> = {
   allow: { label: 'Allow', color: 'green' },
   deny: { label: 'Deny', color: 'red' },
@@ -41,12 +48,19 @@ const ACTION_CONFIG: Record<string, ActionConfig> = {
 
 export function ActionToken({ action, size = 'sm' }: ActionTokenProps) {
   const config = ACTION_CONFIG[action] ?? ACTION_CONFIG.allow;
+  const tooltip = ACTION_TOOLTIP[action] ?? action;
   if (config.wrapperStyle) {
     return (
-      <span style={config.wrapperStyle}>
-        <Token label={config.label} color={config.color} size={size} />
-      </span>
+      <Tooltip content={tooltip}>
+        <span style={config.wrapperStyle}>
+          <Token label={config.label} color={config.color} size={size} />
+        </span>
+      </Tooltip>
     );
   }
-  return <Token label={config.label} color={config.color} size={size} />;
+  return (
+    <Tooltip content={tooltip}>
+      <Token label={config.label} color={config.color} size={size} />
+    </Tooltip>
+  );
 }

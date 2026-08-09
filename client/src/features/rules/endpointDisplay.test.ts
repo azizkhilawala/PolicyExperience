@@ -4,6 +4,7 @@ import {
   fieldLabel,
   isNegatedOperator,
   getDisplayValue,
+  getFilterTooltip,
 } from './endpointDisplay.js';
 
 describe('getFilterColor', () => {
@@ -105,5 +106,35 @@ describe('getDisplayValue', () => {
       value: null,
     });
     expect(result).toBe('App =');
+  });
+});
+
+describe('getFilterTooltip', () => {
+  it('returns tooltip for a standard filter', () => {
+    const result = getFilterTooltip({
+      field: 'label_app',
+      operator: 'is',
+      value: { type: 'enum', value: 'web' },
+    });
+    expect(result).toBe('App\n= App=web');
+  });
+
+  it('appends exclusion note for negated filters', () => {
+    const result = getFilterTooltip({
+      field: 'workload',
+      operator: 'is_not',
+      value: { type: 'entity_list', value: [{ id: 'w1', label: 'Server A' }] },
+    });
+    expect(result).toContain('Exclusion filter');
+    expect(result).toContain('Workload');
+  });
+
+  it('does not append exclusion note for non-negated filters', () => {
+    const result = getFilterTooltip({
+      field: 'ip_list',
+      operator: 'is',
+      value: { type: 'enum', value: '10.0.0.0/8' },
+    });
+    expect(result).not.toContain('Exclusion filter');
   });
 });

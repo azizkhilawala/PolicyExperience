@@ -9,6 +9,7 @@ import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Text } from '@astryxdesign/core/Text';
 import { Token } from '@astryxdesign/core/Token';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
@@ -33,36 +34,41 @@ type V2TemplateRow = V2Template & Record<string, unknown>;
 function ScopeTokens({ policy }: { policy: V2Policy }) {
   if (policy.scope_type === 'all_workloads') {
     return (
-      <Token
-        label="All Workloads"
-        color="blue"
-        size="sm"
-        icon={<ProductIcon name="allWorkloads" color="inherit" />}
-      />
+      <Tooltip content="Scope: All workloads\nApplies to every workload">
+        <Token
+          label="All Workloads"
+          color="blue"
+          size="sm"
+          icon={<ProductIcon name="allWorkloads" color="inherit" />}
+        />
+      </Tooltip>
     );
   }
 
   if (policy.scope_type === 'labels') {
     const labelTokens = policy.scope_labels.map((l) => (
-      <Token
-        key={`${l.key}=${l.value}`}
-        label={`${l.key}=${l.value}`}
-        color="purple"
-        size="sm"
-        icon={<ProductIcon name="label" color="inherit" />}
-      />
+      <Tooltip key={`${l.key}=${l.value}`} content={`Label scope\n${l.key} = ${l.value}`}>
+        <Token
+          label={`${l.key}=${l.value}`}
+          color="purple"
+          size="sm"
+          icon={<ProductIcon name="label" color="inherit" />}
+        />
+      </Tooltip>
     ));
     return (
       <HStack gap={1} vAlign="center" wrap="wrap">
         {labelTokens.length > 0 ? (
           labelTokens
         ) : (
-          <Token
-            label="Labels"
-            color="purple"
-            size="sm"
-            icon={<ProductIcon name="label" color="inherit" />}
-          />
+          <Tooltip content="Label-scoped policy\nNo labels assigned yet">
+            <Token
+              label="Labels"
+              color="purple"
+              size="sm"
+              icon={<ProductIcon name="label" color="inherit" />}
+            />
+          </Tooltip>
         )}
       </HStack>
     );
@@ -72,45 +78,50 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   const tokens: ReactNode[] = [];
   for (const id of policy.scope_cluster_ids ?? []) {
     tokens.push(
-      <Token
-        key={`cluster-${id}`}
-        label={`Cluster: ${id}`}
-        color="teal"
-        size="sm"
-        icon={<ProductIcon name="cluster" color="inherit" />}
-      />,
+      <Tooltip key={`cluster-${id}`} content={`Kubernetes cluster\nCluster ID: ${id}`}>
+        <Token
+          label={`Cluster: ${id}`}
+          color="teal"
+          size="sm"
+          icon={<ProductIcon name="cluster" color="inherit" />}
+        />
+      </Tooltip>,
     );
   }
   for (const id of policy.scope_namespace_ids ?? []) {
     tokens.push(
-      <Token
-        key={`ns-${id}`}
-        label={`NS: ${id}`}
-        color="cyan"
-        size="sm"
-        icon={<ProductIcon name="cluster" color="inherit" />}
-      />,
+      <Tooltip key={`ns-${id}`} content={`Kubernetes namespace\nNamespace ID: ${id}`}>
+        <Token
+          label={`NS: ${id}`}
+          color="cyan"
+          size="sm"
+          icon={<ProductIcon name="cluster" color="inherit" />}
+        />
+      </Tooltip>,
     );
   }
   for (const l of policy.scope_labels) {
     tokens.push(
-      <Token
-        key={`${l.key}=${l.value}`}
-        label={`${l.key}=${l.value}`}
-        color="purple"
-        size="sm"
-        icon={<ProductIcon name="label" color="inherit" />}
-      />,
+      <Tooltip key={`${l.key}=${l.value}`} content={`K8s label\n${l.key} = ${l.value}`}>
+        <Token
+          label={`${l.key}=${l.value}`}
+          color="purple"
+          size="sm"
+          icon={<ProductIcon name="label" color="inherit" />}
+        />
+      </Tooltip>,
     );
   }
   if (tokens.length === 0) {
     return (
-      <Token
-        label="Kubernetes"
-        color="teal"
-        size="sm"
-        icon={<ProductIcon name="cluster" color="inherit" />}
-      />
+      <Tooltip content="Kubernetes scope\nNo clusters or namespaces selected">
+        <Token
+          label="Kubernetes"
+          color="teal"
+          size="sm"
+          icon={<ProductIcon name="cluster" color="inherit" />}
+        />
+      </Tooltip>
     );
   }
   return (
@@ -190,12 +201,14 @@ export default function V2PolicyListPage() {
             />
             <Text weight="medium">{row.name as string}</Text>
             {(row as V2Policy).policy_type === 'guardrail' && (
-              <Token
-                label="Guardrail"
-                color="orange"
-                size="sm"
-                icon={<ProductIcon name="template" color="inherit" />}
-              />
+              <Tooltip content="Guardrail policy\nRules managed by a shared template">
+                <Token
+                  label="Guardrail"
+                  color="orange"
+                  size="sm"
+                  icon={<ProductIcon name="template" color="inherit" />}
+                />
+              </Tooltip>
             )}
           </HStack>
           {row.description ? (
@@ -301,19 +314,29 @@ export default function V2PolicyListPage() {
           onClick={() => navigate(`/policy-v2/templates/${row.id}`)}
           style={{ cursor: 'pointer' }}
         >
-          <Token
-            label={
-              (row.source as string) === 'illumio_suggested' ? 'Illumio Suggested' : 'User Created'
+          <Tooltip
+            content={
+              (row.source as string) === 'illumio_suggested'
+                ? 'Illumio Suggested\nPre-built template from Illumio'
+                : 'User Created\nCustom template created by your team'
             }
-            color={(row.source as string) === 'illumio_suggested' ? 'orange' : 'blue'}
-            size="sm"
-            icon={
-              <ProductIcon
-                name={(row.source as string) === 'illumio_suggested' ? 'template' : 'policy'}
-                color="inherit"
-              />
-            }
-          />
+          >
+            <Token
+              label={
+                (row.source as string) === 'illumio_suggested'
+                  ? 'Illumio Suggested'
+                  : 'User Created'
+              }
+              color={(row.source as string) === 'illumio_suggested' ? 'orange' : 'blue'}
+              size="sm"
+              icon={
+                <ProductIcon
+                  name={(row.source as string) === 'illumio_suggested' ? 'template' : 'policy'}
+                  color="inherit"
+                />
+              }
+            />
+          </Tooltip>
         </HStack>
       ),
     },

@@ -3,6 +3,7 @@ import { Table } from '@astryxdesign/core/Table';
 import { proportional, pixel } from '@astryxdesign/core/Table';
 import type { TableColumn } from '@astryxdesign/core/Table';
 import { Token } from '@astryxdesign/core/Token';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { Text } from '@astryxdesign/core/Text';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
@@ -19,7 +20,12 @@ import type { V2Rule, V2RuleService } from '../../api/v2-policies.js';
 import { createV2Rule, updateV2Rule, deleteV2Rule } from '../../api/v2-policies.js';
 import type { EndpointFilter } from '../../api/policies.js';
 import { ProductIcon, ProductIllustration } from '../../components/ProductVisuals.js';
-import { getFilterColor, getDisplayValue, isNegatedOperator } from '../rules/endpointDisplay.js';
+import {
+  getFilterColor,
+  getDisplayValue,
+  isNegatedOperator,
+  getFilterTooltip,
+} from '../rules/endpointDisplay.js';
 import { ActionToken } from '../rules/ActionToken.js';
 import { V2EntityEditor } from './V2EntityEditor.js';
 import { V2ServiceEditor } from './V2ServiceEditor.js';
@@ -61,12 +67,14 @@ const actionOptions: SelectorOptionData[] = [
 function renderEntityTokens(filters: EndpointFilter[]) {
   if (!filters || filters.length === 0) {
     return (
-      <HStack gap={0.5} vAlign="center">
-        <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
-        <Text type="supporting" color="secondary">
-          All workloads
-        </Text>
-      </HStack>
+      <Tooltip content="Matches all workloads in the policy scope">
+        <HStack gap={0.5} vAlign="center">
+          <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
+          <Text type="supporting" color="secondary">
+            All workloads
+          </Text>
+        </HStack>
+      </Tooltip>
     );
   }
   return (
@@ -74,13 +82,14 @@ function renderEntityTokens(filters: EndpointFilter[]) {
       {filters.map((f, i) => {
         const negated = isNegatedOperator(f.operator);
         return (
-          <Token
-            key={i}
-            label={getDisplayValue(f)}
-            color={negated ? 'red' : getFilterColor(f.field)}
-            size="sm"
-            icon={<ProductIcon name={negated ? 'removed' : 'label'} color="inherit" />}
-          />
+          <Tooltip key={i} content={getFilterTooltip(f)}>
+            <Token
+              label={getDisplayValue(f)}
+              color={negated ? 'red' : getFilterColor(f.field)}
+              size="sm"
+              icon={<ProductIcon name={negated ? 'removed' : 'label'} color="inherit" />}
+            />
+          </Tooltip>
         );
       })}
     </HStack>
@@ -90,26 +99,33 @@ function renderEntityTokens(filters: EndpointFilter[]) {
 function renderServiceTokens(services: V2RuleService[]) {
   if (!services || services.length === 0) {
     return (
-      <HStack gap={0.5} vAlign="center">
-        <ProductIcon name="service" size="sm" color="tertiary" />
-        <Text type="supporting" color="secondary">
-          All Services
-        </Text>
-      </HStack>
+      <Tooltip content="Matches all services and ports">
+        <HStack gap={0.5} vAlign="center">
+          <ProductIcon name="service" size="sm" color="tertiary" />
+          <Text type="supporting" color="secondary">
+            All Services
+          </Text>
+        </HStack>
+      </Tooltip>
     );
   }
   return (
     <HStack gap={0.5} wrap="wrap">
       {services.map((s, i) => {
         const label = s.type === 'named' ? s.name : `${s.protocol}/${s.port}`;
+        const tip =
+          s.type === 'named'
+            ? `Named service\n${s.name}`
+            : `Service\nProtocol: ${s.protocol}\nPort: ${s.port}`;
         return (
-          <Token
-            key={i}
-            label={label}
-            color="default"
-            size="sm"
-            icon={<ProductIcon name="service" color="inherit" />}
-          />
+          <Tooltip key={i} content={tip}>
+            <Token
+              label={label}
+              color="default"
+              size="sm"
+              icon={<ProductIcon name="service" color="inherit" />}
+            />
+          </Tooltip>
         );
       })}
     </HStack>
@@ -371,17 +387,25 @@ export function V2RuleTable({
           const status = row.provision_status as string | undefined;
           if (!status) return null;
           return (
-            <Token
-              label={status === 'provisioned' ? 'Provisioned' : 'Draft'}
-              color={status === 'provisioned' ? 'green' : 'gray'}
-              size="sm"
-              icon={
-                <ProductIcon
-                  name={status === 'provisioned' ? 'provision' : 'diff'}
-                  color="inherit"
-                />
+            <Tooltip
+              content={
+                status === 'provisioned'
+                  ? 'Provisioned\nRule is live in the enforced policy'
+                  : 'Draft\nRule has not been provisioned yet'
               }
-            />
+            >
+              <Token
+                label={status === 'provisioned' ? 'Provisioned' : 'Draft'}
+                color={status === 'provisioned' ? 'green' : 'gray'}
+                size="sm"
+                icon={
+                  <ProductIcon
+                    name={status === 'provisioned' ? 'provision' : 'diff'}
+                    color="inherit"
+                  />
+                }
+              />
+            </Tooltip>
           );
         },
       },

@@ -1,4 +1,5 @@
 import { Token } from '@astryxdesign/core/Token';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { HStack } from '@astryxdesign/core/HStack';
 import type { PolicyLabel } from '../api/policies.js';
 
@@ -10,6 +11,13 @@ const colorMap: Record<string, 'blue' | 'green' | 'purple' | 'orange' | 'teal' |
     loc: 'orange',
   };
 
+const dimensionLabel: Record<string, string> = {
+  app: 'Application label',
+  env: 'Environment label',
+  role: 'Role label',
+  loc: 'Location label',
+};
+
 export function LabelTokens({
   labels,
   size = 'sm',
@@ -18,17 +26,25 @@ export function LabelTokens({
   size?: 'sm' | 'md' | 'lg';
 }) {
   if (!labels || labels.length === 0) {
-    return <Token label="All workloads" color="gray" size={size} />;
+    return (
+      <Tooltip content="Matches every workload in this policy scope">
+        <Token label="All workloads" color="gray" size={size} />
+      </Tooltip>
+    );
   }
   return (
     <HStack gap={0.5} wrap="wrap">
       {labels.map((l, i) => (
-        <Token
+        <Tooltip
           key={i}
-          label={`${l.key}=${l.value}`}
-          color={colorMap[l.key] || 'default'}
-          size={size}
-        />
+          content={`${dimensionLabel[l.key] ?? 'Label'}\n${l.key} = ${l.value}\nPolicy scope`}
+        >
+          <Token
+            label={`${l.key}=${l.value}`}
+            color={colorMap[l.key] || 'default'}
+            size={size}
+          />
+        </Tooltip>
       ))}
     </HStack>
   );

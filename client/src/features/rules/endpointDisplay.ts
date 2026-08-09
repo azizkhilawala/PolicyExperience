@@ -106,3 +106,10 @@ export function getDisplayValue(filter: EndpointFilter): string {
   }
   return String(val.value ?? '');
 }
+
+export function getFilterTooltip(filter: EndpointFilter): string {
+  const label = fieldLabel(filter.field);
+  const op = OPERATOR_LABELS[filter.operator] ?? filter.operator;
+  const negated = isNegatedOperator(filter.operator);
+  return `${label}\n${op} ${getDisplayValue(filter)}${negated ? '\nExclusion filter' : ''}`;
+}

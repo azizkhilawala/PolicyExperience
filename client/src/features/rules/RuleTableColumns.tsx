@@ -4,6 +4,7 @@ import type { TableColumn } from '@astryxdesign/core/Table';
 import { proportional, pixel } from '@astryxdesign/core/Table';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Token } from '@astryxdesign/core/Token';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { Text } from '@astryxdesign/core/Text';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
@@ -18,7 +19,12 @@ import { ActionToken } from './ActionToken.js';
 import { GhostTokens } from './GhostTokens.js';
 import { EndpointEditor } from './EndpointEditor.js';
 import { ServiceEditor } from './ServiceEditor.js';
-import { getFilterColor, getDisplayValue, isNegatedOperator } from './endpointDisplay.js';
+import {
+  getFilterColor,
+  getDisplayValue,
+  isNegatedOperator,
+  getFilterTooltip,
+} from './endpointDisplay.js';
 
 export type RuleTableRow = Rule & Record<string, unknown>;
 
@@ -51,12 +57,14 @@ export function getGhostLabels(
 function renderEndpointTokens(endpoint: RuleEndpoint): React.ReactNode {
   if (!endpoint.filters || endpoint.filters.length === 0) {
     return (
-      <HStack gap={0.5} vAlign="center">
-        <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
-        <Text type="supporting" color="secondary">
-          All workloads
-        </Text>
-      </HStack>
+      <Tooltip content="Matches all workloads in the policy scope">
+        <HStack gap={0.5} vAlign="center">
+          <ProductIcon name="allWorkloads" size="sm" color="tertiary" />
+          <Text type="supporting" color="secondary">
+            All workloads
+          </Text>
+        </HStack>
+      </Tooltip>
     );
   }
 
@@ -65,13 +73,14 @@ function renderEndpointTokens(endpoint: RuleEndpoint): React.ReactNode {
       {endpoint.filters.map((f, i) => {
         const negated = isNegatedOperator(f.operator);
         return (
-          <Token
-            key={i}
-            label={getDisplayValue(f)}
-            color={negated ? 'red' : getFilterColor(f.field)}
-            size="sm"
-            icon={<ProductIcon name={negated ? 'removed' : 'label'} color="inherit" />}
-          />
+          <Tooltip key={i} content={getFilterTooltip(f)}>
+            <Token
+              label={getDisplayValue(f)}
+              color={negated ? 'red' : getFilterColor(f.field)}
+              size="sm"
+              icon={<ProductIcon name={negated ? 'removed' : 'label'} color="inherit" />}
+            />
+          </Tooltip>
         );
       })}
     </HStack>
@@ -188,12 +197,20 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
         }
         return dimIfDisabled(
           row,
-          <Token
-            label={row.scope_type === 'intra' ? 'Intra' : 'Extra'}
-            color={row.scope_type === 'intra' ? 'blue' : 'purple'}
-            size="sm"
-            icon={<ProductIcon name="scope" color="inherit" />}
-          />,
+          <Tooltip
+            content={
+              row.scope_type === 'intra'
+                ? 'Intra scope\nTraffic within this policy scope'
+                : 'Extra scope\nTraffic from outside the policy scope'
+            }
+          >
+            <Token
+              label={row.scope_type === 'intra' ? 'Intra' : 'Extra'}
+              color={row.scope_type === 'intra' ? 'blue' : 'purple'}
+              size="sm"
+              icon={<ProductIcon name="scope" color="inherit" />}
+            />
+          </Tooltip>,
         );
       },
     });
@@ -284,13 +301,14 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           row,
           <HStack gap={0.5} wrap="wrap">
             {row.services.map((s, i) => (
-              <Token
-                key={i}
-                label={`${s.protocol} ${s.port}`}
-                color="default"
-                size="sm"
-                icon={<ProductIcon name="service" color="inherit" />}
-              />
+              <Tooltip key={i} content={`Service\nProtocol: ${s.protocol}\nPort: ${s.port}`}>
+                <Token
+                  label={`${s.protocol} ${s.port}`}
+                  color="default"
+                  size="sm"
+                  icon={<ProductIcon name="service" color="inherit" />}
+                />
+              </Tooltip>
             ))}
           </HStack>,
         );
@@ -325,30 +343,36 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
         let token: React.ReactNode;
         if (provisionStatus === 'provisioned') {
           token = (
-            <Token
-              label="Active"
-              color="green"
-              size="sm"
-              icon={<ProductIcon name="provision" color="inherit" />}
-            />
+            <Tooltip content="Active\nRule is live in the enforced policy">
+              <Token
+                label="Active"
+                color="green"
+                size="sm"
+                icon={<ProductIcon name="provision" color="inherit" />}
+              />
+            </Tooltip>
           );
         } else if (provisionStatus === 'pending') {
           token = (
-            <Token
-              label="Modified"
-              color="orange"
-              size="sm"
-              icon={<ProductIcon name="modified" color="inherit" />}
-            />
+            <Tooltip content="Modified\nRule has unpushed changes since last provision">
+              <Token
+                label="Modified"
+                color="orange"
+                size="sm"
+                icon={<ProductIcon name="modified" color="inherit" />}
+              />
+            </Tooltip>
           );
         } else {
           token = (
-            <Token
-              label="Draft"
-              color="gray"
-              size="sm"
-              icon={<ProductIcon name="diff" color="inherit" />}
-            />
+            <Tooltip content="Draft\nRule has not been provisioned yet">
+              <Token
+                label="Draft"
+                color="gray"
+                size="sm"
+                icon={<ProductIcon name="diff" color="inherit" />}
+              />
+            </Tooltip>
           );
         }
         return dimIfDisabled(row, token);

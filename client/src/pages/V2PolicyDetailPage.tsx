@@ -13,6 +13,7 @@ import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Divider } from '@astryxdesign/core/Divider';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import { Token } from '@astryxdesign/core/Token';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
 
 import { useApi } from '../hooks/useApi.js';
 import {
@@ -194,13 +195,14 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Clusters">
               <HStack gap={0.5} wrap="wrap">
                 {clusterNames.map((name) => (
-                  <Token
-                    key={name}
-                    label={name}
-                    color="teal"
-                    size="sm"
-                    icon={<ProductIcon name="cluster" color="inherit" />}
-                  />
+                  <Tooltip key={name} content={`Kubernetes cluster\n${name}`}>
+                    <Token
+                      label={name}
+                      color="teal"
+                      size="sm"
+                      icon={<ProductIcon name="cluster" color="inherit" />}
+                    />
+                  </Tooltip>
                 ))}
               </HStack>
             </MetadataListItem>
@@ -209,13 +211,14 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Namespaces">
               <HStack gap={0.5} wrap="wrap">
                 {namespaceNames.map((name) => (
-                  <Token
-                    key={name}
-                    label={name}
-                    color="cyan"
-                    size="sm"
-                    icon={<ProductIcon name="cluster" color="inherit" />}
-                  />
+                  <Tooltip key={name} content={`Kubernetes namespace\n${name}`}>
+                    <Token
+                      label={name}
+                      color="cyan"
+                      size="sm"
+                      icon={<ProductIcon name="cluster" color="inherit" />}
+                    />
+                  </Tooltip>
                 ))}
               </HStack>
             </MetadataListItem>
@@ -224,13 +227,14 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="K8s Labels">
               <HStack gap={0.5} wrap="wrap">
                 {policy.scope_labels.map((lbl, i) => (
-                  <Token
-                    key={i}
-                    label={`${lbl.key}=${lbl.value}`}
-                    color="blue"
-                    size="sm"
-                    icon={<ProductIcon name="label" color="inherit" />}
-                  />
+                  <Tooltip key={i} content={`K8s label\n${lbl.key} = ${lbl.value}`}>
+                    <Token
+                      label={`${lbl.key}=${lbl.value}`}
+                      color="blue"
+                      size="sm"
+                      icon={<ProductIcon name="label" color="inherit" />}
+                    />
+                  </Tooltip>
                 ))}
               </HStack>
             </MetadataListItem>
@@ -247,13 +251,14 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Labels">
               <HStack gap={0.5} wrap="wrap">
                 {policy.scope_labels.map((lbl, i) => (
-                  <Token
-                    key={i}
-                    label={`${lbl.key}=${lbl.value}`}
-                    color="blue"
-                    size="sm"
-                    icon={<ProductIcon name="label" color="inherit" />}
-                  />
+                  <Tooltip key={i} content={`Label scope\n${lbl.key} = ${lbl.value}`}>
+                    <Token
+                      label={`${lbl.key}=${lbl.value}`}
+                      color="blue"
+                      size="sm"
+                      icon={<ProductIcon name="label" color="inherit" />}
+                    />
+                  </Tooltip>
                 ))}
               </HStack>
             </MetadataListItem>
