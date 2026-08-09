@@ -9,6 +9,9 @@ const colorMap: Record<string, 'blue' | 'green' | 'purple' | 'orange' | 'teal' |
     env: 'green',
     role: 'purple',
     loc: 'orange',
+    type: 'teal',
+    dept: 'cyan',
+    tier: 'gray',
   };
 
 const dimensionLabel: Record<string, string> = {
@@ -16,6 +19,9 @@ const dimensionLabel: Record<string, string> = {
   env: 'Environment label',
   role: 'Role label',
   loc: 'Location label',
+  type: 'Type label',
+  dept: 'Department label',
+  tier: 'Tier label',
 };
 
 export function LabelTokens({

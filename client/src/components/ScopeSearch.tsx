@@ -27,7 +27,12 @@ export function ScopeSearch({ labels, onChange, isDisabled }: ScopeSearchProps) 
       labelsByKey[l.key].push({ value: l.value, label: l.value });
     }
 
-    const fieldKeys = ['app', 'env', 'loc', 'role'];
+    const primaryKeys = ['app', 'env', 'loc', 'role'];
+    const extraKeys = Object.keys(labelsByKey)
+      .filter((k) => !primaryKeys.includes(k))
+      .sort();
+    const fieldKeys = [...primaryKeys, ...extraKeys];
+
     return {
       name: 'ScopeSearch',
       fields: fieldKeys

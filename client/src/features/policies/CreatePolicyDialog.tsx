@@ -16,8 +16,7 @@ import { useSettings } from '../../hooks/useSettings.js';
 
 function deriveType(scope: PolicyLabel[]): 'organizational' | 'application' {
   if (scope.length === 0) return 'organizational';
-  const hasAppOrRole = scope.some((l) => l.key === 'app' || l.key === 'role');
-  return hasAppOrRole ? 'application' : 'organizational';
+  return 'application';
 }
 
 interface CreatePolicyDialogProps {

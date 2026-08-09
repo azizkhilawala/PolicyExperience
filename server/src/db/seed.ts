@@ -109,12 +109,26 @@ const V2_TPL_MONITORING = 'v2-tpl-monitoring-ingress-0002';
 const V2_TPL_PROD_DENY = 'v2-tpl-prod-deny-external-0003';
 const V2_POLICY_DNS_GUARDRAIL = 'v2-policy-dns-guardrail-0004';
 
+// Labels — additional categories
+const LBL_TYPE_BACKEND = 'lbl-type-backend-0018';
+const LBL_TYPE_FRONTEND = 'lbl-type-frontend-0019';
+const LBL_TYPE_MIDDLEWARE = 'lbl-type-middleware-0020';
+const LBL_DEPT_ENGINEERING = 'lbl-dept-engineering-0021';
+const LBL_DEPT_PLATFORM = 'lbl-dept-platform-0022';
+const LBL_DEPT_SECURITY = 'lbl-dept-security-0023';
+const LBL_TIER_DATA = 'lbl-tier-data-0024';
+const LBL_TIER_COMPUTE = 'lbl-tier-compute-0025';
+const LBL_TIER_EDGE = 'lbl-tier-edge-0026';
+
 // Policies
 const POLICY_HRM = 'policy-hrm-prod-access-0001';
 const POLICY_ERP = 'policy-erp-db-access-0002';
 const POLICY_K8S = 'policy-k8s-frontend-0003';
 const POLICY_DENY = 'policy-global-deny-0004';
 const POLICY_PAYMENT = 'policy-payment-gw-0005';
+const POLICY_K8S_MONITORING = 'policy-k8s-monitoring-0006';
+const POLICY_K8S_INGRESS = 'policy-k8s-ingress-gw-0007';
+const POLICY_CLOUD_HYBRID = 'policy-cloud-hybrid-0008';
 
 // ─── Main seed function ───────────────────────────────────────────────────────
 
@@ -177,6 +191,18 @@ const seed = db.transaction(() => {
   insertLabel.run(LBL_ROLE_CACHE, 'role', 'cache', 'illumio');
   insertLabel.run(LBL_ROLE_WORKER, 'role', 'worker', 'illumio');
   insertLabel.run(LBL_ROLE_LB, 'role', 'load-balancer', 'illumio');
+  // type labels
+  insertLabel.run(LBL_TYPE_BACKEND, 'type', 'backend', 'illumio');
+  insertLabel.run(LBL_TYPE_FRONTEND, 'type', 'frontend', 'illumio');
+  insertLabel.run(LBL_TYPE_MIDDLEWARE, 'type', 'middleware', 'illumio');
+  // dept labels
+  insertLabel.run(LBL_DEPT_ENGINEERING, 'dept', 'engineering', 'illumio');
+  insertLabel.run(LBL_DEPT_PLATFORM, 'dept', 'platform', 'illumio');
+  insertLabel.run(LBL_DEPT_SECURITY, 'dept', 'security', 'illumio');
+  // tier labels
+  insertLabel.run(LBL_TIER_DATA, 'tier', 'data', 'illumio');
+  insertLabel.run(LBL_TIER_COMPUTE, 'tier', 'compute', 'illumio');
+  insertLabel.run(LBL_TIER_EDGE, 'tier', 'edge', 'illumio');
 
   // ── Label Groups ───────────────────────────────────────────────────────────
   const insertLabelGroup = db.prepare(
@@ -831,6 +857,69 @@ const seed = db.transaction(() => {
     now,
   );
 
+  // Policy 6: K8s Monitoring Stack
+  insertPolicy.run(
+    POLICY_K8S_MONITORING,
+    'K8s Monitoring Stack',
+    'Controls observability traffic between Prometheus, Grafana, and monitored namespaces across clusters',
+    'application',
+    JSON.stringify([
+      { key: 'app', value: 'Analytics' },
+      { key: 'env', value: 'prod' },
+      { key: 'dept', value: 'platform' },
+    ]),
+    1,
+    'draft',
+    0,
+    null,
+    null,
+    USER_MORGAN,
+    now,
+    now,
+  );
+
+  // Policy 7: K8s Ingress Gateway
+  insertPolicy.run(
+    POLICY_K8S_INGRESS,
+    'K8s Ingress Gateway',
+    'Manages north-south traffic through the Kubernetes ingress controller and API gateway pods',
+    'application',
+    JSON.stringify([
+      { key: 'app', value: 'Analytics' },
+      { key: 'role', value: 'load-balancer' },
+      { key: 'tier', value: 'edge' },
+    ]),
+    1,
+    'provisioned',
+    0,
+    null,
+    null,
+    USER_ALEX,
+    now,
+    now,
+  );
+
+  // Policy 8: Cloud Hybrid Access
+  insertPolicy.run(
+    POLICY_CLOUD_HYBRID,
+    'Cloud Hybrid Access',
+    'Governs cross-cloud and on-prem to K8s communication for the payment processing pipeline',
+    'application',
+    JSON.stringify([
+      { key: 'app', value: 'PaymentGateway' },
+      { key: 'env', value: 'prod' },
+      { key: 'type', value: 'backend' },
+    ]),
+    1,
+    'pending',
+    0,
+    null,
+    null,
+    USER_MORGAN,
+    now,
+    now,
+  );
+
   // ── Rules ──────────────────────────────────────────────────────────────────
   const insertRule = db.prepare(`
     INSERT INTO rules
@@ -1118,6 +1207,262 @@ const seed = db.transaction(() => {
     0,
   );
 
+  // Policy 6 rules (K8s Monitoring Stack) — 3 rules
+  // Prometheus scraping monitored pods
+  insertRule.run(
+    uuid(),
+    POLICY_K8S_MONITORING,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'monitoring' } },
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'prometheus' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'web-frontend' } },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '9090' }]),
+    'allow',
+    'intra',
+    1,
+    0,
+    'Prometheus scrape targets in web-frontend',
+    0,
+    0,
+  );
+  // Grafana to Prometheus
+  insertRule.run(
+    uuid(),
+    POLICY_K8S_MONITORING,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'grafana' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'prometheus' } },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '9090' }]),
+    'allow',
+    'intra',
+    1,
+    1,
+    'Grafana dashboard reads from Prometheus',
+    1,
+    0,
+  );
+  // Deny external access to monitoring namespace
+  insertRule.run(
+    uuid(),
+    POLICY_K8S_MONITORING,
+    JSON.stringify({ filters: [] }),
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'monitoring' } },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '9090' }]),
+    'deny',
+    'extra',
+    1,
+    2,
+    'Block external scrape access',
+    0,
+    0,
+  );
+
+  // Policy 7 rules (K8s Ingress Gateway) — 3 rules
+  // External traffic to ingress controller
+  insertRule.run(
+    uuid(),
+    POLICY_K8S_INGRESS,
+    JSON.stringify({
+      filters: [
+        {
+          field: 'ip_list',
+          operator: 'is',
+          value: {
+            type: 'entity_list',
+            value: [{ id: IPL_CDN, label: 'Public CDN (203.0.113.0/24)' }],
+          },
+        },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'nginx-ingress' } },
+      ],
+    }),
+    JSON.stringify([
+      { protocol: 'TCP', port: '443' },
+      { protocol: 'TCP', port: '80' },
+    ]),
+    'allow',
+    'extra',
+    1,
+    0,
+    '',
+    0,
+    0,
+  );
+  // Ingress controller to backend services
+  insertRule.run(
+    uuid(),
+    POLICY_K8S_INGRESS,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'nginx-ingress' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        {
+          field: 'k8s_namespace',
+          operator: 'is',
+          value: { type: 'enum', value: 'backend-services' },
+        },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '8080' }]),
+    'allow',
+    'intra',
+    1,
+    1,
+    'Ingress routes to backend pods',
+    0,
+    0,
+  );
+  // Deny direct access bypassing ingress
+  insertRule.run(
+    uuid(),
+    POLICY_K8S_INGRESS,
+    JSON.stringify({
+      filters: [
+        {
+          field: 'k8s_pod_app',
+          operator: 'is_not',
+          value: { type: 'enum', value: 'nginx-ingress' },
+        },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        {
+          field: 'k8s_namespace',
+          operator: 'is',
+          value: { type: 'enum', value: 'backend-services' },
+        },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '8080' }]),
+    'deny',
+    'extra',
+    1,
+    2,
+    'Block direct backend access, must go through ingress',
+    0,
+    0,
+  );
+
+  // Policy 8 rules (Cloud Hybrid Access) — 3 rules
+  // AWS VPC to K8s payment namespace
+  insertRule.run(
+    uuid(),
+    POLICY_CLOUD_HYBRID,
+    JSON.stringify({
+      filters: [
+        {
+          field: 'cloud_aws_account',
+          operator: 'is',
+          value: { type: 'enum', value: 'aws-prod-123456' },
+        },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_cluster', operator: 'is', value: { type: 'enum', value: 'us-east-prod' } },
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '443' }]),
+    'allow',
+    'extra',
+    1,
+    0,
+    'AWS prod account to K8s payments',
+    0,
+    0,
+  );
+  // K8s to on-prem payment processor via VPN
+  insertRule.run(
+    uuid(),
+    POLICY_CLOUD_HYBRID,
+    JSON.stringify({
+      filters: [
+        { field: 'k8s_namespace', operator: 'is', value: { type: 'enum', value: 'payments' } },
+        { field: 'k8s_pod_app', operator: 'is', value: { type: 'enum', value: 'checkout' } },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        {
+          field: 'ip_list',
+          operator: 'is',
+          value: {
+            type: 'entity_list',
+            value: [{ id: IPL_VPN, label: 'VPN Gateway (172.16.0.0/12)' }],
+          },
+        },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '8443' }]),
+    'allow',
+    'intra',
+    1,
+    1,
+    'Payment checkout to on-prem via VPN',
+    1,
+    0,
+  );
+  // Azure to K8s backend services
+  insertRule.run(
+    uuid(),
+    POLICY_CLOUD_HYBRID,
+    JSON.stringify({
+      filters: [
+        {
+          field: 'cloud_azure_subscription',
+          operator: 'is',
+          value: { type: 'enum', value: 'azure-prod-sub-001' },
+        },
+      ],
+    }),
+    JSON.stringify({
+      filters: [
+        {
+          field: 'k8s_namespace',
+          operator: 'is',
+          value: { type: 'enum', value: 'backend-services' },
+        },
+      ],
+    }),
+    JSON.stringify([{ protocol: 'TCP', port: '443' }]),
+    'allow',
+    'extra',
+    1,
+    2,
+    'Azure subscription to K8s backend',
+    0,
+    0,
+  );
+
   // ── Provisioned Rules snapshot for HRM (provisioned policy) ───────────────
   const hrmRules = db.prepare('SELECT * FROM rules WHERE policy_id = ?').all(POLICY_HRM);
   const insertProvisionedRule = db.prepare(`
@@ -1125,6 +1470,26 @@ const seed = db.transaction(() => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   for (const r of hrmRules as any[]) {
+    insertProvisionedRule.run(
+      uuid(),
+      r.policy_id,
+      r.id,
+      r.source,
+      r.destination,
+      r.services,
+      r.action,
+      r.scope_type,
+      r.enabled,
+      r.position,
+      r.notes,
+      r.logging,
+      r.stateless,
+    );
+  }
+
+  // ── Provisioned Rules snapshot for K8s Ingress Gateway (provisioned policy)
+  const ingressRules = db.prepare('SELECT * FROM rules WHERE policy_id = ?').all(POLICY_K8S_INGRESS);
+  for (const r of ingressRules as any[]) {
     insertProvisionedRule.run(
       uuid(),
       r.policy_id,

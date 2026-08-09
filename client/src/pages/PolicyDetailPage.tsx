@@ -175,6 +175,10 @@ export default function PolicyDetailPage() {
         </HStack>
       </HStack>
 
+      {policy.description && (
+        <Text color="secondary">{policy.description}</Text>
+      )}
+
       <MetadataList columns="multi">
         <MetadataListItem label="Scope">
           <LabelTokens labels={policy.scope} />
