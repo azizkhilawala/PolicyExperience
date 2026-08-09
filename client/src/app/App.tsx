@@ -87,6 +87,12 @@ function AppLayout() {
             icon={<Icon icon="viewColumns" />}
           />
           <SideNavItem
+            label="Audit Log"
+            href="/audit-log"
+            isSelected={location.pathname === '/audit-log'}
+            icon={<Icon icon="clock" />}
+          />
+          <SideNavItem
             label="Settings"
             href="/settings"
             isSelected={location.pathname === '/settings'}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Table, proportional, pixel } from '@astryxdesign/core/Table';
@@ -13,6 +13,8 @@ import { Spinner } from '@astryxdesign/core/Spinner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Banner } from '@astryxdesign/core/Banner';
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { TextInput } from '@astryxdesign/core/TextInput';
 
 import { useApi } from '../hooks/useApi.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -39,15 +41,35 @@ export default function PolicyListPage() {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    name: string;
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const allPolicies = data ?? [];
+  const allPolicies = data?.data ?? [];
+  const query = searchQuery.toLowerCase();
 
-  const filteredPolicies: PolicyTableRow[] = allPolicies
-    .filter((p) => {
-      if (activeTab === 'all') return true;
-      return p.type === activeTab;
-    })
-    .map((p) => p as PolicyTableRow);
+  const filteredPolicies: PolicyTableRow[] = useMemo(
+    () =>
+      allPolicies
+        .filter((p) => {
+          if (activeTab !== 'all' && p.type !== activeTab) return false;
+          if (query) {
+            return (
+              p.name.toLowerCase().includes(query) ||
+              p.description?.toLowerCase().includes(query) ||
+              p.scope?.some(
+                (s) => s.key.toLowerCase().includes(query) || s.value.toLowerCase().includes(query),
+              )
+            );
+          }
+          return true;
+        })
+        .map((p) => p as PolicyTableRow),
+    [allPolicies, activeTab, query],
+  );
 
   const columns = [
     {
@@ -120,14 +142,19 @@ export default function PolicyListPage() {
             { type: 'divider' as const },
             {
               label: 'Delete',
-              onClick: async () => {
-                try {
-                  setActionError(null);
-                  await deletePolicy(row.id);
-                  refetch();
-                } catch (e) {
-                  setActionError(e instanceof Error ? e.message : 'Action failed');
-                }
+              onClick: () => {
+                setDeleteConfirm({
+                  name: row.name,
+                  onConfirm: async () => {
+                    try {
+                      setActionError(null);
+                      await deletePolicy(row.id);
+                      refetch();
+                    } catch (e) {
+                      setActionError(e instanceof Error ? e.message : 'Action failed');
+                    }
+                  },
+                });
               },
             },
           ]}
@@ -157,6 +184,17 @@ export default function PolicyListPage() {
         <Tab value="organizational" label="Organizational" />
         <Tab value="application" label="Application" />
       </TabList>
+
+      <TextInput
+        label="Search policies"
+        isLabelHidden
+        placeholder="Search by name, description, or scope…"
+        value={searchQuery}
+        onChange={setSearchQuery}
+        hasClear
+        size="sm"
+        width="100%"
+      />
 
       {actionError ? (
         <Banner status="error" title={actionError} onDismiss={() => setActionError(null)} />
@@ -196,6 +234,24 @@ export default function PolicyListPage() {
         onCreated={(policy) => {
           setDialogOpen(false);
           navigate(`/policies/${policy.id}`);
+        }}
+      />
+
+      <AlertDialog
+        isOpen={!!deleteConfirm}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        title={`Delete "${deleteConfirm?.name ?? ''}"?`}
+        description="This policy and all its rules will be permanently deleted. This action cannot be undone."
+        actionLabel="Delete policy"
+        isActionLoading={deleteLoading}
+        onAction={async () => {
+          if (!deleteConfirm) return;
+          setDeleteLoading(true);
+          await deleteConfirm.onConfirm();
+          setDeleteLoading(false);
+          setDeleteConfirm(null);
         }}
       />
     </VStack>

@@ -5,6 +5,29 @@ import { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
+function logAudit(
+  db: ReturnType<typeof getDb>,
+  entityType: string,
+  entityId: string,
+  entityName: string,
+  action: string,
+  userId: string,
+  details: Record<string, unknown> = {},
+) {
+  db.prepare(
+    'INSERT INTO audit_log (id, entity_type, entity_id, entity_name, action, performed_by, performed_at, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(
+    uuidv4(),
+    entityType,
+    entityId,
+    entityName,
+    action,
+    userId,
+    new Date().toISOString(),
+    JSON.stringify(details),
+  );
+}
+
 function parseV2Policy(row: any) {
   if (!row) return null;
   return {
@@ -20,11 +43,33 @@ function parseV2Rule(row: any) {
   return { ...row, entity: JSON.parse(row.entity), services: JSON.parse(row.services) };
 }
 
-// GET /policies — list all v2 policies
-router.get('/policies', (_req, res) => {
+// GET /policies — list all v2 policies (supports ?page=&limit= for pagination)
+router.get('/policies', (req, res) => {
   const db = getDb();
-  const rows = db.prepare('SELECT * FROM v2_policies ORDER BY name').all();
-  res.json(rows.map(parseV2Policy));
+  let where = 'WHERE 1=1';
+  const params: string[] = [];
+  if (req.query.search) {
+    where += ' AND (name LIKE ? OR description LIKE ?)';
+    const term = `%${req.query.search as string}%`;
+    params.push(term, term);
+  }
+
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+
+  const countRow = db
+    .prepare(`SELECT COUNT(*) as total FROM v2_policies ${where}`)
+    .get(...params) as { total: number };
+  const sql = `SELECT * FROM v2_policies ${where} ORDER BY name LIMIT ? OFFSET ?`;
+  const rows = db.prepare(sql).all(...params, limit, (page - 1) * limit);
+
+  res.json({
+    data: rows.map(parseV2Policy),
+    total: countRow.total,
+    page,
+    limit,
+    totalPages: Math.ceil(countRow.total / limit),
+  });
 });
 
 // GET /policies/:id — get single v2 policy with rules
@@ -86,6 +131,7 @@ router.post('/policies', (req, res) => {
     now,
     now,
   );
+  logAudit(db, 'v2_policy', id, name, 'created', user.id);
   const created = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(id);
   res.status(201).json(parseV2Policy(created));
 });
@@ -111,6 +157,10 @@ router.patch('/policies/:id', (req, res) => {
     now,
     req.params.id,
   );
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'v2_policy', req.params.id, name ?? (existing as any).name, 'updated', user.id, {
+    fields: Object.keys(req.body),
+  });
   const updated = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
   res.json(parseV2Policy(updated));
 });
@@ -120,6 +170,8 @@ router.delete('/policies/:id', (req, res) => {
   const db = getDb();
   const existing = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'v2_policy', req.params.id, (existing as any).name, 'deleted', user.id);
   db.prepare('DELETE FROM v2_policies WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });
@@ -138,6 +190,8 @@ router.post('/policies/:id/provision', (req, res) => {
       "UPDATE v2_rules SET provision_status = 'provisioned' WHERE policy_id = ? AND provision_status = 'draft'",
     ).run(req.params.id);
   })();
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'v2_policy', req.params.id, (existing as any).name, 'provisioned', user.id);
   const updated = db.prepare('SELECT * FROM v2_policies WHERE id = ?').get(req.params.id);
   res.json(parseV2Policy(updated));
 });

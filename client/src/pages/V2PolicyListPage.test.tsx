@@ -20,7 +20,11 @@ describe('V2PolicyListPage', () => {
   });
 
   it('shows a policy row when API returns data', async () => {
-    server.use(http.get('/api/v2/policies', () => HttpResponse.json([mockV2Policy])));
+    server.use(
+      http.get('/api/v2/policies', () =>
+        HttpResponse.json({ data: [mockV2Policy], total: 1, page: 1, limit: 50, totalPages: 1 }),
+      ),
+    );
 
     renderWithProviders(<V2PolicyListPage />);
 
@@ -30,7 +34,11 @@ describe('V2PolicyListPage', () => {
   });
 
   it('shows empty state when no policies exist', async () => {
-    server.use(http.get('/api/v2/policies', () => HttpResponse.json([])));
+    server.use(
+      http.get('/api/v2/policies', () =>
+        HttpResponse.json({ data: [], total: 0, page: 1, limit: 50, totalPages: 0 }),
+      ),
+    );
 
     renderWithProviders(<V2PolicyListPage />);
 

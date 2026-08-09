@@ -222,3 +222,14 @@ CREATE TABLE IF NOT EXISTS v2_template_rules (
   position INTEGER NOT NULL DEFAULT 0,
   notes TEXT DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id TEXT PRIMARY KEY,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  entity_name TEXT NOT NULL DEFAULT '',
+  action TEXT NOT NULL,
+  performed_by TEXT NOT NULL,
+  performed_at TEXT NOT NULL,
+  details TEXT NOT NULL DEFAULT '{}'
+);

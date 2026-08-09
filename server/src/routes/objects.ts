@@ -5,6 +5,29 @@ import { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
+function logAudit(
+  db: ReturnType<typeof getDb>,
+  entityType: string,
+  entityId: string,
+  entityName: string,
+  action: string,
+  userId: string,
+  details: Record<string, unknown> = {},
+) {
+  db.prepare(
+    'INSERT INTO audit_log (id, entity_type, entity_id, entity_name, action, performed_by, performed_at, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(
+    uuidv4(),
+    entityType,
+    entityId,
+    entityName,
+    action,
+    userId,
+    new Date().toISOString(),
+    JSON.stringify(details),
+  );
+}
+
 function escapeLike(s: string): string {
   return s.replace(/[%_\\]/g, (ch) => '\\' + ch);
 }
@@ -30,13 +53,14 @@ router.post('/services', (req, res) => {
   if (!name || port === undefined || !protocol) {
     return res.status(400).json({ error: 'name, port, and protocol are required' });
   }
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
   db.prepare(
     `INSERT INTO services (id, name, description, port, to_port, protocol, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(id, name, description ?? '', port, to_port ?? null, protocol, user.id, now, now);
+  logAudit(db, 'service', id, name, 'created', user.id);
   const created = db.prepare('SELECT * FROM services WHERE id = ?').get(id);
   res.status(201).json(created);
 });
@@ -92,6 +116,8 @@ router.delete('/services/:id', (req, res) => {
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
   }
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'service', req.params.id, serviceName, 'deleted', user.id);
   db.prepare('DELETE FROM services WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });
@@ -117,13 +143,14 @@ router.post('/ip-lists', (req, res) => {
   if (!name || !cidr) {
     return res.status(400).json({ error: 'name and cidr are required' });
   }
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
   db.prepare(
     `INSERT INTO ip_lists (id, name, cidr, description, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(id, name, cidr, description ?? '', user.id, now, now);
+  logAudit(db, 'ip_list', id, name, 'created', user.id);
   const created = db.prepare('SELECT * FROM ip_lists WHERE id = ?').get(id);
   res.status(201).json(created);
 });
@@ -168,6 +195,8 @@ router.delete('/ip-lists/:id', (req, res) => {
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
   }
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'ip_list', req.params.id, ipName, 'deleted', user.id);
   db.prepare('DELETE FROM ip_lists WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });
@@ -198,13 +227,14 @@ router.post('/label-groups', (req, res) => {
   if (!name || !label_ids) {
     return res.status(400).json({ error: 'name and label_ids are required' });
   }
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
   db.prepare(
     `INSERT INTO label_groups (id, name, label_ids, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
   ).run(id, name, JSON.stringify(label_ids), user.id, now, now);
+  logAudit(db, 'label_group', id, name, 'created', user.id);
   const created = db.prepare('SELECT * FROM label_groups WHERE id = ?').get(id);
   res.status(201).json(parseLabelGroup(created));
 });
@@ -248,6 +278,8 @@ router.delete('/label-groups/:id', (req, res) => {
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
   }
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'label_group', req.params.id, lgName, 'deleted', user.id);
   db.prepare('DELETE FROM label_groups WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });
@@ -273,13 +305,14 @@ router.post('/virtual-services', (req, res) => {
   if (!name || port === undefined || !protocol) {
     return res.status(400).json({ error: 'name, port, and protocol are required' });
   }
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   const now = new Date().toISOString();
   const id = uuidv4();
   db.prepare(
     `INSERT INTO virtual_services (id, name, port, protocol, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(id, name, port, protocol, user.id, now, now);
+  logAudit(db, 'virtual_service', id, name, 'created', user.id);
   const created = db.prepare('SELECT * FROM virtual_services WHERE id = ?').get(id);
   res.status(201).json(created);
 });
@@ -326,6 +359,8 @@ router.delete('/virtual-services/:id', (req, res) => {
   if (total > 0) {
     return res.status(409).json({ error: `Cannot delete: referenced by ${total} rules` });
   }
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'virtual_service', req.params.id, vsName, 'deleted', user.id);
   db.prepare('DELETE FROM virtual_services WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });

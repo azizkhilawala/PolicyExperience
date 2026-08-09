@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { TabList, Tab } from '@astryxdesign/core/TabList';
 import { Table, pixel } from '@astryxdesign/core/Table';
 import { Button } from '@astryxdesign/core/Button';
@@ -8,6 +8,9 @@ import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Token } from '@astryxdesign/core/Token';
 import { Spinner } from '@astryxdesign/core/Spinner';
+import { Heading } from '@astryxdesign/core/Heading';
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { TextInput } from '@astryxdesign/core/TextInput';
 
 import type { Service, ObjIpList, ObjLabelGroup, ObjVirtualService } from '../api/objects.js';
 import {
@@ -28,7 +31,6 @@ import { VirtualServiceDialog } from '../features/objects/VirtualServiceDialog.j
 
 type ActiveTab = 'services' | 'ip-lists' | 'label-groups' | 'virtual-services';
 
-// Table rows must satisfy Record<string, unknown>
 type ServiceRow = Service & Record<string, unknown>;
 type IpListRow = ObjIpList & Record<string, unknown>;
 type LabelGroupRow = ObjLabelGroup & Record<string, unknown>;
@@ -36,14 +38,42 @@ type VirtualServiceRow = ObjVirtualService & Record<string, unknown>;
 
 export default function ObjectsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('services');
+  const [searchQuery, setSearchQuery] = useState('');
   const labels = useLabels();
 
-  // ─── Services state ───────────────────────────────────────────────────────
+  // Track which tabs have been visited so we only fetch on first visit
+  const visitedTabs = useRef<Set<ActiveTab>>(new Set(['services']));
+
   const [services, setServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | undefined>(undefined);
   const [serviceDeleteError, setServiceDeleteError] = useState<string | null>(null);
+
+  const [ipLists, setIpLists] = useState<ObjIpList[]>([]);
+  const [ipListsLoading, setIpListsLoading] = useState(false);
+  const [ipListDialogOpen, setIpListDialogOpen] = useState(false);
+  const [editingIpList, setEditingIpList] = useState<ObjIpList | undefined>(undefined);
+  const [ipListDeleteError, setIpListDeleteError] = useState<string | null>(null);
+
+  const [labelGroups, setLabelGroups] = useState<ObjLabelGroup[]>([]);
+  const [labelGroupsLoading, setLabelGroupsLoading] = useState(false);
+  const [labelGroupDialogOpen, setLabelGroupDialogOpen] = useState(false);
+  const [editingLabelGroup, setEditingLabelGroup] = useState<ObjLabelGroup | undefined>(undefined);
+  const [labelGroupDeleteError, setLabelGroupDeleteError] = useState<string | null>(null);
+
+  const [virtualServices, setVirtualServices] = useState<ObjVirtualService[]>([]);
+  const [vsLoading, setVsLoading] = useState(false);
+  const [vsDialogOpen, setVsDialogOpen] = useState(false);
+  const [editingVs, setEditingVs] = useState<ObjVirtualService | undefined>(undefined);
+  const [vsDeleteError, setVsDeleteError] = useState<string | null>(null);
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    name: string;
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadServices = useCallback(async () => {
     setServicesLoading(true);
@@ -56,17 +86,6 @@ export default function ObjectsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadServices();
-  }, [loadServices]);
-
-  // ─── IP Lists state ───────────────────────────────────────────────────────
-  const [ipLists, setIpLists] = useState<ObjIpList[]>([]);
-  const [ipListsLoading, setIpListsLoading] = useState(true);
-  const [ipListDialogOpen, setIpListDialogOpen] = useState(false);
-  const [editingIpList, setEditingIpList] = useState<ObjIpList | undefined>(undefined);
-  const [ipListDeleteError, setIpListDeleteError] = useState<string | null>(null);
-
   const loadIpLists = useCallback(async () => {
     setIpListsLoading(true);
     try {
@@ -77,17 +96,6 @@ export default function ObjectsPage() {
       setIpListsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    loadIpLists();
-  }, [loadIpLists]);
-
-  // ─── Label Groups state ───────────────────────────────────────────────────
-  const [labelGroups, setLabelGroups] = useState<ObjLabelGroup[]>([]);
-  const [labelGroupsLoading, setLabelGroupsLoading] = useState(true);
-  const [labelGroupDialogOpen, setLabelGroupDialogOpen] = useState(false);
-  const [editingLabelGroup, setEditingLabelGroup] = useState<ObjLabelGroup | undefined>(undefined);
-  const [labelGroupDeleteError, setLabelGroupDeleteError] = useState<string | null>(null);
 
   const loadLabelGroups = useCallback(async () => {
     setLabelGroupsLoading(true);
@@ -100,17 +108,6 @@ export default function ObjectsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadLabelGroups();
-  }, [loadLabelGroups]);
-
-  // ─── Virtual Services state ───────────────────────────────────────────────
-  const [virtualServices, setVirtualServices] = useState<ObjVirtualService[]>([]);
-  const [vsLoading, setVsLoading] = useState(true);
-  const [vsDialogOpen, setVsDialogOpen] = useState(false);
-  const [editingVs, setEditingVs] = useState<ObjVirtualService | undefined>(undefined);
-  const [vsDeleteError, setVsDeleteError] = useState<string | null>(null);
-
   const loadVirtualServices = useCallback(async () => {
     setVsLoading(true);
     try {
@@ -122,64 +119,99 @@ export default function ObjectsPage() {
     }
   }, []);
 
+  // Load services on mount (default tab)
   useEffect(() => {
-    loadVirtualServices();
-  }, [loadVirtualServices]);
+    loadServices();
+  }, [loadServices]);
 
-  // ─── Delete handlers ─────────────────────────────────────────────────────
+  // Lazy-load data when switching tabs
+  useEffect(() => {
+    if (visitedTabs.current.has(activeTab)) return;
+    visitedTabs.current.add(activeTab);
+    if (activeTab === 'ip-lists') loadIpLists();
+    if (activeTab === 'label-groups') loadLabelGroups();
+    if (activeTab === 'virtual-services') loadVirtualServices();
+  }, [activeTab, loadIpLists, loadLabelGroups, loadVirtualServices]);
+
+  // Clear search when switching tabs
+  const handleTabChange = useCallback((v: string) => {
+    setActiveTab(v as ActiveTab);
+    setSearchQuery('');
+  }, []);
+
+  // Delete handlers with confirmation
   const handleDeleteService = useCallback(
-    async (id: string) => {
-      try {
-        await deleteService(id);
-        setServiceDeleteError(null);
-        loadServices();
-      } catch (e) {
-        setServiceDeleteError(e instanceof Error ? e.message : 'Delete failed');
-      }
+    (row: Service) => {
+      setDeleteConfirm({
+        name: row.name,
+        onConfirm: async () => {
+          try {
+            await deleteService(row.id);
+            setServiceDeleteError(null);
+            loadServices();
+          } catch (e) {
+            setServiceDeleteError(e instanceof Error ? e.message : 'Delete failed');
+          }
+        },
+      });
     },
     [loadServices],
   );
 
   const handleDeleteIpList = useCallback(
-    async (id: string) => {
-      try {
-        await deleteIpList(id);
-        setIpListDeleteError(null);
-        loadIpLists();
-      } catch (e) {
-        setIpListDeleteError(e instanceof Error ? e.message : 'Delete failed');
-      }
+    (row: ObjIpList) => {
+      setDeleteConfirm({
+        name: row.name,
+        onConfirm: async () => {
+          try {
+            await deleteIpList(row.id);
+            setIpListDeleteError(null);
+            loadIpLists();
+          } catch (e) {
+            setIpListDeleteError(e instanceof Error ? e.message : 'Delete failed');
+          }
+        },
+      });
     },
     [loadIpLists],
   );
 
   const handleDeleteLabelGroup = useCallback(
-    async (id: string) => {
-      try {
-        await deleteLabelGroup(id);
-        setLabelGroupDeleteError(null);
-        loadLabelGroups();
-      } catch (e) {
-        setLabelGroupDeleteError(e instanceof Error ? e.message : 'Delete failed');
-      }
+    (row: ObjLabelGroup) => {
+      setDeleteConfirm({
+        name: row.name,
+        onConfirm: async () => {
+          try {
+            await deleteLabelGroup(row.id);
+            setLabelGroupDeleteError(null);
+            loadLabelGroups();
+          } catch (e) {
+            setLabelGroupDeleteError(e instanceof Error ? e.message : 'Delete failed');
+          }
+        },
+      });
     },
     [loadLabelGroups],
   );
 
   const handleDeleteVs = useCallback(
-    async (id: string) => {
-      try {
-        await deleteVirtualService(id);
-        setVsDeleteError(null);
-        loadVirtualServices();
-      } catch (e) {
-        setVsDeleteError(e instanceof Error ? e.message : 'Delete failed');
-      }
+    (row: ObjVirtualService) => {
+      setDeleteConfirm({
+        name: row.name,
+        onConfirm: async () => {
+          try {
+            await deleteVirtualService(row.id);
+            setVsDeleteError(null);
+            loadVirtualServices();
+          } catch (e) {
+            setVsDeleteError(e instanceof Error ? e.message : 'Delete failed');
+          }
+        },
+      });
     },
     [loadVirtualServices],
   );
 
-  // ─── Label name resolver ─────────────────────────────────────────────────
   const resolveLabelName = useCallback(
     (id: string): string => {
       const label = labels.find((l) => l.id === id);
@@ -188,7 +220,61 @@ export default function ObjectsPage() {
     [labels],
   );
 
-  // ─── Column definitions ───────────────────────────────────────────────────
+  // Filtered data based on search query
+  const query = searchQuery.toLowerCase();
+
+  const filteredServices = useMemo(
+    () =>
+      query
+        ? services.filter(
+            (s) =>
+              s.name.toLowerCase().includes(query) ||
+              s.protocol.toLowerCase().includes(query) ||
+              String(s.port).includes(query) ||
+              s.description?.toLowerCase().includes(query),
+          )
+        : services,
+    [services, query],
+  );
+
+  const filteredIpLists = useMemo(
+    () =>
+      query
+        ? ipLists.filter(
+            (s) =>
+              s.name.toLowerCase().includes(query) ||
+              s.cidr.toLowerCase().includes(query) ||
+              s.description?.toLowerCase().includes(query),
+          )
+        : ipLists,
+    [ipLists, query],
+  );
+
+  const filteredLabelGroups = useMemo(
+    () =>
+      query
+        ? labelGroups.filter(
+            (s) =>
+              s.name.toLowerCase().includes(query) ||
+              s.label_ids.some((lid) => resolveLabelName(lid).toLowerCase().includes(query)),
+          )
+        : labelGroups,
+    [labelGroups, query, resolveLabelName],
+  );
+
+  const filteredVirtualServices = useMemo(
+    () =>
+      query
+        ? virtualServices.filter(
+            (s) =>
+              s.name.toLowerCase().includes(query) ||
+              s.protocol.toLowerCase().includes(query) ||
+              String(s.port).includes(query),
+          )
+        : virtualServices,
+    [virtualServices, query],
+  );
+
   const serviceColumns = [
     { key: 'name', header: 'Name' },
     {
@@ -213,7 +299,7 @@ export default function ObjectsPage() {
                 setServiceDialogOpen(true);
               },
             },
-            { label: 'Delete', onClick: () => handleDeleteService(row.id as string) },
+            { label: 'Delete', onClick: () => handleDeleteService(row as Service) },
           ]}
         />
       ),
@@ -238,7 +324,7 @@ export default function ObjectsPage() {
                 setIpListDialogOpen(true);
               },
             },
-            { label: 'Delete', onClick: () => handleDeleteIpList(row.id as string) },
+            { label: 'Delete', onClick: () => handleDeleteIpList(row as ObjIpList) },
           ]}
         />
       ),
@@ -272,7 +358,7 @@ export default function ObjectsPage() {
                 setLabelGroupDialogOpen(true);
               },
             },
-            { label: 'Delete', onClick: () => handleDeleteLabelGroup(row.id as string) },
+            { label: 'Delete', onClick: () => handleDeleteLabelGroup(row as ObjLabelGroup) },
           ]}
         />
       ),
@@ -297,7 +383,7 @@ export default function ObjectsPage() {
                 setVsDialogOpen(true);
               },
             },
-            { label: 'Delete', onClick: () => handleDeleteVs(row.id as string) },
+            { label: 'Delete', onClick: () => handleDeleteVs(row as ObjVirtualService) },
           ]}
         />
       ),
@@ -306,16 +392,26 @@ export default function ObjectsPage() {
 
   return (
     <VStack gap={3} padding={4}>
-      <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>Policy Objects</h1>
+      <Heading level={1}>Policy Objects</Heading>
 
-      <TabList value={activeTab} onChange={(v) => setActiveTab(v as ActiveTab)}>
+      <TabList value={activeTab} onChange={handleTabChange}>
         <Tab value="services" label="Services" />
         <Tab value="ip-lists" label="IP Lists" />
         <Tab value="label-groups" label="Label Groups" />
         <Tab value="virtual-services" label="Virtual Services" />
       </TabList>
 
-      {/* ─── Services tab ─────────────────────────────────────────────────── */}
+      <TextInput
+        label="Search"
+        isLabelHidden
+        placeholder={`Search ${activeTab.replace(/-/g, ' ')}…`}
+        value={searchQuery}
+        onChange={setSearchQuery}
+        hasClear
+        size="sm"
+        width="100%"
+      />
+
       {activeTab === 'services' && (
         <VStack gap={2}>
           <HStack hAlign="end">
@@ -341,7 +437,7 @@ export default function ObjectsPage() {
           ) : (
             <Table<ServiceRow>
               columns={serviceColumns}
-              data={services as ServiceRow[]}
+              data={filteredServices as ServiceRow[]}
               idKey="id"
             />
           )}
@@ -354,7 +450,6 @@ export default function ObjectsPage() {
         </VStack>
       )}
 
-      {/* ─── IP Lists tab ─────────────────────────────────────────────────── */}
       {activeTab === 'ip-lists' && (
         <VStack gap={2}>
           <HStack hAlign="end">
@@ -378,7 +473,11 @@ export default function ObjectsPage() {
           {ipListsLoading ? (
             <Spinner label="Loading IP lists…" size="lg" />
           ) : (
-            <Table<IpListRow> columns={ipListColumns} data={ipLists as IpListRow[]} idKey="id" />
+            <Table<IpListRow>
+              columns={ipListColumns}
+              data={filteredIpLists as IpListRow[]}
+              idKey="id"
+            />
           )}
           <IpListDialog
             isOpen={ipListDialogOpen}
@@ -389,7 +488,6 @@ export default function ObjectsPage() {
         </VStack>
       )}
 
-      {/* ─── Label Groups tab ─────────────────────────────────────────────── */}
       {activeTab === 'label-groups' && (
         <VStack gap={2}>
           <HStack hAlign="end">
@@ -415,7 +513,7 @@ export default function ObjectsPage() {
           ) : (
             <Table<LabelGroupRow>
               columns={labelGroupColumns}
-              data={labelGroups as LabelGroupRow[]}
+              data={filteredLabelGroups as LabelGroupRow[]}
               idKey="id"
             />
           )}
@@ -428,7 +526,6 @@ export default function ObjectsPage() {
         </VStack>
       )}
 
-      {/* ─── Virtual Services tab ─────────────────────────────────────────── */}
       {activeTab === 'virtual-services' && (
         <VStack gap={2}>
           <HStack hAlign="end">
@@ -454,7 +551,7 @@ export default function ObjectsPage() {
           ) : (
             <Table<VirtualServiceRow>
               columns={virtualServiceColumns}
-              data={virtualServices as VirtualServiceRow[]}
+              data={filteredVirtualServices as VirtualServiceRow[]}
               idKey="id"
             />
           )}
@@ -466,6 +563,24 @@ export default function ObjectsPage() {
           />
         </VStack>
       )}
+
+      <AlertDialog
+        isOpen={!!deleteConfirm}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        title={`Delete "${deleteConfirm?.name ?? ''}"?`}
+        description="This action cannot be undone. Any rules referencing this object may also be affected."
+        actionLabel="Delete"
+        isActionLoading={deleteLoading}
+        onAction={async () => {
+          if (!deleteConfirm) return;
+          setDeleteLoading(true);
+          await deleteConfirm.onConfirm();
+          setDeleteLoading(false);
+          setDeleteConfirm(null);
+        }}
+      />
     </VStack>
   );
 }

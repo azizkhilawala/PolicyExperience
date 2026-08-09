@@ -73,8 +73,12 @@ export const handlers = [
   http.get('/api/auth/me', () => HttpResponse.json(mockUser)),
   http.get('/api/auth/users', () => HttpResponse.json(mockUsers)),
 
-  http.get('/api/policies', () => HttpResponse.json([mockPolicy])),
-  http.get('/api/v2/policies', () => HttpResponse.json([mockV2Policy])),
+  http.get('/api/policies', () =>
+    HttpResponse.json({ data: [mockPolicy], total: 1, page: 1, limit: 50, totalPages: 1 }),
+  ),
+  http.get('/api/v2/policies', () =>
+    HttpResponse.json({ data: [mockV2Policy], total: 1, page: 1, limit: 50, totalPages: 1 }),
+  ),
   http.get('/api/v2/templates', () => HttpResponse.json([mockV2Template])),
   http.get('/api/tenant-settings', () => HttpResponse.json(mockSettings)),
   http.get('/api/labels', () => HttpResponse.json(mockLabels)),

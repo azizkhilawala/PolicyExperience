@@ -13,7 +13,11 @@ describe('PolicyListPage', () => {
   });
 
   it('shows empty state when API returns no policies', async () => {
-    server.use(http.get('/api/policies', () => HttpResponse.json([])));
+    server.use(
+      http.get('/api/policies', () =>
+        HttpResponse.json({ data: [], total: 0, page: 1, limit: 50, totalPages: 0 }),
+      ),
+    );
 
     renderWithProviders(<PolicyListPage />);
 
@@ -24,7 +28,11 @@ describe('PolicyListPage', () => {
   });
 
   it('shows a policy row when API returns data', async () => {
-    server.use(http.get('/api/policies', () => HttpResponse.json([mockPolicy])));
+    server.use(
+      http.get('/api/policies', () =>
+        HttpResponse.json({ data: [mockPolicy], total: 1, page: 1, limit: 50, totalPages: 1 }),
+      ),
+    );
 
     renderWithProviders(<PolicyListPage />);
 

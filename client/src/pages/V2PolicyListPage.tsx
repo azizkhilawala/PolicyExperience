@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +15,8 @@ import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Banner } from '@astryxdesign/core/Banner';
 import { TabList, Tab } from '@astryxdesign/core/TabList';
+import { AlertDialog } from '@astryxdesign/core/AlertDialog';
+import { TextInput } from '@astryxdesign/core/TextInput';
 
 import { useApi } from '../hooks/useApi.js';
 import { fetchV2Policies, deleteV2Policy, type V2Policy } from '../api/v2-policies.js';
@@ -130,9 +132,44 @@ export default function V2PolicyListPage() {
     refetch: refetchTemplates,
   } = useApi(() => fetchV2Templates());
   const [actionError, setActionError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    name: string;
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const policies: V2PolicyRow[] = (data ?? []).map((p) => p as V2PolicyRow);
-  const templates: V2TemplateRow[] = (templatesData ?? []).map((t) => t as V2TemplateRow);
+  const query = searchQuery.toLowerCase();
+
+  const policies: V2PolicyRow[] = useMemo(
+    () =>
+      (data?.data ?? [])
+        .filter((p) => {
+          if (!query) return true;
+          return (
+            p.name.toLowerCase().includes(query) ||
+            p.description?.toLowerCase().includes(query) ||
+            p.scope_labels?.some(
+              (s) => s.key.toLowerCase().includes(query) || s.value.toLowerCase().includes(query),
+            )
+          );
+        })
+        .map((p) => p as V2PolicyRow),
+    [data, query],
+  );
+
+  const templates: V2TemplateRow[] = useMemo(
+    () =>
+      (templatesData ?? [])
+        .filter((t) => {
+          if (!query) return true;
+          return (
+            t.name.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query)
+          );
+        })
+        .map((t) => t as V2TemplateRow),
+    [templatesData, query],
+  );
 
   const columns = [
     {
@@ -211,14 +248,19 @@ export default function V2PolicyListPage() {
             { type: 'divider' as const },
             {
               label: 'Delete',
-              onClick: async () => {
-                try {
-                  setActionError(null);
-                  await deleteV2Policy(row.id as string);
-                  refetch();
-                } catch (e) {
-                  setActionError(e instanceof Error ? e.message : 'Delete failed');
-                }
+              onClick: () => {
+                setDeleteConfirm({
+                  name: row.name as string,
+                  onConfirm: async () => {
+                    try {
+                      setActionError(null);
+                      await deleteV2Policy(row.id as string);
+                      refetch();
+                    } catch (e) {
+                      setActionError(e instanceof Error ? e.message : 'Delete failed');
+                    }
+                  },
+                });
               },
             },
           ]}
@@ -319,14 +361,19 @@ export default function V2PolicyListPage() {
             { type: 'divider' as const },
             {
               label: 'Delete',
-              onClick: async () => {
-                try {
-                  setActionError(null);
-                  await deleteV2Template(row.id as string);
-                  refetchTemplates();
-                } catch (e) {
-                  setActionError(e instanceof Error ? e.message : 'Delete failed');
-                }
+              onClick: () => {
+                setDeleteConfirm({
+                  name: row.name as string,
+                  onConfirm: async () => {
+                    try {
+                      setActionError(null);
+                      await deleteV2Template(row.id as string);
+                      refetchTemplates();
+                    } catch (e) {
+                      setActionError(e instanceof Error ? e.message : 'Delete failed');
+                    }
+                  },
+                });
               },
             },
           ]}
@@ -368,6 +415,17 @@ export default function V2PolicyListPage() {
         <Tab value="policies" label="Policies" />
         <Tab value="templates" label="Templates" />
       </TabList>
+
+      <TextInput
+        label="Search"
+        isLabelHidden
+        placeholder={`Search ${activeTab}…`}
+        value={searchQuery}
+        onChange={setSearchQuery}
+        hasClear
+        size="sm"
+        width="100%"
+      />
 
       {actionError ? (
         <Banner
@@ -427,6 +485,23 @@ export default function V2PolicyListPage() {
       ) : (
         <Table data={templates} columns={templateColumns} idKey="id" density="compact" hasHover />
       )}
+      <AlertDialog
+        isOpen={!!deleteConfirm}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        title={`Delete "${deleteConfirm?.name ?? ''}"?`}
+        description="This will permanently delete this item and all associated rules. This action cannot be undone."
+        actionLabel="Delete"
+        isActionLoading={deleteLoading}
+        onAction={async () => {
+          if (!deleteConfirm) return;
+          setDeleteLoading(true);
+          await deleteConfirm.onConfirm();
+          setDeleteLoading(false);
+          setDeleteConfirm(null);
+        }}
+      />
     </VStack>
   );
 }

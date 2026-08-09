@@ -166,9 +166,29 @@ export function fetchCloudSubnets(provider?: string, vpcId?: string) {
   return apiFetch<CloudSubnet[]>(`/api/cloud/subnets${q ? `?${q}` : ''}`);
 }
 
-export function fetchPolicies(params?: { type?: string; status?: string; enabled?: string }) {
-  const query = new URLSearchParams(params as Record<string, string>).toString();
-  return apiFetch<Policy[]>(`/api/policies${query ? `?${query}` : ''}`);
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export function fetchPolicies(params?: {
+  type?: string;
+  status?: string;
+  enabled?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const query = new URLSearchParams(
+    Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v !== undefined)) as Record<
+      string,
+      string
+    >,
+  ).toString();
+  return apiFetch<PaginatedResponse<Policy>>(`/api/policies${query ? `?${query}` : ''}`);
 }
 
 export function fetchPolicy(id: string) {

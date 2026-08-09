@@ -5,6 +5,29 @@ import { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
+function logAudit(
+  db: ReturnType<typeof getDb>,
+  entityType: string,
+  entityId: string,
+  entityName: string,
+  action: string,
+  userId: string,
+  details: Record<string, unknown> = {},
+) {
+  db.prepare(
+    'INSERT INTO audit_log (id, entity_type, entity_id, entity_name, action, performed_by, performed_at, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(
+    uuidv4(),
+    entityType,
+    entityId,
+    entityName,
+    action,
+    userId,
+    new Date().toISOString(),
+    JSON.stringify(details),
+  );
+}
+
 function parsePolicy(row: any) {
   if (!row) return null;
   return { ...row, scope: JSON.parse(row.scope) };
@@ -34,26 +57,45 @@ function parsePolicyWithRules(row: any, rules: any[]) {
   };
 }
 
-// GET / — list policies
+// GET / — list policies (supports ?page=&limit= for pagination)
 router.get('/', (req, res) => {
   const db = getDb();
-  let sql = 'SELECT * FROM policies WHERE 1=1';
+  let where = 'WHERE 1=1';
   const params: string[] = [];
   if (req.query.type) {
-    sql += ' AND type = ?';
+    where += ' AND type = ?';
     params.push(req.query.type as string);
   }
   if (req.query.status) {
-    sql += ' AND provision_status = ?';
+    where += ' AND provision_status = ?';
     params.push(req.query.status as string);
   }
   if (req.query.enabled !== undefined) {
-    sql += ' AND enabled = ?';
+    where += ' AND enabled = ?';
     params.push(req.query.enabled as string);
   }
-  sql += ' ORDER BY name';
-  const rows = db.prepare(sql).all(...params);
-  res.json(rows.map(parsePolicy));
+  if (req.query.search) {
+    where += ' AND (name LIKE ? OR description LIKE ?)';
+    const term = `%${req.query.search as string}%`;
+    params.push(term, term);
+  }
+
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+
+  const countRow = db.prepare(`SELECT COUNT(*) as total FROM policies ${where}`).get(...params) as {
+    total: number;
+  };
+  const sql = `SELECT * FROM policies ${where} ORDER BY name LIMIT ? OFFSET ?`;
+  const rows = db.prepare(sql).all(...params, limit, (page - 1) * limit);
+
+  res.json({
+    data: rows.map(parsePolicy),
+    total: countRow.total,
+    page,
+    limit,
+    totalPages: Math.ceil(countRow.total / limit),
+  });
 });
 
 // POST / — create policy
@@ -67,6 +109,7 @@ router.post('/', (req, res) => {
     `INSERT INTO policies (id, name, description, scope, type, provision_status, enabled, is_locked, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'draft', 1, 0, ?, ?, ?)`,
   ).run(id, name, description ?? '', JSON.stringify(scope ?? []), type, user.id, now, now);
+  logAudit(db, 'policy', id, name, 'created', user.id);
   const created = db.prepare('SELECT * FROM policies WHERE id = ?').get(id);
   res.status(201).json(parsePolicy(created));
 });
@@ -114,6 +157,10 @@ router.patch('/:id', (req, res) => {
     req.params.id,
   );
 
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'policy', req.params.id, name ?? existing.name, 'updated', user.id, {
+    fields: Object.keys(req.body),
+  });
   const updated = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   res.json(parsePolicy(updated));
 });
@@ -123,6 +170,8 @@ router.delete('/:id', (req, res) => {
   const db = getDb();
   const existing = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Policy not found' });
+  const user = (req as unknown as AuthenticatedRequest).user;
+  logAudit(db, 'policy', req.params.id, (existing as any).name, 'deleted', user.id);
   db.prepare('DELETE FROM policies WHERE id = ?').run(req.params.id);
   res.status(204).send();
 });
@@ -280,6 +329,7 @@ router.post('/:id/provision/commit', (req, res) => {
     }
   })();
 
+  logAudit(db, 'policy', req.params.id, existing.name, 'provisioned', user.id, diff);
   const updated = db.prepare('SELECT * FROM policies WHERE id = ?').get(req.params.id);
   res.json(parsePolicy(updated));
 });

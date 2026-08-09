@@ -36,8 +36,22 @@ export interface V2Policy {
   rules?: V2Rule[];
 }
 
-export function fetchV2Policies() {
-  return apiFetch<V2Policy[]>('/api/v2/policies');
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export function fetchV2Policies(params?: { search?: string; page?: number; limit?: number }) {
+  const query = new URLSearchParams(
+    Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v !== undefined)) as Record<
+      string,
+      string
+    >,
+  ).toString();
+  return apiFetch<PaginatedResponse<V2Policy>>(`/api/v2/policies${query ? `?${query}` : ''}`);
 }
 
 export function fetchV2Policy(id: string) {

@@ -12,6 +12,7 @@ import resourcesRoutes from './routes/resources.js';
 import v2PoliciesRoutes from './routes/v2-policies.js';
 import v2TemplatesRoutes from './routes/v2-templates.js';
 import objectsRoutes from './routes/objects.js';
+import auditRoutes from './routes/audit.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -32,6 +33,7 @@ app.use('/api', resourcesRoutes);
 app.use('/api/v2', v2PoliciesRoutes);
 app.use('/api/v2', v2TemplatesRoutes);
 app.use('/api/objects', objectsRoutes);
+app.use('/api/audit-log', auditRoutes);
 
 app.listen(PORT, () => {
   console.log(`PolicyExperience API v2 running on http://localhost:${PORT}`);
