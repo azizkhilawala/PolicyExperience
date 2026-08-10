@@ -15,6 +15,7 @@ import { Spinner } from '@astryxdesign/core/Spinner';
 import { Token } from '@astryxdesign/core/Token';
 import { Tooltip } from '@astryxdesign/core/Tooltip';
 
+import { ImpactPreview } from '../features/impact/ImpactPreview.js';
 import { useApi } from '../hooks/useApi.js';
 import {
   fetchV2Policy,
@@ -264,6 +265,13 @@ export default function V2PolicyDetailPage() {
             </MetadataListItem>
           )}
         </MetadataList>
+      )}
+
+      {policy.scope_labels && policy.scope_labels.length > 0 && (
+        <HStack gap={1} vAlign="center">
+          <Text type="supporting">Impact:</Text>
+          <ImpactPreview scopeLabels={policy.scope_labels} />
+        </HStack>
       )}
 
       <Divider />

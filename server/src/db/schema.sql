@@ -108,7 +108,25 @@ CREATE TABLE IF NOT EXISTS workloads (
   type TEXT NOT NULL CHECK (type IN ('vm', 'k8s_pod')),
   labels TEXT NOT NULL DEFAULT '[]',
   cluster_id TEXT REFERENCES k8s_clusters(id),
-  namespace_id TEXT REFERENCES k8s_namespaces(id)
+  namespace_id TEXT REFERENCES k8s_namespaces(id),
+  managed INTEGER NOT NULL DEFAULT 1,
+  online INTEGER NOT NULL DEFAULT 1,
+  enforcement_mode TEXT NOT NULL DEFAULT 'visibility_only'
+    CHECK (enforcement_mode IN ('idle', 'visibility_only', 'selective', 'full')),
+  os_type TEXT DEFAULT NULL
+    CHECK (os_type IS NULL OR os_type IN ('linux', 'windows')),
+  os_detail TEXT DEFAULT '',
+  ven_version TEXT DEFAULT NULL,
+  ven_status TEXT DEFAULT 'active'
+    CHECK (ven_status IN ('active', 'suspended', 'stopped', 'uninstalled')),
+  last_heartbeat_at TEXT DEFAULT NULL,
+  public_ip TEXT DEFAULT NULL,
+  data_center TEXT DEFAULT '',
+  service_provider TEXT DEFAULT ''
+    CHECK (service_provider IN ('', 'aws', 'azure', 'gcp', 'on-prem')),
+  description TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z',
+  updated_at TEXT NOT NULL DEFAULT '2026-07-28T10:00:00Z'
 );
 
 CREATE TABLE IF NOT EXISTS policies (

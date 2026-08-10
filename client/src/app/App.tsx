@@ -8,6 +8,7 @@ import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 import { Avatar } from '@astryxdesign/core/Avatar';
 import { Icon } from '@astryxdesign/core/Icon';
 
+import { Box } from 'lucide-react';
 import { AuthProvider, useAuth } from '../hooks/useAuth.js';
 import { SettingsProvider } from '../hooks/useSettings.js';
 import { LabelsProvider } from '../hooks/useLabels.js';
@@ -85,6 +86,12 @@ function AppLayout() {
             href="/objects"
             isSelected={location.pathname.startsWith('/objects')}
             icon={<Icon icon="viewColumns" />}
+          />
+          <SideNavItem
+            label="Workloads"
+            href="/workloads"
+            isSelected={location.pathname.startsWith('/workloads')}
+            icon={<Icon icon={Box} />}
           />
           <SideNavItem
             label="Audit Log"

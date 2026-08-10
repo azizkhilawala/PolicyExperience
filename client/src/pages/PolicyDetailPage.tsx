@@ -13,6 +13,7 @@ import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Divider } from '@astryxdesign/core/Divider';
 import { Spinner } from '@astryxdesign/core/Spinner';
 
+import { ImpactPreview } from '../features/impact/ImpactPreview.js';
 import { useApi } from '../hooks/useApi.js';
 import { apiFetch } from '../api/client.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -182,6 +183,9 @@ export default function PolicyDetailPage() {
       <MetadataList columns="multi">
         <MetadataListItem label="Scope">
           <LabelTokens labels={policy.scope} />
+        </MetadataListItem>
+        <MetadataListItem label="Impact">
+          <ImpactPreview scopeLabels={policy.scope} />
         </MetadataListItem>
         <MetadataListItem label="Status">
           <StatusIndicator enabled={!!policy.enabled} />

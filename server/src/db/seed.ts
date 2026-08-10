@@ -120,6 +120,15 @@ const LBL_TIER_DATA = 'lbl-tier-data-0024';
 const LBL_TIER_COMPUTE = 'lbl-tier-compute-0025';
 const LBL_TIER_EDGE = 'lbl-tier-edge-0026';
 
+// Labels — K8s type
+const LBL_K8S_APP_WEB = 'lbl-k8s-app-web-0027';
+const LBL_K8S_APP_API = 'lbl-k8s-app-api-0028';
+const LBL_K8S_APP_WORKER = 'lbl-k8s-app-worker-0029';
+const LBL_K8S_TIER_FRONTEND = 'lbl-k8s-tier-frontend-0030';
+const LBL_K8S_TIER_BACKEND = 'lbl-k8s-tier-backend-0031';
+const LBL_K8S_ENV_PROD = 'lbl-k8s-env-prod-0032';
+const LBL_K8S_ENV_STAGING = 'lbl-k8s-env-staging-0033';
+
 // Policies
 const POLICY_HRM = 'policy-hrm-prod-access-0001';
 const POLICY_ERP = 'policy-erp-db-access-0002';
@@ -203,6 +212,14 @@ const seed = db.transaction(() => {
   insertLabel.run(LBL_TIER_DATA, 'tier', 'data', 'illumio');
   insertLabel.run(LBL_TIER_COMPUTE, 'tier', 'compute', 'illumio');
   insertLabel.run(LBL_TIER_EDGE, 'tier', 'edge', 'illumio');
+  // k8s labels (values must be unique per key across types due to UNIQUE(key,value) constraint)
+  insertLabel.run(LBL_K8S_APP_WEB, 'app', 'k8s-web', 'k8s');
+  insertLabel.run(LBL_K8S_APP_API, 'app', 'k8s-api-gateway', 'k8s');
+  insertLabel.run(LBL_K8S_APP_WORKER, 'app', 'k8s-worker', 'k8s');
+  insertLabel.run(LBL_K8S_TIER_FRONTEND, 'tier', 'k8s-frontend', 'k8s');
+  insertLabel.run(LBL_K8S_TIER_BACKEND, 'tier', 'k8s-backend', 'k8s');
+  insertLabel.run(LBL_K8S_ENV_PROD, 'env', 'k8s-production', 'k8s');
+  insertLabel.run(LBL_K8S_ENV_STAGING, 'env', 'k8s-staging', 'k8s');
 
   // ── Label Groups ───────────────────────────────────────────────────────────
   const insertLabelGroup = db.prepare(
@@ -458,304 +475,168 @@ const seed = db.transaction(() => {
 
   // ── Workloads ──────────────────────────────────────────────────────────────
   const insertWorkload = db.prepare(
-    'INSERT INTO workloads (id, name, hostname, ip, type, labels, cluster_id, namespace_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    `INSERT INTO workloads (id, name, hostname, ip, type, labels, cluster_id, namespace_id,
+      managed, online, enforcement_mode, os_type, os_detail, ven_version, ven_status,
+      last_heartbeat_at, public_ip, data_center, service_provider, description,
+      created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
+  interface VmSeed {
+    name: string;
+    role: string;
+    env: string;
+    loc: string;
+    ip: string;
+    os?: 'linux' | 'windows';
+    enforcement?: string;
+    online?: number;
+    ven?: string;
+    dc?: string;
+    provider?: string;
+  }
+
+  function seedVm(vm: VmSeed, app: string) {
+    const enforcement = vm.enforcement ?? 'full';
+    const osType = vm.os ?? 'linux';
+    const osDetail = osType === 'windows' ? 'Windows Server 2022' : 'Ubuntu 22.04 LTS';
+    const venVer = vm.ven ?? '25.2.5';
+    const online = vm.online ?? 1;
+    const dc = vm.dc ?? (vm.loc === 'us-east' ? 'us-east-dc1' : vm.loc === 'us-west' ? 'us-west-dc2' : 'eu-west-dc1');
+    const provider = vm.provider ?? 'aws';
+    insertWorkload.run(
+      uuid(), vm.name, `${vm.name}.illumio.internal`, vm.ip, 'vm',
+      JSON.stringify([
+        { key: 'app', value: app },
+        { key: 'role', value: vm.role },
+        { key: 'env', value: vm.env },
+        { key: 'loc', value: vm.loc },
+      ]),
+      null, null,
+      1, online, enforcement, osType, osDetail, venVer, 'active',
+      online ? now : '2026-08-07T04:30:00Z',
+      null, dc, provider, '', now, now,
+    );
+  }
+
   // VMs (~30): HRM (10), ERP (10), CRM (10)
-  // HRM prod VMs
-  const hrmVms = [
+  const hrmVms: VmSeed[] = [
     { name: 'hrm-web-01', role: 'web', env: 'prod', loc: 'us-east', ip: '10.1.1.1' },
     { name: 'hrm-web-02', role: 'web', env: 'prod', loc: 'us-east', ip: '10.1.1.2' },
     { name: 'hrm-api-01', role: 'api', env: 'prod', loc: 'us-east', ip: '10.1.2.1' },
     { name: 'hrm-api-02', role: 'api', env: 'prod', loc: 'us-east', ip: '10.1.2.2' },
-    { name: 'hrm-db-01', role: 'db', env: 'prod', loc: 'us-east', ip: '10.1.3.1' },
+    { name: 'hrm-db-01', role: 'db', env: 'prod', loc: 'us-east', ip: '10.1.3.1', os: 'windows', provider: 'on-prem' },
     { name: 'hrm-db-02', role: 'db', env: 'prod', loc: 'us-east', ip: '10.1.3.2' },
     { name: 'hrm-cache-01', role: 'cache', env: 'prod', loc: 'us-east', ip: '10.1.4.1' },
-    { name: 'hrm-worker-01', role: 'worker', env: 'prod', loc: 'us-east', ip: '10.1.5.1' },
+    { name: 'hrm-worker-01', role: 'worker', env: 'prod', loc: 'us-east', ip: '10.1.5.1', online: 0 },
     { name: 'hrm-lb-01', role: 'load-balancer', env: 'prod', loc: 'us-east', ip: '10.1.6.1' },
-    { name: 'hrm-api-dev-01', role: 'api', env: 'dev', loc: 'us-west', ip: '10.2.1.1' },
+    { name: 'hrm-api-dev-01', role: 'api', env: 'dev', loc: 'us-west', ip: '10.2.1.1', enforcement: 'visibility_only', ven: '24.5.12' },
   ];
+  for (const vm of hrmVms) seedVm(vm, 'HRM');
 
-  for (const vm of hrmVms) {
-    insertWorkload.run(
-      uuid(),
-      vm.name,
-      `${vm.name}.illumio.internal`,
-      vm.ip,
-      'vm',
-      JSON.stringify([
-        { key: 'app', value: 'HRM' },
-        { key: 'role', value: vm.role },
-        { key: 'env', value: vm.env },
-        { key: 'loc', value: vm.loc },
-      ]),
-      null,
-      null,
-    );
-  }
-
-  // ERP VMs
-  const erpVms = [
+  const erpVms: VmSeed[] = [
     { name: 'erp-web-01', role: 'web', env: 'prod', loc: 'us-east', ip: '10.3.1.1' },
-    { name: 'erp-web-02', role: 'web', env: 'prod', loc: 'us-west', ip: '10.3.1.2' },
+    { name: 'erp-web-02', role: 'web', env: 'prod', loc: 'us-west', ip: '10.3.1.2', provider: 'azure' },
     { name: 'erp-api-01', role: 'api', env: 'prod', loc: 'us-east', ip: '10.3.2.1' },
     { name: 'erp-api-02', role: 'api', env: 'prod', loc: 'us-east', ip: '10.3.2.2' },
-    { name: 'erp-db-01', role: 'db', env: 'prod', loc: 'us-east', ip: '10.3.3.1' },
+    { name: 'erp-db-01', role: 'db', env: 'prod', loc: 'us-east', ip: '10.3.3.1', os: 'windows', provider: 'on-prem' },
     { name: 'erp-db-02', role: 'db', env: 'prod', loc: 'us-east', ip: '10.3.3.2' },
     { name: 'erp-cache-01', role: 'cache', env: 'prod', loc: 'us-east', ip: '10.3.4.1' },
     { name: 'erp-worker-01', role: 'worker', env: 'prod', loc: 'us-east', ip: '10.3.5.1' },
-    { name: 'erp-lb-01', role: 'load-balancer', env: 'prod', loc: 'us-east', ip: '10.3.6.1' },
-    { name: 'erp-api-staging-01', role: 'api', env: 'staging', loc: 'eu-west', ip: '10.4.1.1' },
+    { name: 'erp-lb-01', role: 'load-balancer', env: 'prod', loc: 'us-east', ip: '10.3.6.1', online: 0 },
+    { name: 'erp-api-staging-01', role: 'api', env: 'staging', loc: 'eu-west', ip: '10.4.1.1', enforcement: 'visibility_only', ven: '24.5.12' },
   ];
+  for (const vm of erpVms) seedVm(vm, 'ERP');
 
-  for (const vm of erpVms) {
-    insertWorkload.run(
-      uuid(),
-      vm.name,
-      `${vm.name}.illumio.internal`,
-      vm.ip,
-      'vm',
-      JSON.stringify([
-        { key: 'app', value: 'ERP' },
-        { key: 'role', value: vm.role },
-        { key: 'env', value: vm.env },
-        { key: 'loc', value: vm.loc },
-      ]),
-      null,
-      null,
-    );
-  }
-
-  // CRM VMs
-  const crmVms = [
+  const crmVms: VmSeed[] = [
     { name: 'crm-web-01', role: 'web', env: 'prod', loc: 'us-east', ip: '10.5.1.1' },
-    { name: 'crm-web-02', role: 'web', env: 'prod', loc: 'us-west', ip: '10.5.1.2' },
+    { name: 'crm-web-02', role: 'web', env: 'prod', loc: 'us-west', ip: '10.5.1.2', provider: 'azure' },
     { name: 'crm-api-01', role: 'api', env: 'prod', loc: 'us-east', ip: '10.5.2.1' },
-    { name: 'crm-api-02', role: 'api', env: 'prod', loc: 'us-east', ip: '10.5.2.2' },
+    { name: 'crm-api-02', role: 'api', env: 'prod', loc: 'us-east', ip: '10.5.2.2', enforcement: 'selective' },
     { name: 'crm-db-01', role: 'db', env: 'prod', loc: 'us-east', ip: '10.5.3.1' },
-    { name: 'crm-db-02', role: 'db', env: 'prod', loc: 'us-east', ip: '10.5.3.2' },
+    { name: 'crm-db-02', role: 'db', env: 'prod', loc: 'us-east', ip: '10.5.3.2', os: 'windows', provider: 'on-prem' },
     { name: 'crm-cache-01', role: 'cache', env: 'prod', loc: 'us-east', ip: '10.5.4.1' },
     { name: 'crm-worker-01', role: 'worker', env: 'prod', loc: 'us-east', ip: '10.5.5.1' },
     { name: 'crm-lb-01', role: 'load-balancer', env: 'prod', loc: 'us-east', ip: '10.5.6.1' },
-    { name: 'crm-api-dev-01', role: 'api', env: 'dev', loc: 'us-west', ip: '10.6.1.1' },
+    { name: 'crm-api-dev-01', role: 'api', env: 'dev', loc: 'us-west', ip: '10.6.1.1', enforcement: 'visibility_only', ven: '24.5.12' },
   ];
+  for (const vm of crmVms) seedVm(vm, 'CRM');
 
-  for (const vm of crmVms) {
-    insertWorkload.run(
-      uuid(),
-      vm.name,
-      `${vm.name}.illumio.internal`,
-      vm.ip,
-      'vm',
-      JSON.stringify([
-        { key: 'app', value: 'CRM' },
-        { key: 'role', value: vm.role },
-        { key: 'env', value: vm.env },
-        { key: 'loc', value: vm.loc },
-      ]),
-      null,
-      null,
-    );
-  }
+  // Unmanaged workloads (3)
+  insertWorkload.run(
+    uuid(), 'payment-gateway-ext', 'gateway.stripe.com', '198.51.100.1', 'vm',
+    JSON.stringify([{ key: 'role', value: 'payment-gateway' }, { key: 'type', value: 'external' }]),
+    null, null,
+    0, 0, 'idle', null, '', null, 'uninstalled',
+    null, '198.51.100.1', '', '', 'External payment processor', now, now,
+  );
+  insertWorkload.run(
+    uuid(), 'mainframe-legacy-01', 'mainframe.corp.internal', '10.0.0.50', 'vm',
+    JSON.stringify([{ key: 'app', value: 'ERP' }, { key: 'role', value: 'db' }, { key: 'env', value: 'prod' }]),
+    null, null,
+    0, 1, 'idle', null, 'IBM z/OS 2.5', null, 'uninstalled',
+    null, null, 'us-east-dc1', 'on-prem', 'Legacy IBM mainframe', now, now,
+  );
+  insertWorkload.run(
+    uuid(), 'partner-api-acme', 'api.acme-partner.com', '203.0.113.10', 'vm',
+    JSON.stringify([{ key: 'role', value: 'api' }, { key: 'type', value: 'external' }]),
+    null, null,
+    0, 0, 'idle', null, '', null, 'uninstalled',
+    null, '203.0.113.10', '', '', 'ACME partner API endpoint', now, now,
+  );
 
   // K8s pods (~20) — 10 in us-east-prod, 10 in eu-west-staging
   const usEastPods = [
-    {
-      name: 'payment-processor-abc12',
-      ns: NS_PAYMENTS,
-      app: 'payment-processor',
-      tier: 'backend',
-      version: 'v2.1',
-      ip: '172.16.1.1',
-    },
-    {
-      name: 'payment-processor-def34',
-      ns: NS_PAYMENTS,
-      app: 'payment-processor',
-      tier: 'backend',
-      version: 'v2.1',
-      ip: '172.16.1.2',
-    },
-    {
-      name: 'checkout-ghi56',
-      ns: NS_PAYMENTS,
-      app: 'checkout',
-      tier: 'frontend',
-      version: 'v1.5',
-      ip: '172.16.1.3',
-    },
-    {
-      name: 'web-frontend-jkl78',
-      ns: NS_WEB_FRONTEND,
-      app: 'web',
-      tier: 'frontend',
-      version: 'v3.0',
-      ip: '172.16.2.1',
-    },
-    {
-      name: 'web-frontend-mno90',
-      ns: NS_WEB_FRONTEND,
-      app: 'web',
-      tier: 'frontend',
-      version: 'v3.0',
-      ip: '172.16.2.2',
-    },
-    {
-      name: 'prometheus-pqr12',
-      ns: NS_MONITORING,
-      app: 'prometheus',
-      tier: 'monitoring',
-      version: 'v2.45',
-      ip: '172.16.3.1',
-    },
-    {
-      name: 'grafana-stu34',
-      ns: NS_MONITORING,
-      app: 'grafana',
-      tier: 'monitoring',
-      version: 'v9.4',
-      ip: '172.16.3.2',
-    },
-    {
-      name: 'backend-api-vwx56',
-      ns: NS_BACKEND,
-      app: 'backend-api',
-      tier: 'backend',
-      version: 'v1.8',
-      ip: '172.16.4.1',
-    },
-    {
-      name: 'backend-api-yza78',
-      ns: NS_BACKEND,
-      app: 'backend-api',
-      tier: 'backend',
-      version: 'v1.8',
-      ip: '172.16.4.2',
-    },
-    {
-      name: 'worker-bcd90',
-      ns: NS_BACKEND,
-      app: 'worker',
-      tier: 'worker',
-      version: 'v1.2',
-      ip: '172.16.4.3',
-    },
+    { name: 'payment-processor-abc12', ns: NS_PAYMENTS, app: 'payment-processor', tier: 'backend', version: 'v2.1', ip: '172.16.1.1' },
+    { name: 'payment-processor-def34', ns: NS_PAYMENTS, app: 'payment-processor', tier: 'backend', version: 'v2.1', ip: '172.16.1.2' },
+    { name: 'checkout-ghi56', ns: NS_PAYMENTS, app: 'checkout', tier: 'frontend', version: 'v1.5', ip: '172.16.1.3' },
+    { name: 'web-frontend-jkl78', ns: NS_WEB_FRONTEND, app: 'web', tier: 'frontend', version: 'v3.0', ip: '172.16.2.1' },
+    { name: 'web-frontend-mno90', ns: NS_WEB_FRONTEND, app: 'web', tier: 'frontend', version: 'v3.0', ip: '172.16.2.2' },
+    { name: 'prometheus-pqr12', ns: NS_MONITORING, app: 'prometheus', tier: 'monitoring', version: 'v2.45', ip: '172.16.3.1' },
+    { name: 'grafana-stu34', ns: NS_MONITORING, app: 'grafana', tier: 'monitoring', version: 'v9.4', ip: '172.16.3.2' },
+    { name: 'backend-api-vwx56', ns: NS_BACKEND, app: 'backend-api', tier: 'backend', version: 'v1.8', ip: '172.16.4.1' },
+    { name: 'backend-api-yza78', ns: NS_BACKEND, app: 'backend-api', tier: 'backend', version: 'v1.8', ip: '172.16.4.2' },
+    { name: 'worker-bcd90', ns: NS_BACKEND, app: 'worker', tier: 'worker', version: 'v1.2', ip: '172.16.4.3' },
   ];
 
   for (const pod of usEastPods) {
     insertWorkload.run(
-      uuid(),
-      pod.name,
-      `${pod.name}.${pod.ns}`,
-      pod.ip,
-      'k8s_pod',
+      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
       JSON.stringify([
         { key: 'app', value: pod.app },
         { key: 'tier', value: pod.tier },
         { key: 'version', value: pod.version },
       ]),
-      CLUSTER_USEAST,
-      pod.ns,
+      CLUSTER_USEAST, pod.ns,
+      1, 1, 'full', 'linux', 'Container Linux', '25.2.5', 'active',
+      now, null, 'us-east-dc1', 'aws', '', now, now,
     );
   }
 
   const euWestPods = [
-    {
-      name: 'payment-stg-abc12',
-      ns: NS_PAYMENTS_STG,
-      app: 'payment-processor',
-      tier: 'backend',
-      version: 'v2.0',
-      ip: '172.17.1.1',
-    },
-    {
-      name: 'payment-stg-def34',
-      ns: NS_PAYMENTS_STG,
-      app: 'payment-processor',
-      tier: 'backend',
-      version: 'v2.0',
-      ip: '172.17.1.2',
-    },
-    {
-      name: 'checkout-stg-ghi56',
-      ns: NS_PAYMENTS_STG,
-      app: 'checkout',
-      tier: 'frontend',
-      version: 'v1.4',
-      ip: '172.17.1.3',
-    },
-    {
-      name: 'web-stg-jkl78',
-      ns: NS_WEB_STG,
-      app: 'web',
-      tier: 'frontend',
-      version: 'v2.9',
-      ip: '172.17.2.1',
-    },
-    {
-      name: 'web-stg-mno90',
-      ns: NS_WEB_STG,
-      app: 'web',
-      tier: 'frontend',
-      version: 'v2.9',
-      ip: '172.17.2.2',
-    },
-    {
-      name: 'prometheus-stg-pqr12',
-      ns: NS_MONITORING_STG,
-      app: 'prometheus',
-      tier: 'monitoring',
-      version: 'v2.44',
-      ip: '172.17.3.1',
-    },
-    {
-      name: 'grafana-stg-stu34',
-      ns: NS_MONITORING_STG,
-      app: 'grafana',
-      tier: 'monitoring',
-      version: 'v9.3',
-      ip: '172.17.3.2',
-    },
-    {
-      name: 'backend-stg-vwx56',
-      ns: NS_BACKEND_STG,
-      app: 'backend-api',
-      tier: 'backend',
-      version: 'v1.7',
-      ip: '172.17.4.1',
-    },
-    {
-      name: 'backend-stg-yza78',
-      ns: NS_BACKEND_STG,
-      app: 'backend-api',
-      tier: 'backend',
-      version: 'v1.7',
-      ip: '172.17.4.2',
-    },
-    {
-      name: 'worker-stg-bcd90',
-      ns: NS_BACKEND_STG,
-      app: 'worker',
-      tier: 'worker',
-      version: 'v1.1',
-      ip: '172.17.4.3',
-    },
+    { name: 'payment-stg-abc12', ns: NS_PAYMENTS_STG, app: 'payment-processor', tier: 'backend', version: 'v2.0', ip: '172.17.1.1' },
+    { name: 'payment-stg-def34', ns: NS_PAYMENTS_STG, app: 'payment-processor', tier: 'backend', version: 'v2.0', ip: '172.17.1.2' },
+    { name: 'checkout-stg-ghi56', ns: NS_PAYMENTS_STG, app: 'checkout', tier: 'frontend', version: 'v1.4', ip: '172.17.1.3' },
+    { name: 'web-stg-jkl78', ns: NS_WEB_STG, app: 'web', tier: 'frontend', version: 'v2.9', ip: '172.17.2.1' },
+    { name: 'web-stg-mno90', ns: NS_WEB_STG, app: 'web', tier: 'frontend', version: 'v2.9', ip: '172.17.2.2' },
+    { name: 'prometheus-stg-pqr12', ns: NS_MONITORING_STG, app: 'prometheus', tier: 'monitoring', version: 'v2.44', ip: '172.17.3.1' },
+    { name: 'grafana-stg-stu34', ns: NS_MONITORING_STG, app: 'grafana', tier: 'monitoring', version: 'v9.3', ip: '172.17.3.2' },
+    { name: 'backend-stg-vwx56', ns: NS_BACKEND_STG, app: 'backend-api', tier: 'backend', version: 'v1.7', ip: '172.17.4.1' },
+    { name: 'backend-stg-yza78', ns: NS_BACKEND_STG, app: 'backend-api', tier: 'backend', version: 'v1.7', ip: '172.17.4.2' },
+    { name: 'worker-stg-bcd90', ns: NS_BACKEND_STG, app: 'worker', tier: 'worker', version: 'v1.1', ip: '172.17.4.3' },
   ];
 
   for (const pod of euWestPods) {
     insertWorkload.run(
-      uuid(),
-      pod.name,
-      `${pod.name}.${pod.ns}`,
-      pod.ip,
-      'k8s_pod',
+      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
       JSON.stringify([
         { key: 'app', value: pod.app },
         { key: 'tier', value: pod.tier },
         { key: 'version', value: pod.version },
       ]),
-      CLUSTER_EUWEST,
-      pod.ns,
+      CLUSTER_EUWEST, pod.ns,
+      1, 1, 'visibility_only', 'linux', 'Container Linux', '25.2.5', 'active',
+      now, null, 'eu-west-dc1', 'aws', '', now, now,
     );
   }
 

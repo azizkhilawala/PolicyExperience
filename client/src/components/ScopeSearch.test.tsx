@@ -23,7 +23,7 @@ describe('ScopeSearch', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Add scope labels…')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Add scope criteria…')).toBeInTheDocument();
     });
   });
 
@@ -51,7 +51,7 @@ describe('ScopeSearch', () => {
     );
 
     await waitFor(() => {
-      const input = screen.getByPlaceholderText('Add scope labels…');
+      const input = screen.getByPlaceholderText('Add scope criteria…');
       expect(input).toBeInTheDocument();
     });
   });
