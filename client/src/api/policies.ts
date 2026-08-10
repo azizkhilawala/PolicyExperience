@@ -133,7 +133,7 @@ export interface Workload {
 }
 
 export function fetchWorkloads() {
-  return apiFetch<Workload[]>('/api/workloads');
+  return apiFetch<{ data: Workload[] }>('/api/workloads').then((r) => r.data);
 }
 export function fetchIpLists() {
   return apiFetch<IpList[]>('/api/ip-lists');
