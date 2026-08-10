@@ -3,17 +3,17 @@ import { BrowserRouter, useRoutes, useLocation, useNavigate } from 'react-router
 import { Theme, defineTheme } from '@astryxdesign/core/theme';
 import { neutralTheme } from '@astryxdesign/theme-neutral';
 import { AppShell } from '@astryxdesign/core/AppShell';
-import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav';
-import { SideNav, SideNavItem } from '@astryxdesign/core/SideNav';
+import { HStack } from '@astryxdesign/core/HStack';
+import { SideNav, SideNavHeading, SideNavItem, SideNavSection } from '@astryxdesign/core/SideNav';
 import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 import { Avatar } from '@astryxdesign/core/Avatar';
 import { Icon } from '@astryxdesign/core/Icon';
 
-import { Box } from 'lucide-react';
+import { Box, Shield } from 'lucide-react';
 import { AuthProvider, useAuth } from '../hooks/useAuth.js';
 import { SettingsProvider } from '../hooks/useSettings.js';
 import { LabelsProvider } from '../hooks/useLabels.js';
-import { useColorMode } from '../hooks/useColorMode.js';
+import { ColorModeProvider, useColorMode } from '../hooks/useColorMode.js';
 import { routes } from './routes.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
 
@@ -58,67 +58,79 @@ function AppLayout() {
     <AppShell
       variant="elevated"
       height="fill"
-      topNav={
-        <TopNav
-          heading={<TopNavHeading heading="Illumio Policy Experience" />}
-          endContent={
-            <DropdownMenu
-              hasChevron={false}
-              button={{
-                label: user?.name ?? 'User menu',
-                icon: <Avatar name={user?.name ?? 'U'} size="sm" tooltip={false} />,
-                isIconOnly: true,
-                variant: 'ghost',
-              }}
-              items={userMenuItems}
+      sideNav={
+        <SideNav
+          collapsible={{ isCollapsed, onCollapsedChange: setIsCollapsed }}
+          header={
+            <SideNavHeading
+              heading="Illumio"
+              subheading="Policy Experience"
+              icon={<Icon icon={Shield} />}
             />
           }
-        />
-      }
-      sideNav={
-        <SideNav collapsible={{ isCollapsed, onCollapsedChange: setIsCollapsed }}>
-          <SideNavItem
-            label="Policies"
-            href="/policies"
-            onClick={navTo('/policies')}
-            isSelected={location.pathname.startsWith('/policies')}
-            icon={<Icon icon="funnel" />}
-          />
-          <SideNavItem
-            label="Policy-v2"
-            href="/policy-v2"
-            onClick={navTo('/policy-v2')}
-            isSelected={location.pathname.startsWith('/policy-v2')}
-            icon={<Icon icon="funnel" />}
-          />
-          <SideNavItem
-            label="Objects"
-            href="/objects"
-            onClick={navTo('/objects')}
-            isSelected={location.pathname.startsWith('/objects')}
-            icon={<Icon icon="viewColumns" />}
-          />
-          <SideNavItem
-            label="Workloads"
-            href="/workloads"
-            onClick={navTo('/workloads')}
-            isSelected={location.pathname.startsWith('/workloads')}
-            icon={<Icon icon={Box} />}
-          />
-          <SideNavItem
-            label="Audit Log"
-            href="/audit-log"
-            onClick={navTo('/audit-log')}
-            isSelected={location.pathname === '/audit-log'}
-            icon={<Icon icon="clock" />}
-          />
-          <SideNavItem
-            label="Settings"
-            href="/settings"
-            onClick={navTo('/settings')}
-            isSelected={location.pathname === '/settings'}
-            icon={<Icon icon="wrench" />}
-          />
+          footer={
+            <HStack hAlign="start">
+              <DropdownMenu
+                hasChevron={false}
+                button={{
+                  label: user?.name ?? 'User menu',
+                  icon: <Avatar name={user?.name ?? 'U'} size="sm" tooltip={false} />,
+                  isIconOnly: isCollapsed,
+                  variant: 'ghost',
+                }}
+                items={userMenuItems}
+              />
+            </HStack>
+          }
+        >
+          <SideNavSection title="Policy">
+            <SideNavItem
+              label="Policy-v1"
+              href="/policies"
+              onClick={navTo('/policies')}
+              isSelected={location.pathname.startsWith('/policies')}
+              icon={<Icon icon="funnel" />}
+            />
+            <SideNavItem
+              label="Policy-v2"
+              href="/policy-v2"
+              onClick={navTo('/policy-v2')}
+              isSelected={location.pathname.startsWith('/policy-v2')}
+              icon={<Icon icon="funnel" />}
+            />
+          </SideNavSection>
+          <SideNavSection title="Infrastructure">
+            <SideNavItem
+              label="Policy Objects"
+              href="/objects"
+              onClick={navTo('/objects')}
+              isSelected={location.pathname.startsWith('/objects')}
+              icon={<Icon icon="viewColumns" />}
+            />
+            <SideNavItem
+              label="Workloads"
+              href="/workloads"
+              onClick={navTo('/workloads')}
+              isSelected={location.pathname.startsWith('/workloads')}
+              icon={<Icon icon={Box} />}
+            />
+          </SideNavSection>
+          <SideNavSection title="Admin">
+            <SideNavItem
+              label="Audit Log"
+              href="/audit-log"
+              onClick={navTo('/audit-log')}
+              isSelected={location.pathname === '/audit-log'}
+              icon={<Icon icon="clock" />}
+            />
+            <SideNavItem
+              label="Settings"
+              href="/settings"
+              onClick={navTo('/settings')}
+              isSelected={location.pathname === '/settings'}
+              icon={<Icon icon="wrench" />}
+            />
+          </SideNavSection>
         </SideNav>
       }
     >
@@ -148,5 +160,9 @@ function ThemedApp() {
 }
 
 export default function App() {
-  return <ThemedApp />;
+  return (
+    <ColorModeProvider>
+      <ThemedApp />
+    </ColorModeProvider>
+  );
 }

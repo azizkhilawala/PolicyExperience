@@ -301,7 +301,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           row,
           <HStack gap={0.5} wrap="wrap">
             {row.services.map((s, i) => (
-              <Tooltip key={i} content={`Service\nProtocol: ${s.protocol}\nPort: ${s.port}`}>
+              <Tooltip key={i} content={`Service — ${s.protocol}:${s.port}`}>
                 <Token
                   label={`${s.protocol} ${s.port}`}
                   color="default"
@@ -343,7 +343,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
         let token: React.ReactNode;
         if (provisionStatus === 'provisioned') {
           token = (
-            <Tooltip content="Active\nRule is live in the enforced policy">
+            <Tooltip content="Active — rule is live in the enforced policy">
               <Token
                 label="Active"
                 color="green"
@@ -354,7 +354,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           );
         } else if (provisionStatus === 'pending') {
           token = (
-            <Tooltip content="Modified\nRule has unpushed changes since last provision">
+            <Tooltip content="Modified — rule has unpushed changes since last provision">
               <Token
                 label="Modified"
                 color="orange"
@@ -365,7 +365,7 @@ export function getColumns(opts: ColumnOptions): TableColumn<RuleTableRow>[] {
           );
         } else {
           token = (
-            <Tooltip content="Draft\nRule has not been provisioned yet">
+            <Tooltip content="Draft — rule has not been provisioned yet">
               <Token
                 label="Draft"
                 color="gray"

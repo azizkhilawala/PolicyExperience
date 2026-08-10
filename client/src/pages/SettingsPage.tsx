@@ -1,4 +1,3 @@
-import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Heading } from '@astryxdesign/core/Heading';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -30,10 +29,6 @@ export default function SettingsPage() {
 
   return (
     <VStack gap={4} padding={4}>
-      <Breadcrumbs>
-        <BreadcrumbItem isCurrent>Settings</BreadcrumbItem>
-      </Breadcrumbs>
-
       <Heading level={1}>Settings</Heading>
 
       <Section>

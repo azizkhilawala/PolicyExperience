@@ -90,7 +90,7 @@ export function LabelTokens({
       {labels.map((l, i) => (
         <Tooltip
           key={i}
-          content={`${getLabel(l.key)}\n${getDisplayKey(l.key)} = ${l.value}\nPolicy scope`}
+          content={`${getLabel(l.key)} — ${getDisplayKey(l.key)} = ${l.value}`}
         >
           <Token
             label={`${getDisplayKey(l.key)}=${l.value}`}

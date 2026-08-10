@@ -13,7 +13,6 @@ import { Tooltip } from '@astryxdesign/core/Tooltip';
 import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Banner } from '@astryxdesign/core/Banner';
 import { TabList, Tab } from '@astryxdesign/core/TabList';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
@@ -34,7 +33,7 @@ type V2TemplateRow = V2Template & Record<string, unknown>;
 function ScopeTokens({ policy }: { policy: V2Policy }) {
   if (policy.scope_type === 'all_workloads') {
     return (
-      <Tooltip content="Scope: All workloads\nApplies to every workload">
+      <Tooltip content="Scope: All workloads — applies to every workload">
         <Token
           label="All Workloads"
           color="blue"
@@ -47,7 +46,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
 
   if (policy.scope_type === 'labels') {
     const labelTokens = policy.scope_labels.map((l) => (
-      <Tooltip key={`${l.key}=${l.value}`} content={`Label scope\n${l.key} = ${l.value}`}>
+      <Tooltip key={`${l.key}=${l.value}`} content={`Label scope — ${l.key} = ${l.value}`}>
         <Token
           label={`${l.key}=${l.value}`}
           color="purple"
@@ -61,7 +60,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
         {labelTokens.length > 0 ? (
           labelTokens
         ) : (
-          <Tooltip content="Label-scoped policy\nNo labels assigned yet">
+          <Tooltip content="Label-scoped policy — no labels assigned yet">
             <Token
               label="Labels"
               color="purple"
@@ -78,7 +77,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   const tokens: ReactNode[] = [];
   for (const id of policy.scope_cluster_ids ?? []) {
     tokens.push(
-      <Tooltip key={`cluster-${id}`} content={`Kubernetes cluster\nCluster ID: ${id}`}>
+      <Tooltip key={`cluster-${id}`} content={`Kubernetes cluster — ${id}`}>
         <Token
           label={`Cluster: ${id}`}
           color="teal"
@@ -90,7 +89,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   }
   for (const id of policy.scope_namespace_ids ?? []) {
     tokens.push(
-      <Tooltip key={`ns-${id}`} content={`Kubernetes namespace\nNamespace ID: ${id}`}>
+      <Tooltip key={`ns-${id}`} content={`Kubernetes namespace — ${id}`}>
         <Token
           label={`NS: ${id}`}
           color="cyan"
@@ -102,7 +101,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   }
   for (const l of policy.scope_labels) {
     tokens.push(
-      <Tooltip key={`${l.key}=${l.value}`} content={`K8s label\n${l.key} = ${l.value}`}>
+      <Tooltip key={`${l.key}=${l.value}`} content={`K8s label — ${l.key} = ${l.value}`}>
         <Token
           label={`${l.key}=${l.value}`}
           color="purple"
@@ -114,7 +113,7 @@ function ScopeTokens({ policy }: { policy: V2Policy }) {
   }
   if (tokens.length === 0) {
     return (
-      <Tooltip content="Kubernetes scope\nNo clusters or namespaces selected">
+      <Tooltip content="Kubernetes scope — no clusters or namespaces selected">
         <Token
           label="Kubernetes"
           color="teal"
@@ -201,7 +200,7 @@ export default function V2PolicyListPage() {
             />
             <Text weight="medium">{row.name as string}</Text>
             {(row as V2Policy).policy_type === 'guardrail' && (
-              <Tooltip content="Guardrail policy\nRules managed by a shared template">
+              <Tooltip content="Guardrail policy — rules managed by a shared template">
                 <Token
                   label="Guardrail"
                   color="orange"
@@ -407,12 +406,8 @@ export default function V2PolicyListPage() {
 
   return (
     <VStack gap={3} padding={4}>
-      <Breadcrumbs>
-        <BreadcrumbItem isCurrent>Policies (v2)</BreadcrumbItem>
-      </Breadcrumbs>
-
       <HStack hAlign="between" vAlign="center">
-        <Heading level={1}>Policies (v2)</Heading>
+        <Heading level={1}>Policy-v2</Heading>
         {activeTab === 'policies' ? (
           <Button
             label="Create Policy"

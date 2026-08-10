@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
 import { Text } from '@astryxdesign/core/Text';
+import { Heading } from '@astryxdesign/core/Heading';
 import { Token } from '@astryxdesign/core/Token';
 import { StatusDot } from '@astryxdesign/core/StatusDot';
 import { Button } from '@astryxdesign/core/Button';
@@ -73,7 +74,7 @@ export function WorkloadListPage() {
   return (
     <VStack gap={3} padding={4}>
       <HStack vAlign="center" gap={2}>
-        <Text type="title3" weight="bold">Workloads</Text>
+        <Heading level={1}>Workloads</Heading>
         {!loading && (
           <Token label={`${total} total`} color="default" size="sm" />
         )}
@@ -151,7 +152,7 @@ export function WorkloadListPage() {
           </Table>
 
           {totalPages > 1 && (
-            <HStack hAlign="center" gap={1}>
+            <HStack hAlign="center" vAlign="center" gap={1}>
               <Button
                 label="Previous"
                 variant="secondary"

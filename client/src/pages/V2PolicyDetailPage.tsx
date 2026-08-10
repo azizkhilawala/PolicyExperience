@@ -196,7 +196,7 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Clusters">
               <HStack gap={0.5} wrap="wrap">
                 {clusterNames.map((name) => (
-                  <Tooltip key={name} content={`Kubernetes cluster\n${name}`}>
+                  <Tooltip key={name} content={`Kubernetes cluster — ${name}`}>
                     <Token
                       label={name}
                       color="teal"
@@ -212,7 +212,7 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Namespaces">
               <HStack gap={0.5} wrap="wrap">
                 {namespaceNames.map((name) => (
-                  <Tooltip key={name} content={`Kubernetes namespace\n${name}`}>
+                  <Tooltip key={name} content={`Kubernetes namespace — ${name}`}>
                     <Token
                       label={name}
                       color="cyan"
@@ -228,7 +228,7 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="K8s Labels">
               <HStack gap={0.5} wrap="wrap">
                 {policy.scope_labels.map((lbl, i) => (
-                  <Tooltip key={i} content={`K8s label\n${lbl.key} = ${lbl.value}`}>
+                  <Tooltip key={i} content={`K8s label — ${lbl.key} = ${lbl.value}`}>
                     <Token
                       label={`${lbl.key}=${lbl.value}`}
                       color="blue"
@@ -252,7 +252,7 @@ export default function V2PolicyDetailPage() {
             <MetadataListItem label="Labels">
               <HStack gap={0.5} wrap="wrap">
                 {policy.scope_labels.map((lbl, i) => (
-                  <Tooltip key={i} content={`Label scope\n${lbl.key} = ${lbl.value}`}>
+                  <Tooltip key={i} content={`Label scope — ${lbl.key} = ${lbl.value}`}>
                     <Token
                       label={`${lbl.key}=${lbl.value}`}
                       color="blue"

@@ -11,7 +11,6 @@ import { Text } from '@astryxdesign/core/Text';
 import { MoreMenu } from '@astryxdesign/core/MoreMenu';
 import { Spinner } from '@astryxdesign/core/Spinner';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { Breadcrumbs, BreadcrumbItem } from '@astryxdesign/core/Breadcrumbs';
 import { Banner } from '@astryxdesign/core/Banner';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
 import { TextInput } from '@astryxdesign/core/TextInput';
@@ -165,12 +164,8 @@ export default function PolicyListPage() {
 
   return (
     <VStack gap={3} padding={4}>
-      <Breadcrumbs>
-        <BreadcrumbItem isCurrent>Policies</BreadcrumbItem>
-      </Breadcrumbs>
-
       <HStack hAlign="between" vAlign="center">
-        <Heading level={1}>Policies</Heading>
+        <Heading level={1}>Policy-v1</Heading>
         <Button
           label="Create Policy"
           variant="primary"
