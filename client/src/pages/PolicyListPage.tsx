@@ -230,6 +230,10 @@ export default function PolicyListPage() {
           setDialogOpen(false);
           navigate(`/policies/${policy.id}`);
         }}
+        onCreatedV2={(policy) => {
+          setDialogOpen(false);
+          navigate(`/policy-v2/${policy.id}`);
+        }}
       />
 
       <AlertDialog

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Table, proportional, pixel } from '@astryxdesign/core/Table';
 import { Button } from '@astryxdesign/core/Button';
+import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 import { Heading } from '@astryxdesign/core/Heading';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
@@ -24,6 +25,8 @@ import { fetchV2Templates, deleteV2Template, type V2Template } from '../api/v2-t
 import { ProductIcon, ProductIllustration } from '../components/ProductVisuals.js';
 import { StatusIndicator } from '../components/StatusIndicator.js';
 import { ProvisionBadge } from '../components/ProvisionBadge.js';
+import { CreateV2PolicyDialog } from '../features/v2-policies/CreateV2PolicyDialog.js';
+import { CreateV2GuardrailDialog } from '../features/v2-policies/CreateV2GuardrailDialog.js';
 
 // V2Policy must satisfy Table's Record<string, unknown> generic constraint
 type V2PolicyRow = V2Policy & Record<string, unknown>;
@@ -148,6 +151,8 @@ export default function V2PolicyListPage() {
     onConfirm: () => Promise<void>;
   } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [guardrailDialogOpen, setGuardrailDialogOpen] = useState(false);
 
   const query = searchQuery.toLowerCase();
 
@@ -409,11 +414,16 @@ export default function V2PolicyListPage() {
       <HStack hAlign="between" vAlign="center">
         <Heading level={1}>Policy-v2</Heading>
         {activeTab === 'policies' ? (
-          <Button
-            label="Create Policy"
-            variant="primary"
-            icon={<ProductIcon name="add" color="inherit" />}
-            onClick={() => navigate('/policy-v2/new')}
+          <DropdownMenu
+            button={{
+              label: 'Create Policy',
+              variant: 'primary',
+              icon: <ProductIcon name="add" color="inherit" />,
+            }}
+            items={[
+              { label: 'Create from Scratch', onClick: () => setCreateDialogOpen(true) },
+              { label: 'Create from Template', onClick: () => setGuardrailDialogOpen(true) },
+            ]}
           />
         ) : (
           <Button
@@ -468,11 +478,16 @@ export default function V2PolicyListPage() {
             icon={<ProductIllustration kind="policies" />}
             headingLevel={3}
             actions={
-              <Button
-                label="Create Policy"
-                variant="primary"
-                icon={<ProductIcon name="add" color="inherit" />}
-                onClick={() => navigate('/policy-v2/new')}
+              <DropdownMenu
+                button={{
+                  label: 'Create Policy',
+                  variant: 'primary',
+                  icon: <ProductIcon name="add" color="inherit" />,
+                }}
+                items={[
+                  { label: 'Create from Scratch', onClick: () => setCreateDialogOpen(true) },
+                  { label: 'Create from Template', onClick: () => setGuardrailDialogOpen(true) },
+                ]}
               />
             }
           />
@@ -518,6 +533,22 @@ export default function V2PolicyListPage() {
           await deleteConfirm.onConfirm();
           setDeleteLoading(false);
           setDeleteConfirm(null);
+        }}
+      />
+      <CreateV2PolicyDialog
+        isOpen={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={(policy) => {
+          setCreateDialogOpen(false);
+          navigate(`/policy-v2/${policy.id}`);
+        }}
+      />
+      <CreateV2GuardrailDialog
+        isOpen={guardrailDialogOpen}
+        onClose={() => setGuardrailDialogOpen(false)}
+        onCreated={(policy) => {
+          setGuardrailDialogOpen(false);
+          navigate(`/policy-v2/${policy.id}`);
         }}
       />
     </VStack>

@@ -14,9 +14,9 @@ describe('V2PolicyListPage', () => {
     expect(screen.getByRole('button', { name: 'Templates' })).toBeInTheDocument();
   });
 
-  it('shows Create Policy button on Policies tab', () => {
+  it('shows Create Policy dropdown on Policies tab', () => {
     renderWithProviders(<V2PolicyListPage />);
-    expect(screen.getByText('Create Policy')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create Policy/i })).toBeInTheDocument();
   });
 
   it('shows a policy row when API returns data', async () => {
