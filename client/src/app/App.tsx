@@ -1,4 +1,5 @@
-import { BrowserRouter, useRoutes, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { BrowserRouter, useRoutes, useLocation, useNavigate } from 'react-router-dom';
 import { Theme, defineTheme } from '@astryxdesign/core/theme';
 import { neutralTheme } from '@astryxdesign/theme-neutral';
 import { AppShell } from '@astryxdesign/core/AppShell';
@@ -31,8 +32,15 @@ const a11yTheme = defineTheme({
 
 function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, users, switchUser } = useAuth();
   const routeElement = useRoutes(routes);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const navTo = (path: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(path);
+  };
 
   const userMenuItems = [
     { label: user?.name ?? 'Unknown', isDisabled: true },
@@ -68,40 +76,46 @@ function AppLayout() {
         />
       }
       sideNav={
-        <SideNav collapsible>
+        <SideNav collapsible={{ isCollapsed, onCollapsedChange: setIsCollapsed }}>
           <SideNavItem
             label="Policies"
             href="/policies"
+            onClick={navTo('/policies')}
             isSelected={location.pathname.startsWith('/policies')}
             icon={<Icon icon="funnel" />}
           />
           <SideNavItem
             label="Policy-v2"
             href="/policy-v2"
+            onClick={navTo('/policy-v2')}
             isSelected={location.pathname.startsWith('/policy-v2')}
             icon={<Icon icon="funnel" />}
           />
           <SideNavItem
             label="Objects"
             href="/objects"
+            onClick={navTo('/objects')}
             isSelected={location.pathname.startsWith('/objects')}
             icon={<Icon icon="viewColumns" />}
           />
           <SideNavItem
             label="Workloads"
             href="/workloads"
+            onClick={navTo('/workloads')}
             isSelected={location.pathname.startsWith('/workloads')}
             icon={<Icon icon={Box} />}
           />
           <SideNavItem
             label="Audit Log"
             href="/audit-log"
+            onClick={navTo('/audit-log')}
             isSelected={location.pathname === '/audit-log'}
             icon={<Icon icon="clock" />}
           />
           <SideNavItem
             label="Settings"
             href="/settings"
+            onClick={navTo('/settings')}
             isSelected={location.pathname === '/settings'}
             icon={<Icon icon="wrench" />}
           />
