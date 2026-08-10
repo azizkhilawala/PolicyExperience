@@ -35,6 +35,9 @@ const LBL_ROLE_LB = 'lbl-role-lb-0017';
 // K8s clusters
 const CLUSTER_USEAST = 'cluster-useast-prod-0001';
 const CLUSTER_EUWEST = 'cluster-euwest-stg-0002';
+const CLUSTER_USWEST = 'cluster-uswest-prod-0003';
+const CLUSTER_APSOUTHEAST = 'cluster-apsoutheast-prod-0004';
+const CLUSTER_EUCENTRAL = 'cluster-eucentral-dev-0005';
 
 // K8s namespaces — us-east
 const NS_PAYMENTS = 'ns-payments-0001';
@@ -47,6 +50,22 @@ const NS_PAYMENTS_STG = 'ns-payments-stg-0005';
 const NS_WEB_STG = 'ns-web-stg-0006';
 const NS_MONITORING_STG = 'ns-monitoring-stg-0007';
 const NS_BACKEND_STG = 'ns-backend-stg-0008';
+
+// K8s namespaces — us-west
+const NS_AUTH = 'ns-auth-0009';
+const NS_DATA_PIPELINE = 'ns-data-pipeline-0010';
+const NS_SEARCH = 'ns-search-0011';
+const NS_GATEWAY = 'ns-gateway-0012';
+
+// K8s namespaces — ap-southeast
+const NS_ORDERS = 'ns-orders-0013';
+const NS_INVENTORY = 'ns-inventory-0014';
+const NS_NOTIFICATIONS = 'ns-notifications-0015';
+
+// K8s namespaces — eu-central
+const NS_ML_TRAINING = 'ns-ml-training-0016';
+const NS_ETL = 'ns-etl-0017';
+const NS_LOGGING = 'ns-logging-0018';
 
 // Label groups
 const LG_WEB_TIER = 'lg-web-tier-0001';
@@ -83,12 +102,22 @@ const CA_AWS_PROD = 'ca-aws-prod-0001';
 const CA_AWS_STAGING = 'ca-aws-staging-0002';
 const CA_AZURE_PROD = 'ca-azure-prod-0003';
 const CA_AZURE_DEV = 'ca-azure-dev-0004';
+const CA_AWS_DR = 'ca-aws-dr-0005';
+const CA_AZURE_STAGING = 'ca-azure-staging-0006';
+const CA_AWS_ANALYTICS = 'ca-aws-analytics-0007';
+const CA_AZURE_APAC = 'ca-azure-apac-0008';
 
 // Cloud VPCs
 const CV_AWS_PROD = 'cv-aws-prod-vpc-0001';
 const CV_AWS_STAGING = 'cv-aws-staging-vpc-0002';
 const CV_AZURE_PROD = 'cv-azure-prod-vnet-0003';
 const CV_AZURE_DEV = 'cv-azure-dev-vnet-0004';
+const CV_AWS_DR = 'cv-aws-dr-vpc-0005';
+const CV_AZURE_STAGING = 'cv-azure-staging-vnet-0006';
+const CV_AWS_ANALYTICS = 'cv-aws-analytics-vpc-0007';
+const CV_AZURE_APAC = 'cv-azure-apac-vnet-0008';
+const CV_AWS_PROD_PRIVATE = 'cv-aws-prod-private-vpc-0009';
+const CV_AZURE_PROD_DMZ = 'cv-azure-prod-dmz-vnet-0010';
 
 // Cloud subnets
 const CS_AWS_PROD_1A = 'cs-aws-prod-private-1a-0001';
@@ -128,6 +157,18 @@ const LBL_K8S_TIER_FRONTEND = 'lbl-k8s-tier-frontend-0030';
 const LBL_K8S_TIER_BACKEND = 'lbl-k8s-tier-backend-0031';
 const LBL_K8S_ENV_PROD = 'lbl-k8s-env-prod-0032';
 const LBL_K8S_ENV_STAGING = 'lbl-k8s-env-staging-0033';
+const LBL_K8S_APP_REDIS = 'lbl-k8s-app-redis-0034';
+const LBL_K8S_APP_NGINX = 'lbl-k8s-app-nginx-0035';
+const LBL_K8S_APP_POSTGRES = 'lbl-k8s-app-postgres-0036';
+const LBL_K8S_TIER_DATA = 'lbl-k8s-tier-data-0037';
+const LBL_K8S_TIER_CACHE = 'lbl-k8s-tier-cache-0038';
+const LBL_K8S_TIER_INGRESS = 'lbl-k8s-tier-ingress-0039';
+const LBL_K8S_ENV_DEV = 'lbl-k8s-env-dev-0040';
+const LBL_K8S_TEAM_PLATFORM = 'lbl-k8s-team-platform-0041';
+const LBL_K8S_TEAM_PAYMENTS = 'lbl-k8s-team-payments-0042';
+const LBL_K8S_TEAM_SEARCH = 'lbl-k8s-team-search-0043';
+const LBL_K8S_RELEASE_STABLE = 'lbl-k8s-release-stable-0044';
+const LBL_K8S_RELEASE_CANARY = 'lbl-k8s-release-canary-0045';
 
 // Policies
 const POLICY_HRM = 'policy-hrm-prod-access-0001';
@@ -220,6 +261,18 @@ const seed = db.transaction(() => {
   insertLabel.run(LBL_K8S_TIER_BACKEND, 'tier', 'k8s-backend', 'k8s');
   insertLabel.run(LBL_K8S_ENV_PROD, 'env', 'k8s-production', 'k8s');
   insertLabel.run(LBL_K8S_ENV_STAGING, 'env', 'k8s-staging', 'k8s');
+  insertLabel.run(LBL_K8S_APP_REDIS, 'app', 'k8s-redis', 'k8s');
+  insertLabel.run(LBL_K8S_APP_NGINX, 'app', 'k8s-nginx', 'k8s');
+  insertLabel.run(LBL_K8S_APP_POSTGRES, 'app', 'k8s-postgres', 'k8s');
+  insertLabel.run(LBL_K8S_TIER_DATA, 'tier', 'k8s-data', 'k8s');
+  insertLabel.run(LBL_K8S_TIER_CACHE, 'tier', 'k8s-cache', 'k8s');
+  insertLabel.run(LBL_K8S_TIER_INGRESS, 'tier', 'k8s-ingress', 'k8s');
+  insertLabel.run(LBL_K8S_ENV_DEV, 'env', 'k8s-development', 'k8s');
+  insertLabel.run(LBL_K8S_TEAM_PLATFORM, 'team', 'k8s-platform', 'k8s');
+  insertLabel.run(LBL_K8S_TEAM_PAYMENTS, 'team', 'k8s-payments', 'k8s');
+  insertLabel.run(LBL_K8S_TEAM_SEARCH, 'team', 'k8s-search', 'k8s');
+  insertLabel.run(LBL_K8S_RELEASE_STABLE, 'release', 'k8s-stable', 'k8s');
+  insertLabel.run(LBL_K8S_RELEASE_CANARY, 'release', 'k8s-canary', 'k8s');
 
   // ── Label Groups ───────────────────────────────────────────────────────────
   const insertLabelGroup = db.prepare(
@@ -333,6 +386,10 @@ const seed = db.transaction(() => {
   insertCloudAccount.run(CA_AWS_STAGING, 'aws', 'Staging', '987654321098', 'us-west-2');
   insertCloudAccount.run(CA_AZURE_PROD, 'azure', 'Enterprise Prod', 'aaaa-bbbb-cccc-dddd', null);
   insertCloudAccount.run(CA_AZURE_DEV, 'azure', 'Enterprise Dev', 'eeee-ffff-1111-2222', null);
+  insertCloudAccount.run(CA_AWS_DR, 'aws', 'Disaster Recovery', '111222333444', 'us-west-1');
+  insertCloudAccount.run(CA_AZURE_STAGING, 'azure', 'Enterprise Staging', 'cccc-dddd-3333-4444', null);
+  insertCloudAccount.run(CA_AWS_ANALYTICS, 'aws', 'Analytics Workloads', '555666777888', 'us-east-2');
+  insertCloudAccount.run(CA_AZURE_APAC, 'azure', 'APAC Region', 'ffff-aaaa-5555-6666', null);
 
   // ── Cloud VPCs ─────────────────────────────────────────────────────────────
   const insertCloudVpc = db.prepare(
@@ -366,6 +423,12 @@ const seed = db.transaction(() => {
     'prod-rg',
   );
   insertCloudVpc.run(CV_AZURE_DEV, 'azure', 'dev-vnet', 'dev-vnet', CA_AZURE_DEV, null, 'dev-rg');
+  insertCloudVpc.run(CV_AWS_DR, 'aws', 'dr-vpc', 'vpc-dr1a2b3c', CA_AWS_DR, 'us-west-1', null);
+  insertCloudVpc.run(CV_AZURE_STAGING, 'azure', 'staging-vnet', 'staging-vnet', CA_AZURE_STAGING, null, 'staging-rg');
+  insertCloudVpc.run(CV_AWS_ANALYTICS, 'aws', 'analytics-vpc', 'vpc-analytics-01', CA_AWS_ANALYTICS, 'us-east-2', null);
+  insertCloudVpc.run(CV_AZURE_APAC, 'azure', 'apac-vnet', 'apac-vnet', CA_AZURE_APAC, null, 'apac-rg');
+  insertCloudVpc.run(CV_AWS_PROD_PRIVATE, 'aws', 'prod-private-vpc', 'vpc-priv-0e1f2a', CA_AWS_PROD, 'us-east-1', null);
+  insertCloudVpc.run(CV_AZURE_PROD_DMZ, 'azure', 'prod-dmz-vnet', 'prod-dmz-vnet', CA_AZURE_PROD, null, 'prod-rg');
 
   // ── Cloud Subnets ──────────────────────────────────────────────────────────
   const insertCloudSubnet = db.prepare(
@@ -412,11 +475,20 @@ const seed = db.transaction(() => {
     null,
   );
   insertCloudSubnet.run(CS_AZURE_DEV, 'azure', 'dev-default', 'dev-default', CV_AZURE_DEV, null);
+  insertCloudSubnet.run('cs-aws-dr-private-0007', 'aws', 'dr-private-1a', 'subnet-dr-aaa', CV_AWS_DR, 'us-west-1');
+  insertCloudSubnet.run('cs-azure-staging-app-0008', 'azure', 'staging-app-subnet', 'staging-app-subnet', CV_AZURE_STAGING, null);
+  insertCloudSubnet.run('cs-aws-analytics-data-0009', 'aws', 'analytics-data', 'subnet-analytics-01', CV_AWS_ANALYTICS, 'us-east-2');
+  insertCloudSubnet.run('cs-azure-apac-app-0010', 'azure', 'apac-app-subnet', 'apac-app-subnet', CV_AZURE_APAC, null);
+  insertCloudSubnet.run('cs-aws-prod-priv-1c-0011', 'aws', 'prod-private-1c', 'subnet-priv-ccc', CV_AWS_PROD_PRIVATE, 'us-east-1');
+  insertCloudSubnet.run('cs-azure-prod-dmz-0012', 'azure', 'prod-dmz-subnet', 'prod-dmz-subnet', CV_AZURE_PROD_DMZ, null);
 
   // ── K8s Clusters ───────────────────────────────────────────────────────────
   const insertCluster = db.prepare('INSERT INTO k8s_clusters (id, name, region) VALUES (?, ?, ?)');
   insertCluster.run(CLUSTER_USEAST, 'us-east-prod', 'us-east-1');
   insertCluster.run(CLUSTER_EUWEST, 'eu-west-staging', 'eu-west-1');
+  insertCluster.run(CLUSTER_USWEST, 'us-west-prod', 'us-west-2');
+  insertCluster.run(CLUSTER_APSOUTHEAST, 'ap-southeast-prod', 'ap-southeast-1');
+  insertCluster.run(CLUSTER_EUCENTRAL, 'eu-central-dev', 'eu-central-1');
 
   // ── K8s Namespaces ─────────────────────────────────────────────────────────
   const insertNs = db.prepare(
@@ -471,6 +543,69 @@ const seed = db.transaction(() => {
     'backend-stg',
     CLUSTER_EUWEST,
     JSON.stringify([{ key: 'team', value: 'backend' }]),
+  );
+  // us-west-prod namespaces
+  insertNs.run(
+    NS_AUTH,
+    'auth',
+    CLUSTER_USWEST,
+    JSON.stringify([{ key: 'team', value: 'identity' }, { key: 'criticality', value: 'high' }]),
+  );
+  insertNs.run(
+    NS_DATA_PIPELINE,
+    'data-pipeline',
+    CLUSTER_USWEST,
+    JSON.stringify([{ key: 'team', value: 'data-eng' }]),
+  );
+  insertNs.run(
+    NS_SEARCH,
+    'search',
+    CLUSTER_USWEST,
+    JSON.stringify([{ key: 'team', value: 'search' }, { key: 'tier', value: 'core' }]),
+  );
+  insertNs.run(
+    NS_GATEWAY,
+    'api-gateway',
+    CLUSTER_USWEST,
+    JSON.stringify([{ key: 'team', value: 'platform' }, { key: 'tier', value: 'ingress' }]),
+  );
+  // ap-southeast-prod namespaces
+  insertNs.run(
+    NS_ORDERS,
+    'orders',
+    CLUSTER_APSOUTHEAST,
+    JSON.stringify([{ key: 'team', value: 'commerce' }, { key: 'region', value: 'apac' }]),
+  );
+  insertNs.run(
+    NS_INVENTORY,
+    'inventory',
+    CLUSTER_APSOUTHEAST,
+    JSON.stringify([{ key: 'team', value: 'supply-chain' }]),
+  );
+  insertNs.run(
+    NS_NOTIFICATIONS,
+    'notifications',
+    CLUSTER_APSOUTHEAST,
+    JSON.stringify([{ key: 'team', value: 'messaging' }]),
+  );
+  // eu-central-dev namespaces
+  insertNs.run(
+    NS_ML_TRAINING,
+    'ml-training',
+    CLUSTER_EUCENTRAL,
+    JSON.stringify([{ key: 'team', value: 'ml-ops' }, { key: 'gpu', value: 'true' }]),
+  );
+  insertNs.run(
+    NS_ETL,
+    'etl',
+    CLUSTER_EUCENTRAL,
+    JSON.stringify([{ key: 'team', value: 'data-eng' }]),
+  );
+  insertNs.run(
+    NS_LOGGING,
+    'logging',
+    CLUSTER_EUCENTRAL,
+    JSON.stringify([{ key: 'team', value: 'ops' }, { key: 'tier', value: 'observability' }]),
   );
 
   // ── Workloads ──────────────────────────────────────────────────────────────
@@ -637,6 +772,86 @@ const seed = db.transaction(() => {
       CLUSTER_EUWEST, pod.ns,
       1, 1, 'visibility_only', 'linux', 'Container Linux', '25.2.5', 'active',
       now, null, 'eu-west-dc1', 'aws', '', now, now,
+    );
+  }
+
+  // K8s pods — us-west-prod
+  const usWestPods = [
+    { name: 'auth-service-abc12', ns: NS_AUTH, app: 'auth-service', tier: 'backend', version: 'v3.1', ip: '172.18.1.1' },
+    { name: 'auth-service-def34', ns: NS_AUTH, app: 'auth-service', tier: 'backend', version: 'v3.1', ip: '172.18.1.2' },
+    { name: 'oauth-proxy-ghi56', ns: NS_AUTH, app: 'oauth-proxy', tier: 'ingress', version: 'v1.0', ip: '172.18.1.3' },
+    { name: 'kafka-consumer-jkl78', ns: NS_DATA_PIPELINE, app: 'kafka-consumer', tier: 'data', version: 'v2.3', ip: '172.18.2.1' },
+    { name: 'spark-driver-mno90', ns: NS_DATA_PIPELINE, app: 'spark-driver', tier: 'data', version: 'v4.0', ip: '172.18.2.2' },
+    { name: 'elasticsearch-pqr12', ns: NS_SEARCH, app: 'elasticsearch', tier: 'data', version: 'v8.11', ip: '172.18.3.1' },
+    { name: 'elasticsearch-stu34', ns: NS_SEARCH, app: 'elasticsearch', tier: 'data', version: 'v8.11', ip: '172.18.3.2' },
+    { name: 'search-api-vwx56', ns: NS_SEARCH, app: 'search-api', tier: 'backend', version: 'v2.0', ip: '172.18.3.3' },
+    { name: 'nginx-ingress-yza78', ns: NS_GATEWAY, app: 'nginx-ingress', tier: 'ingress', version: 'v1.9', ip: '172.18.4.1' },
+    { name: 'rate-limiter-bcd90', ns: NS_GATEWAY, app: 'rate-limiter', tier: 'ingress', version: 'v1.2', ip: '172.18.4.2' },
+  ];
+
+  for (const pod of usWestPods) {
+    insertWorkload.run(
+      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
+      JSON.stringify([
+        { key: 'app', value: pod.app },
+        { key: 'tier', value: pod.tier },
+        { key: 'version', value: pod.version },
+      ]),
+      CLUSTER_USWEST, pod.ns,
+      1, 1, 'full', 'linux', 'Container Linux', '25.2.5', 'active',
+      now, null, 'us-west-dc1', 'aws', '', now, now,
+    );
+  }
+
+  // K8s pods — ap-southeast-prod
+  const apSoutheastPods = [
+    { name: 'order-api-abc12', ns: NS_ORDERS, app: 'order-api', tier: 'backend', version: 'v5.2', ip: '172.19.1.1' },
+    { name: 'order-api-def34', ns: NS_ORDERS, app: 'order-api', tier: 'backend', version: 'v5.2', ip: '172.19.1.2' },
+    { name: 'order-worker-ghi56', ns: NS_ORDERS, app: 'order-worker', tier: 'worker', version: 'v5.2', ip: '172.19.1.3' },
+    { name: 'inventory-api-jkl78', ns: NS_INVENTORY, app: 'inventory-api', tier: 'backend', version: 'v2.8', ip: '172.19.2.1' },
+    { name: 'inventory-sync-mno90', ns: NS_INVENTORY, app: 'inventory-sync', tier: 'worker', version: 'v2.8', ip: '172.19.2.2' },
+    { name: 'notification-svc-pqr12', ns: NS_NOTIFICATIONS, app: 'notification-svc', tier: 'backend', version: 'v1.5', ip: '172.19.3.1' },
+    { name: 'email-sender-stu34', ns: NS_NOTIFICATIONS, app: 'email-sender', tier: 'worker', version: 'v1.5', ip: '172.19.3.2' },
+    { name: 'sms-gateway-vwx56', ns: NS_NOTIFICATIONS, app: 'sms-gateway', tier: 'backend', version: 'v1.1', ip: '172.19.3.3' },
+  ];
+
+  for (const pod of apSoutheastPods) {
+    insertWorkload.run(
+      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
+      JSON.stringify([
+        { key: 'app', value: pod.app },
+        { key: 'tier', value: pod.tier },
+        { key: 'version', value: pod.version },
+      ]),
+      CLUSTER_APSOUTHEAST, pod.ns,
+      1, 1, 'full', 'linux', 'Container Linux', '25.2.5', 'active',
+      now, null, 'ap-southeast-dc1', 'aws', '', now, now,
+    );
+  }
+
+  // K8s pods — eu-central-dev
+  const euCentralPods = [
+    { name: 'ml-trainer-abc12', ns: NS_ML_TRAINING, app: 'ml-trainer', tier: 'compute', version: 'v1.0', ip: '172.20.1.1' },
+    { name: 'ml-trainer-def34', ns: NS_ML_TRAINING, app: 'ml-trainer', tier: 'compute', version: 'v1.0', ip: '172.20.1.2' },
+    { name: 'model-server-ghi56', ns: NS_ML_TRAINING, app: 'model-server', tier: 'backend', version: 'v2.1', ip: '172.20.1.3' },
+    { name: 'etl-scheduler-jkl78', ns: NS_ETL, app: 'etl-scheduler', tier: 'data', version: 'v3.5', ip: '172.20.2.1' },
+    { name: 'etl-worker-mno90', ns: NS_ETL, app: 'etl-worker', tier: 'worker', version: 'v3.5', ip: '172.20.2.2' },
+    { name: 'fluentd-pqr12', ns: NS_LOGGING, app: 'fluentd', tier: 'observability', version: 'v1.16', ip: '172.20.3.1' },
+    { name: 'elasticsearch-log-stu34', ns: NS_LOGGING, app: 'elasticsearch', tier: 'data', version: 'v8.10', ip: '172.20.3.2' },
+    { name: 'kibana-vwx56', ns: NS_LOGGING, app: 'kibana', tier: 'frontend', version: 'v8.10', ip: '172.20.3.3' },
+  ];
+
+  for (const pod of euCentralPods) {
+    insertWorkload.run(
+      uuid(), pod.name, `${pod.name}.${pod.ns}`, pod.ip, 'k8s_pod',
+      JSON.stringify([
+        { key: 'app', value: pod.app },
+        { key: 'tier', value: pod.tier },
+        { key: 'version', value: pod.version },
+      ]),
+      CLUSTER_EUCENTRAL, pod.ns,
+      1, 1, 'visibility_only', 'linux', 'Container Linux', '25.2.5', 'active',
+      now, null, 'eu-central-dc1', 'aws', '', now, now,
     );
   }
 

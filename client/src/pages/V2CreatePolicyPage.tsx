@@ -111,10 +111,10 @@ export default function V2CreatePolicyPage() {
       const allLabels = new Map<string, string>();
       for (const nsId of selectedNamespaceIds) {
         try {
-          const workloads = await apiFetch<
-            Array<{ labels: Array<{ key: string; value: string }> }>
-          >(`/api/workloads?namespace_id=${nsId}`);
-          for (const wl of workloads) {
+          const res = await apiFetch<
+            { data: Array<{ labels: Array<{ key: string; value: string }> }> }
+          >(`/api/workloads?namespace_id=${nsId}&limit=100`);
+          for (const wl of res.data) {
             for (const lbl of wl.labels ?? []) {
               const kv = `${lbl.key}=${lbl.value}`;
               allLabels.set(kv, kv);
