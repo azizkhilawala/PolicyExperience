@@ -217,6 +217,19 @@ export function buildV2EntityConfig(
     });
   }
 
+  const serviceAccountValues = [
+    { value: 'default', label: 'default' },
+    { value: 'payment-processor-sa', label: 'payment-processor-sa' },
+    { value: 'monitoring-agent-sa', label: 'monitoring-agent-sa' },
+    { value: 'backend-api-sa', label: 'backend-api-sa' },
+    { value: 'ingress-controller-sa', label: 'ingress-controller-sa' },
+    { value: 'cert-manager-sa', label: 'cert-manager-sa' },
+    { value: 'fluentd-sa', label: 'fluentd-sa' },
+    { value: 'etl-worker-sa', label: 'etl-worker-sa' },
+    { value: 'ml-trainer-sa', label: 'ml-trainer-sa' },
+    { value: 'vault-auth-sa', label: 'vault-auth-sa' },
+  ];
+
   fields.push({
     key: 'k8s_service_account',
     label: 'K8s Service Account',
@@ -226,25 +239,58 @@ export function buildV2EntityConfig(
       {
         key: 'is',
         label: 'is',
-        value: { type: 'string_list' },
+        value: { type: 'enum', values: serviceAccountValues },
       } satisfies PowerSearchOperator,
       {
         key: 'is_not',
         label: 'is not',
-        value: { type: 'string_list' },
+        value: { type: 'enum', values: serviceAccountValues },
       } satisfies PowerSearchOperator,
       {
         key: 'is_any_of',
         label: 'is any of',
-        value: { type: 'string_list' },
+        value: { type: 'enum_list', values: serviceAccountValues },
       } satisfies PowerSearchOperator,
       {
         key: 'is_none_of',
         label: 'is none of',
-        value: { type: 'string_list' },
+        value: { type: 'enum_list', values: serviceAccountValues },
       } satisfies PowerSearchOperator,
     ],
   });
+
+  const k8sServiceValues = [
+    { value: 'payment-api-svc', label: 'payment-api-svc' },
+    { value: 'backend-api-svc', label: 'backend-api-svc' },
+    { value: 'web-frontend-svc', label: 'web-frontend-svc' },
+    { value: 'prometheus-svc', label: 'prometheus-svc' },
+    { value: 'grafana-svc', label: 'grafana-svc' },
+    { value: 'elasticsearch-svc', label: 'elasticsearch-svc' },
+    { value: 'redis-svc', label: 'redis-svc' },
+    { value: 'postgres-svc', label: 'postgres-svc' },
+    { value: 'kube-dns', label: 'kube-dns' },
+    { value: 'notification-svc', label: 'notification-svc' },
+  ];
+
+  const k8sIngressValues = [
+    { value: 'nginx-ingress', label: 'nginx-ingress' },
+    { value: 'traefik-ingress', label: 'traefik-ingress' },
+    { value: 'istio-ingressgateway', label: 'istio-ingressgateway' },
+    { value: 'haproxy-ingress', label: 'haproxy-ingress' },
+    { value: 'contour-ingress', label: 'contour-ingress' },
+    { value: 'alb-ingress', label: 'alb-ingress' },
+    { value: 'api-gateway-ingress', label: 'api-gateway-ingress' },
+  ];
+
+  const k8sGatewayValues = [
+    { value: 'istio-gateway', label: 'istio-gateway' },
+    { value: 'kong-gateway', label: 'kong-gateway' },
+    { value: 'envoy-gateway', label: 'envoy-gateway' },
+    { value: 'nginx-gateway', label: 'nginx-gateway' },
+    { value: 'apisix-gateway', label: 'apisix-gateway' },
+    { value: 'traefik-gateway', label: 'traefik-gateway' },
+    { value: 'gloo-gateway', label: 'gloo-gateway' },
+  ];
 
   if (direction === 'egress') {
     fields.push(
@@ -257,12 +303,12 @@ export function buildV2EntityConfig(
           {
             key: 'is',
             label: 'is',
-            value: { type: 'string' },
+            value: { type: 'enum', values: k8sServiceValues },
           } satisfies PowerSearchOperator,
           {
             key: 'is_not',
             label: 'is not',
-            value: { type: 'string' },
+            value: { type: 'enum', values: k8sServiceValues },
           } satisfies PowerSearchOperator,
         ],
       },
@@ -275,12 +321,12 @@ export function buildV2EntityConfig(
           {
             key: 'is',
             label: 'is',
-            value: { type: 'string' },
+            value: { type: 'enum', values: k8sIngressValues },
           } satisfies PowerSearchOperator,
           {
             key: 'is_not',
             label: 'is not',
-            value: { type: 'string' },
+            value: { type: 'enum', values: k8sIngressValues },
           } satisfies PowerSearchOperator,
         ],
       },
@@ -293,12 +339,12 @@ export function buildV2EntityConfig(
           {
             key: 'is',
             label: 'is',
-            value: { type: 'string' },
+            value: { type: 'enum', values: k8sGatewayValues },
           } satisfies PowerSearchOperator,
           {
             key: 'is_not',
             label: 'is not',
-            value: { type: 'string' },
+            value: { type: 'enum', values: k8sGatewayValues },
           } satisfies PowerSearchOperator,
         ],
       },
