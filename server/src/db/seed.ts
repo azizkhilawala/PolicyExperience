@@ -189,6 +189,8 @@ const now = '2026-07-28T10:00:00Z';
 const seed = db.transaction(() => {
   // Clear all tables in reverse FK order
   db.exec(`
+    DELETE FROM workload_label_mappings;
+    DELETE FROM k8s_label_mapping_rules;
     DELETE FROM provision_history;
     DELETE FROM provisioned_rules;
     DELETE FROM rules;
@@ -1944,6 +1946,101 @@ const seed = db.transaction(() => {
     now,
     now,
   );
+
+  // ─── K8s Label Mapping Rules ──────────────────────────────────────────────
+  const RULE_COPY_APP = 'rule-copy-app-label-0001';
+  const RULE_PROD_NS = 'rule-prod-namespace-0002';
+  const RULE_FRONTEND_TIER = 'rule-frontend-tier-0003';
+  const RULE_USEAST_LOC = 'rule-useast-location-0004';
+  const RULE_PAYMENTS_APP = 'rule-payments-app-0005';
+  const RULE_API_DEPLOY = 'rule-api-deployment-0006';
+  const RULE_EXCLUDE_SYSTEM = 'rule-exclude-system-0007';
+
+  const insertMappingRule = db.prepare(`
+    INSERT OR IGNORE INTO k8s_label_mapping_rules
+    (id, name, description, enabled, priority, match_mode, conditions, condition_logic, expression,
+     target_dimension, target_value_mode, target_value, target_source_field, target_transform,
+     regex_pattern, regex_capture_group, conflict_behavior, created_by, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Rule 1: Copy app label → Application
+  insertMappingRule.run(
+    RULE_COPY_APP,
+    'Copy App Label',
+    'Copies the K8s app label value directly to the Illumio Application dimension',
+    1, 10, 'expression', '[]', 'AND',
+    'exists(k8s.labels["app"])',
+    'app', 'copy', '', 'k8s.labels.app', '',
+    '', 1, 'skip', USER_ALEX, now, now,
+  );
+
+  // Rule 2: Prod namespace → Environment = Production
+  insertMappingRule.run(
+    RULE_PROD_NS,
+    'Production Namespace',
+    'Maps workloads in prod-prefixed namespaces to Environment = Production',
+    1, 20, 'expression', '[]', 'AND',
+    'namespace =~ "^prod-.*" OR namespace == "payments" OR namespace == "web-frontend" OR namespace == "backend-services"',
+    'env', 'static', 'Production', '', '',
+    '', 1, 'skip', USER_ALEX, now, now,
+  );
+
+  // Rule 3: Frontend tier → Role = Frontend
+  insertMappingRule.run(
+    RULE_FRONTEND_TIER,
+    'Frontend Tier',
+    'Maps workloads with tier=frontend label to Role = Frontend',
+    1, 30, 'guided',
+    JSON.stringify([{ field: 'k8s.labels.tier', operator: 'is', value: 'frontend' }]),
+    'AND', '',
+    'role', 'static', 'Frontend', '', '',
+    '', 1, 'skip', USER_ALEX, now, now,
+  );
+
+  // Rule 4: US East cluster → Location = US East
+  insertMappingRule.run(
+    RULE_USEAST_LOC,
+    'US East Cluster Location',
+    'Maps workloads in the us-east-prod cluster to Location = US East',
+    1, 40, 'expression', '[]', 'AND',
+    'cluster == "us-east-prod"',
+    'loc', 'static', 'US East', '', '',
+    '', 1, 'skip', USER_ALEX, now, now,
+  );
+
+  // Rule 5: Payments namespace or team → Application = Payments
+  insertMappingRule.run(
+    RULE_PAYMENTS_APP,
+    'Payments Application',
+    'Maps workloads in the payments namespace or with team=payments to Application = Payments',
+    1, 50, 'expression', '[]', 'AND',
+    'namespace == "payments" OR k8s.labels["team"] == "payments"',
+    'app', 'static', 'Payments', '', '',
+    '', 1, 'priority_wins', USER_ALEX, now, now,
+  );
+
+  // Rule 6: API deployment regex → Role = API
+  insertMappingRule.run(
+    RULE_API_DEPLOY,
+    'API Deployment Role',
+    'Extracts API role from deployment names matching api-* pattern',
+    1, 60, 'expression', '[]', 'AND',
+    'deployment =~ "^api-(.*)$"',
+    'role', 'regex_capture', '', 'deployment', 'title_case',
+    '^api-(.*)$', 1, 'skip', USER_ALEX, now, now,
+  );
+
+  // Rule 7: Exclude kube-system (disabled by default)
+  insertMappingRule.run(
+    RULE_EXCLUDE_SYSTEM,
+    'Non-System Workloads',
+    'Maps non-system workloads that have an app label to Application (disabled)',
+    0, 100, 'expression', '[]', 'AND',
+    'namespace != "kube-system" AND exists(k8s.labels["app"])',
+    'app', 'copy', '', 'k8s.labels.app', 'title_case',
+    '', 1, 'skip', USER_MORGAN, now, now,
+  );
 });
 
 // Run the transaction
@@ -2029,4 +2126,8 @@ console.log(
 console.log(
   '  v2_template_rules:',
   (db2.prepare('SELECT count(*) as c FROM v2_template_rules').get() as { c: number }).c,
+);
+console.log(
+  '  k8s_label_mapping_rules:',
+  (db2.prepare('SELECT count(*) as c FROM k8s_label_mapping_rules').get() as { c: number }).c,
 );

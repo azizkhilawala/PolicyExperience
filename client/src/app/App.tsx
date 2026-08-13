@@ -9,7 +9,7 @@ import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 import { Avatar } from '@astryxdesign/core/Avatar';
 import { Icon } from '@astryxdesign/core/Icon';
 
-import { Box, Shield } from 'lucide-react';
+import { Box, Shield, Tags } from 'lucide-react';
 import { AuthProvider, useAuth } from '../hooks/useAuth.js';
 import { SettingsProvider } from '../hooks/useSettings.js';
 import { LabelsProvider } from '../hooks/useLabels.js';
@@ -113,6 +113,13 @@ function AppLayout() {
               onClick={navTo('/workloads')}
               isSelected={location.pathname.startsWith('/workloads')}
               icon={<Icon icon={Box} />}
+            />
+            <SideNavItem
+              label="Label Mapping"
+              href="/label-mapping"
+              onClick={navTo('/label-mapping')}
+              isSelected={location.pathname.startsWith('/label-mapping')}
+              icon={<Icon icon={Tags} />}
             />
           </SideNavSection>
           <SideNavSection title="Admin">

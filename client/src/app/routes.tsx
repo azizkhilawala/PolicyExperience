@@ -11,6 +11,9 @@ import ObjectsPage from '../pages/ObjectsPage.js';
 import { WorkloadListPage } from '../pages/WorkloadListPage.js';
 import { WorkloadDetailPage } from '../pages/WorkloadDetailPage.js';
 import AuditLogPage from '../pages/AuditLogPage.js';
+import LabelMappingListPage from '../pages/LabelMappingListPage.js';
+import LabelMappingDetailPage from '../pages/LabelMappingDetailPage.js';
+import LabelMappingCreatePage from '../pages/LabelMappingCreatePage.js';
 
 export const routes = [
   { path: '/', element: <Navigate to="/policies" replace /> },
@@ -25,6 +28,10 @@ export const routes = [
   { path: '/objects', element: <ObjectsPage /> },
   { path: '/workloads', element: <WorkloadListPage /> },
   { path: '/workloads/:id', element: <WorkloadDetailPage /> },
+  { path: '/label-mapping', element: <LabelMappingListPage /> },
+  { path: '/label-mapping/new', element: <LabelMappingCreatePage /> },
+  { path: '/label-mapping/:id', element: <LabelMappingDetailPage /> },
+  { path: '/label-mapping/:id/edit', element: <LabelMappingCreatePage /> },
   { path: '/audit-log', element: <AuditLogPage /> },
   { path: '*', element: <Navigate to="/policies" replace /> },
 ];

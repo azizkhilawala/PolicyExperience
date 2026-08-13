@@ -14,6 +14,7 @@ import v2TemplatesRoutes from './routes/v2-templates.js';
 import objectsRoutes from './routes/objects.js';
 import impactRoutes from './routes/impact.js';
 import auditRoutes from './routes/audit.js';
+import labelMappingRoutes from './routes/label-mapping.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -36,6 +37,7 @@ app.use('/api/v2', v2TemplatesRoutes);
 app.use('/api/objects', objectsRoutes);
 app.use('/api/impact', impactRoutes);
 app.use('/api/audit-log', auditRoutes);
+app.use('/api/label-mapping', labelMappingRoutes);
 
 app.listen(PORT, () => {
   console.log(`PolicyExperience API v2 running on http://localhost:${PORT}`);

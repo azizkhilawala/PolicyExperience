@@ -241,6 +241,41 @@ CREATE TABLE IF NOT EXISTS v2_template_rules (
   notes TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS k8s_label_mapping_rules (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  enabled INTEGER DEFAULT 1,
+  priority INTEGER DEFAULT 0,
+  match_mode TEXT NOT NULL CHECK(match_mode IN ('guided', 'expression')),
+  conditions TEXT DEFAULT '[]',
+  condition_logic TEXT DEFAULT 'AND' CHECK(condition_logic IN ('AND', 'OR')),
+  expression TEXT DEFAULT '',
+  target_dimension TEXT NOT NULL CHECK(target_dimension IN ('role', 'app', 'env', 'loc')),
+  target_value_mode TEXT NOT NULL CHECK(target_value_mode IN ('static', 'copy', 'regex_capture', 'transform')),
+  target_value TEXT DEFAULT '',
+  target_source_field TEXT DEFAULT '',
+  target_transform TEXT DEFAULT '',
+  regex_pattern TEXT DEFAULT '',
+  regex_capture_group INTEGER DEFAULT 1,
+  conflict_behavior TEXT DEFAULT 'skip' CHECK(conflict_behavior IN ('skip', 'overwrite_mapped', 'flag', 'priority_wins')),
+  created_by TEXT REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS workload_label_mappings (
+  id TEXT PRIMARY KEY,
+  workload_id TEXT NOT NULL REFERENCES workloads(id) ON DELETE CASCADE,
+  rule_id TEXT NOT NULL REFERENCES k8s_label_mapping_rules(id) ON DELETE CASCADE,
+  label_dimension TEXT NOT NULL CHECK(label_dimension IN ('role', 'app', 'env', 'loc')),
+  label_value TEXT NOT NULL,
+  provenance TEXT DEFAULT 'mapping-rule',
+  conflict INTEGER DEFAULT 0,
+  conflict_detail TEXT DEFAULT '',
+  evaluated_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS audit_log (
   id TEXT PRIMARY KEY,
   entity_type TEXT NOT NULL,
